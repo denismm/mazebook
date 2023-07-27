@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import random
+import sys
 from positions import Position, cardinal_directions, add_direction
 from maze import Grid
 
-maze_width = 5
-maze_height = 5
+maze_width = int(sys.argv[1])
+maze_height = int(sys.argv[2])
 
 grid = Grid(maze_height, maze_width)
 

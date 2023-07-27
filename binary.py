@@ -10,12 +10,14 @@ maze_height = int(sys.argv[2])
 grid = Grid(maze_height, maze_width)
 
 ne = cardinal_directions[:2]
+nw = cardinal_directions[1:3]
 
 for j in range(grid.height):
     for i in range(grid.width):
         position = (i, j)
         possible_next: list[Position] = []
-        for direction in ne:
+        possible_dirs = ne if j % 2 == 0 else nw
+        for direction in possible_dirs:
             next_position = add_direction(position, direction)
             if next_position in grid:
                 possible_next.append(next_position)

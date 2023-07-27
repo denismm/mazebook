@@ -7,8 +7,6 @@ from maze import Grid
 maze_width = int(sys.argv[1])
 maze_height = int(sys.argv[2])
 
-random.seed(23)
-
 grid = Grid(maze_height, maze_width)
 ne = cardinal_directions[:2]
 

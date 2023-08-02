@@ -10,10 +10,10 @@ PATH = '.'
 
 class Cell():
     def __init__(self, location: Position) -> None:
-        self.neighbors: set[Position] = set()
+        self.links: set[Position] = set()
 
-    def add_neighbor(self, neighbor: Position) -> None:
-        self.neighbors.add(neighbor)
+    def add_link(self, link: Position) -> None:
+        self.links.add(link)
 
 class Grid():
     def __init__(self, height: int, width: int) -> None:
@@ -32,8 +32,8 @@ class Grid():
         return self._grid[position]
 
     def connect(self, first: Position, second: Position) -> None:
-        self._grid[first].add_neighbor(second)
-        self._grid[second].add_neighbor(first)
+        self._grid[first].add_link(second)
+        self._grid[second].add_link(first)
 
     def dijkstra(self, start: Position) -> list[set[Position]]:
         seen: set[Position] = {start}
@@ -41,7 +41,7 @@ class Grid():
         while True:
             frontier: set[Position] = set()
             for point in far_points[-1]:
-                new_points = self[point].neighbors - seen
+                new_points = self[point].links - seen
                 frontier |= new_points
                 seen |= new_points
             if len(frontier) == 0:
@@ -63,7 +63,7 @@ class Grid():
         distance = len(distance_points) - 1
         while distance > 0:
             distance -= 1
-            possibles = self[path[-1]].neighbors & distance_points[distance]
+            possibles = self[path[-1]].links & distance_points[distance]
             path.append(possibles.pop())
         return path
 
@@ -101,7 +101,7 @@ class Grid():
                 else:
                     center_output += interior * CELL_WIDTH
                 across_output += interior * CELL_WIDTH
-                if across_position in self[position].neighbors:
+                if across_position in self[position].links:
                     if position in path and across_position in path:
                         door = PATH
                     else:
@@ -110,7 +110,7 @@ class Grid():
                     door = WALL
                 across_output += door
                 center_output += door
-                if down_position in self[position].neighbors:
+                if down_position in self[position].links:
                     if position in path and down_position in path:
                         door = PATH
                     else:

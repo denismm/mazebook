@@ -10,6 +10,7 @@ PATH = '.'
 
 class Cell():
     def __init__(self, location: Position) -> None:
+        self.position = location
         self.links: set[Position] = set()
 
     def add_link(self, link: Position) -> None:
@@ -34,6 +35,10 @@ class Grid():
     def connect(self, first: Position, second: Position) -> None:
         self._grid[first].add_link(second)
         self._grid[second].add_link(first)
+
+    def pos_neighbors(self, start: Position) -> list[Position]:
+        neighbors = [add_direction(start, dir) for dir in cardinal_directions]
+        return [neighbor for neighbor in neighbors if neighbor in self]
 
     def dijkstra(self, start: Position) -> list[set[Position]]:
         seen: set[Position] = {start}
@@ -177,4 +182,21 @@ def make_sidewinder(maze_height: int, maze_width: int) -> Grid:
                     # add next room to run
                     next_position = add_direction(position, next_direction)
                     grid.connect(position, next_position)
+    return grid
+
+def make_aldous_broder(maze_height: int, maze_width: int) -> Grid:
+    grid = Grid(maze_height, maze_width)
+
+    current: Position = (random.randrange(grid.width), random.randrange(grid.height))
+    visited: set[Position] = {current}
+    full_size = grid.width * grid.height
+    steps = 0
+    while len(visited) < full_size:
+        steps += 1
+        next: Position = random.choice(grid.pos_neighbors(current))
+        if next not in visited:
+            grid.connect(current, next)
+            visited.add(next)
+        current = next
+    print (f"A-B done in {steps} steps")
     return grid

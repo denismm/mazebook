@@ -32,9 +32,15 @@ class Grid():
     def __getitem__(self, position: Position) -> Cell:
         return self._grid[position]
 
+    def __len__(self) -> int:
+        return self.height * self.width
+
     def connect(self, first: Position, second: Position) -> None:
         self._grid[first].add_link(second)
         self._grid[second].add_link(first)
+
+    def random_point(self) -> Position:
+        return (random.randrange(self.width), random.randrange(self.height))
 
     def pos_neighbors(self, start: Position) -> list[Position]:
         neighbors = [add_direction(start, dir) for dir in cardinal_directions]
@@ -187,16 +193,44 @@ def make_sidewinder(maze_height: int, maze_width: int) -> Grid:
 def make_aldous_broder(maze_height: int, maze_width: int) -> Grid:
     grid = Grid(maze_height, maze_width)
 
-    current: Position = (random.randrange(grid.width), random.randrange(grid.height))
+    current: Position = grid.random_point()
     visited: set[Position] = {current}
-    full_size = grid.width * grid.height
     steps = 0
-    while len(visited) < full_size:
+    while len(visited) < len(grid):
         steps += 1
         next: Position = random.choice(grid.pos_neighbors(current))
         if next not in visited:
             grid.connect(current, next)
             visited.add(next)
         current = next
-    print (f"A-B done in {steps} steps")
+    print(f"A-B done in {steps} steps")
+    return grid
+
+def make_wilson(maze_height: int, maze_width: int) -> Grid:
+    grid = Grid(maze_height, maze_width)
+    start: Position = grid.random_point()
+    unvisited: set[Position] = set(grid._grid.keys())
+    visited: set[Position] = {start}
+    unvisited -= visited
+    steps: int = 0
+    while len(unvisited):
+        current: Position = random.choice(list(unvisited))
+        path: list[Position] = [current]
+        steps += 1
+        while path[-1] not in visited:
+            steps += 1
+            next: Position = random.choice(grid.pos_neighbors(current))
+            if next in path:
+                # chop out loop
+                path = path[:(path.index(next))]
+            path.append(next)
+            current = next
+        # connect path
+        for i in range(len(path) - 1):
+            current = path[i]
+            next = path[i + 1]
+            grid.connect(current, next)
+            visited.add(current)
+        unvisited -= visited
+    print(f"Wilson done in {steps} steps")
     return grid

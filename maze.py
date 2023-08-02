@@ -30,6 +30,38 @@ class Grid():
         self._grid[first].add_neighbor(second)
         self._grid[second].add_neighbor(first)
 
+    def dijkstra(self, start: Position) -> list[set[Position]]:
+        seen: set[Position] = {start}
+        far_points: list[set[Position]] = [{start}]
+        while True:
+            frontier: set[Position] = set()
+            for point in far_points[-1]:
+                new_points = self[point].neighbors - seen
+                frontier |= new_points
+                seen |= new_points
+            if len(frontier) == 0:
+                break
+            far_points.append(frontier)
+
+        return far_points
+
+    def longest_path(self) -> list[Position]:
+        # start at 0, 0
+        start: Position = (0, 0)
+        # get farthest point
+        first_point = self.dijkstra(start)[-1].pop()
+        # get farthest point from there
+        distance_points = self.dijkstra(first_point)
+        second_point = distance_points[-1].pop()
+        # get path
+        path: list[Position] = [second_point]
+        distance = len(distance_points) - 1
+        while distance > 0:
+            distance -= 1
+            possibles = self[path[-1]].neighbors & distance_points[distance]
+            path.append(possibles.pop())
+        return path
+
     def ascii_print(self) -> None:
         output: list[str] = []
         output.append("#" * ((CELL_WIDTH + 1) * self.width + 1))

@@ -16,7 +16,8 @@ for j in range(grid.height):
     for i in range(grid.width):
         position = (i, j)
         possible_next: list[Position] = []
-        possible_dirs = ne if j % 2 == 0 else nw
+        # possible_dirs = ne if j % 2 == 0 else nw
+        possible_dirs = ne
         for direction in possible_dirs:
             next_position = add_direction(position, direction)
             if next_position in grid:

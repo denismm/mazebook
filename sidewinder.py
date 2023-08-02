@@ -34,3 +34,5 @@ for j in range(grid.height):
                 grid.connect(position, next_position)
 
 grid.ascii_print()
+far_points = grid.longest_path()
+print(far_points)

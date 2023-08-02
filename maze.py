@@ -1,7 +1,11 @@
 from positions import Position
 
-CELL_WIDTH = 3
-CELL_HEIGHT = 2
+CELL_WIDTH = 4
+CELL_HEIGHT = 3
+
+WALL = '#'
+SPACE = ' '
+PATH = '.'
 
 class Cell():
     def __init__(self, location: Position) -> None:
@@ -62,28 +66,63 @@ class Grid():
             path.append(possibles.pop())
         return path
 
-    def ascii_print(self) -> None:
+    # I'm not modifying path or field so it's safe to use degenerate
+    # cases as defaults
+    def ascii_print(self,
+            path: list[Position] = [],
+            field: list[set[Position]] = [],
+    ) -> None:
+        field_for_position: dict[Position, int] = {}
+        for i, positions in enumerate(field):
+            for position in positions:
+                field_for_position[position] = i
         output: list[str] = []
-        output.append("#" * ((CELL_WIDTH + 1) * self.width + 1))
+        output.append(WALL * ((CELL_WIDTH + 1) * self.width + 1))
         for j in range(self.height):
-            across_output = "#"
-            down_output = "#"
+            across_output = WALL
+            down_output = WALL
+            center_output = across_output
             for i in range(self.width):
                 position = (i, j)
                 across_position = (i + 1, j)
                 down_position = (i, j + 1)
-                across_output += " " * CELL_WIDTH
+                if position in path:
+                    interior = PATH
+                else:
+                    interior = SPACE
+                if position in field_for_position:
+                    field_str = str(field_for_position[position])
+                    extra_space = CELL_WIDTH - len(field_str)
+                    interior_output = interior * (extra_space // 2)
+                    interior_output += field_str
+                    interior_output += interior * (CELL_WIDTH - len(interior_output))
+                    center_output += interior_output
+                else:
+                    center_output += interior * CELL_WIDTH
+                across_output += interior * CELL_WIDTH
                 if across_position in self[position].neighbors:
-                    across_output += " "
+                    if position in path and across_position in path:
+                        door = PATH
+                    else:
+                        door = SPACE
                 else:
-                    across_output += "#"
+                    door = WALL
+                across_output += door
+                center_output += door
                 if down_position in self[position].neighbors:
-                    down_output += " " * CELL_WIDTH
+                    if position in path and down_position in path:
+                        door = PATH
+                    else:
+                        door = SPACE
                 else:
-                    down_output += "#" * CELL_WIDTH
-                down_output += "#"
-            for _ in range(CELL_HEIGHT):
-                output.append(across_output)
+                    door = WALL
+                down_output += door * CELL_WIDTH
+                down_output += WALL
+            for i in range(CELL_HEIGHT):
+                if i == CELL_HEIGHT // 2:
+                    output.append(center_output)
+                else:
+                    output.append(across_output)
             output.append(down_output)
 
         output.reverse()

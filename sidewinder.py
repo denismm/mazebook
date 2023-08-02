@@ -33,6 +33,8 @@ for j in range(grid.height):
                 next_position = add_direction(position, next_direction)
                 grid.connect(position, next_position)
 
-grid.ascii_print()
-far_points = grid.longest_path()
-print(far_points)
+long_path = grid.longest_path()
+field = grid.dijkstra(long_path[0])
+grid.ascii_print(field=field)
+grid.ascii_print(path=long_path)
+grid.ascii_print(field=field, path=long_path)

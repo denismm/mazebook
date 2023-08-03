@@ -9,4 +9,6 @@ grid = make_wilson(maze_height, maze_width)
 
 long_path = grid.longest_path()
 field = grid.dijkstra(long_path[0])
-grid.ascii_print(field=field, path=long_path)
+# grid.ascii_print(field=field, path=long_path)
+# grid.ps_print(field=field, path=long_path)
+grid.png_print("wilson", field=field, path=long_path)

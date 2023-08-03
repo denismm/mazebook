@@ -1,4 +1,5 @@
 from positions import Position, Direction, cardinal_directions, add_direction
+from typing import Any
 import random
 
 CELL_WIDTH = 4
@@ -141,6 +142,70 @@ class Grid():
         for line in output:
             print(line)
 
+    def ps_instructions(self,
+            path: list[Position] = [],
+            field: list[set[Position]] = [],
+    ) -> str:
+        output: list[str] = []
+        from collections.abc import Iterable
+        def ps_list(iterable:Iterable[Any]) -> str:
+            return '[' +  ' '.join([str(x) for x in iterable]) + ']'
+        output.append("<<")
+        # width and height
+        output.append (f"/width {self.width}")
+        output.append (f"/height {self.height}")
+        # cells
+        output.append ("/cells [")
+        for k, v in self._grid.items():
+            walls: list[str] = []
+            for dir in cardinal_directions:
+                walls.append(str(add_direction(k, dir) not in v.links).lower())
+            output.append(f"[ {ps_list(k)} {ps_list(walls)} ]")
+        output.append("]")
+        if path:
+            output.append("/path ")
+            output.append(ps_list([
+                ps_list(position) for position in path
+            ]))
+        if field:
+            output.append("/field ")
+            output.append(ps_list([
+                ps_list([
+                    ps_list(position) for position in frontier
+                ]) for frontier in field
+            ]))
+        output.append(">> drawmaze")
+        return "\n".join(output)
+
+    def png_print(self, maze_name: str,
+            path: list[Position] = [],
+            field: list[set[Position]] = [],
+    ) -> None:
+        import subprocess
+        import os
+        filename = '.temp.ps'
+        with open(filename, 'w') as f:
+            f.write("%!\n(draw_maze.ps) run\n")
+            f.write("/%s {" % (maze_name, ))
+            f.write(self.ps_instructions(path=path, field=field))
+            f.write("\n } def\n")
+            f.write("%%EndProlog\n")
+        command = ['pstopng',
+            '-0.05', 'd', str(self.width + 0.05), str(self.height + 0.05),
+            '20', filename, maze_name]
+        subprocess.run(command, check=True)
+        os.unlink(filename)
+
+    def ps_print(self,
+            path: list[Position] = [],
+            field: list[set[Position]] = [],
+    ) -> None:
+        print("%!\n(draw_maze.ps) run")
+        print("%%EndProlog\n")
+        print("72 softscale 0.5 0.5 translate")
+        print(self.ps_instructions(path=path, field=field))
+        print("showpage")
+
 def make_binary(maze_height: int, maze_width: int) -> Grid:
     grid = Grid(maze_height, maze_width)
 
@@ -232,5 +297,5 @@ def make_wilson(maze_height: int, maze_width: int) -> Grid:
             grid.connect(current, next)
             visited.add(current)
         unvisited -= visited
-    print(f"Wilson done in {steps} steps")
+    #  print(f"Wilson done in {steps} steps")
     return grid

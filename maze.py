@@ -19,6 +19,8 @@ class Cell():
 
 class Grid():
     algorithms = {}
+    outputs = {}
+
     def __init__(self, height: int, width: int) -> None:
         self._grid: dict[Position, Cell] = {}
         self.width = width
@@ -147,16 +149,18 @@ class Grid():
             path: list[Position] = [],
             field: list[set[Position]] = [],
     ) -> str:
-        output: list[str] = []
         from collections.abc import Iterable
-        def ps_list(iterable:Iterable[Any]) -> str:
-            return '[' +  ' '.join([str(x) for x in iterable]) + ']'
+
+        def ps_list(iterable: Iterable[Any]) -> str:
+            return '[' + ' '.join([str(x) for x in iterable]) + ']'
+
+        output: list[str] = []
         output.append("<<")
         # width and height
-        output.append (f"/width {self.width}")
-        output.append (f"/height {self.height}")
+        output.append(f"/width {self.width}")
+        output.append(f"/height {self.height}")
         # cells
-        output.append ("/cells [")
+        output.append("/cells [")
         for k, v in self._grid.items():
             walls: list[str] = []
             for dir in cardinal_directions:
@@ -178,13 +182,14 @@ class Grid():
         output.append(">> drawmaze")
         return "\n".join(output)
 
-    def png_print(self, maze_name: str,
+    def png_print(self,
             path: list[Position] = [],
             field: list[set[Position]] = [],
     ) -> None:
         import subprocess
         import os
         filename = '.temp.ps'
+        maze_name = 'temp'
         with open(filename, 'w') as f:
             f.write("%!\n(draw_maze.ps) run\n")
             f.write("/%s {" % (maze_name, ))
@@ -223,8 +228,6 @@ class Grid():
                 if possible_next:
                     next_position = random.choice(possible_next)
                     self.connect(position, next_position)
-
-    algorithms['binary'] = binary
 
     def sidewinder(self) -> None:
         ne = cardinal_directions[:2]
@@ -289,6 +292,18 @@ class Grid():
                 visited.add(current)
             unvisited -= visited
 
+    algorithms['binary'] = binary
+    algorithms['sidewinder'] = sidewinder
+    algorithms['aldous_broder'] = aldous_broder
+    algorithms['wilson'] = wilson
+
+    def generate_maze(self, maze_algorithm: str):
+        self.algorithms[maze_algorithm](self)
+
+    outputs['ascii'] = ascii_print
+    outputs['ps'] = ps_print
+    outputs['png'] = png_print
+
 def make_binary(maze_height: int, maze_width: int) -> Grid:
     grid = Grid(maze_height, maze_width)
     grid.binary()
@@ -307,6 +322,6 @@ def make_aldous_broder(maze_height: int, maze_width: int) -> Grid:
 
 def make_wilson(maze_height: int, maze_width: int) -> Grid:
     grid = Grid(maze_height, maze_width)
-    grid.wilson()
+    grid.generate_maze('wilson')
     #  print(f"Wilson done in {steps} steps")
     return grid

@@ -18,6 +18,7 @@ class Cell():
         self.links.add(link)
 
 class Grid():
+    algorithms = {}
     def __init__(self, height: int, width: int) -> None:
         self._grid: dict[Position, Cell] = {}
         self.width = width
@@ -206,96 +207,106 @@ class Grid():
         print(self.ps_instructions(path=path, field=field))
         print("showpage")
 
+    def binary(self) -> None:
+        ne = cardinal_directions[:2]
+        # nw = cardinal_directions[1:3]
+        for j in range(self.height):
+            for i in range(self.width):
+                position = (i, j)
+                possible_next: list[Position] = []
+                # possible_dirs = ne if j % 2 == 0 else nw
+                possible_dirs = ne
+                for direction in possible_dirs:
+                    next_position = add_direction(position, direction)
+                    if next_position in self:
+                        possible_next.append(next_position)
+                if possible_next:
+                    next_position = random.choice(possible_next)
+                    self.connect(position, next_position)
+
+    algorithms['binary'] = binary
+
+    def sidewinder(self) -> None:
+        ne = cardinal_directions[:2]
+        for j in range(self.height):
+            run: list[Position] = []
+            for i in range(self.width):
+                position = (i, j)
+                run.append(position)
+                options: list[Direction] = []
+                for direction in ne:
+                    next_position = add_direction(position, direction)
+                    if next_position in self:
+                        options.append(direction)
+                if options:
+                    next_direction = random.choice(options)
+                    if next_direction == (0, 1):
+                        # close run and break north
+                        break_room = random.choice(run)
+                        next_position = add_direction(break_room, next_direction)
+                        self.connect(break_room, next_position)
+                        run = []
+                    else:
+                        # add next room to run
+                        next_position = add_direction(position, next_direction)
+                        self.connect(position, next_position)
+
+    def aldous_broder(self) -> None:
+        current: Position = self.random_point()
+        visited: set[Position] = {current}
+        steps = 0
+        while len(visited) < len(self):
+            steps += 1
+            next: Position = random.choice(self.pos_neighbors(current))
+            if next not in visited:
+                self.connect(current, next)
+                visited.add(next)
+            current = next
+
+    def wilson(self) -> None:
+        start: Position = self.random_point()
+        unvisited: set[Position] = set(self._grid.keys())
+        visited: set[Position] = {start}
+        unvisited -= visited
+        steps: int = 0
+        while len(unvisited):
+            current: Position = random.choice(list(unvisited))
+            path: list[Position] = [current]
+            steps += 1
+            while path[-1] not in visited:
+                steps += 1
+                next: Position = random.choice(self.pos_neighbors(current))
+                if next in path:
+                    # chop out loop
+                    path = path[:(path.index(next))]
+                path.append(next)
+                current = next
+            # connect path
+            for i in range(len(path) - 1):
+                current = path[i]
+                next = path[i + 1]
+                self.connect(current, next)
+                visited.add(current)
+            unvisited -= visited
+
 def make_binary(maze_height: int, maze_width: int) -> Grid:
     grid = Grid(maze_height, maze_width)
-
-    ne = cardinal_directions[:2]
-    # nw = cardinal_directions[1:3]
-
-    for j in range(grid.height):
-        for i in range(grid.width):
-            position = (i, j)
-            possible_next: list[Position] = []
-            # possible_dirs = ne if j % 2 == 0 else nw
-            possible_dirs = ne
-            for direction in possible_dirs:
-                next_position = add_direction(position, direction)
-                if next_position in grid:
-                    possible_next.append(next_position)
-            if possible_next:
-                next_position = random.choice(possible_next)
-                grid.connect(position, next_position)
+    grid.binary()
     return grid
 
 def make_sidewinder(maze_height: int, maze_width: int) -> Grid:
     grid = Grid(maze_height, maze_width)
-    ne = cardinal_directions[:2]
-
-    for j in range(grid.height):
-        run: list[Position] = []
-        for i in range(grid.width):
-            position = (i, j)
-            run.append(position)
-            options: list[Direction] = []
-            for direction in ne:
-                next_position = add_direction(position, direction)
-                if next_position in grid:
-                    options.append(direction)
-            if options:
-                next_direction = random.choice(options)
-                if next_direction == (0, 1):
-                    # close run and break north
-                    break_room = random.choice(run)
-                    next_position = add_direction(break_room, next_direction)
-                    grid.connect(break_room, next_position)
-                    run = []
-                else:
-                    # add next room to run
-                    next_position = add_direction(position, next_direction)
-                    grid.connect(position, next_position)
+    grid.sidewinder()
     return grid
 
 def make_aldous_broder(maze_height: int, maze_width: int) -> Grid:
     grid = Grid(maze_height, maze_width)
-
-    current: Position = grid.random_point()
-    visited: set[Position] = {current}
-    steps = 0
-    while len(visited) < len(grid):
-        steps += 1
-        next: Position = random.choice(grid.pos_neighbors(current))
-        if next not in visited:
-            grid.connect(current, next)
-            visited.add(next)
-        current = next
-    print(f"A-B done in {steps} steps")
+    grid.aldous_broder()
+    # print(f"A-B done in {steps} steps")
     return grid
 
 def make_wilson(maze_height: int, maze_width: int) -> Grid:
     grid = Grid(maze_height, maze_width)
-    start: Position = grid.random_point()
-    unvisited: set[Position] = set(grid._grid.keys())
-    visited: set[Position] = {start}
-    unvisited -= visited
-    steps: int = 0
-    while len(unvisited):
-        current: Position = random.choice(list(unvisited))
-        path: list[Position] = [current]
-        steps += 1
-        while path[-1] not in visited:
-            steps += 1
-            next: Position = random.choice(grid.pos_neighbors(current))
-            if next in path:
-                # chop out loop
-                path = path[:(path.index(next))]
-            path.append(next)
-            current = next
-        # connect path
-        for i in range(len(path) - 1):
-            current = path[i]
-            next = path[i + 1]
-            grid.connect(current, next)
-            visited.add(current)
-        unvisited -= visited
+    grid.wilson()
     #  print(f"Wilson done in {steps} steps")
     return grid

@@ -211,7 +211,11 @@ class Grid():
     ) -> None:
         print("%!\n(draw_maze.ps) run")
         print("%%EndProlog\n")
-        print("72 softscale 0.5 0.5 translate")
+        print("72 softscale 0.25 0.25 translate")
+        if self.width / 8 > self.height / 10.5:
+            print(f"8 {self.width} div dup scale")
+        else:
+            print(f"10.5 {self.height} div dup scale")
         print(self.ps_instructions(path=path, field=field))
         print("showpage")
 

@@ -87,6 +87,7 @@ class Grid():
     def ascii_print(self,
             path: list[Position] = [],
             field: list[set[Position]] = [],
+            **kwargs
     ) -> None:
         field_for_position: dict[Position, int] = {}
         for i, positions in enumerate(field):
@@ -185,11 +186,12 @@ class Grid():
     def png_print(self,
             path: list[Position] = [],
             field: list[set[Position]] = [],
+            **kwargs
     ) -> None:
         import subprocess
         import os
         filename = '.temp.ps'
-        maze_name = 'temp'
+        maze_name = kwargs.get('maze_name', 'temp')
         with open(filename, 'w') as f:
             f.write("%!\n(draw_maze.ps) run\n")
             f.write("/%s {" % (maze_name, ))
@@ -205,6 +207,7 @@ class Grid():
     def ps_print(self,
             path: list[Position] = [],
             field: list[set[Position]] = [],
+            **kwargs
     ) -> None:
         print("%!\n(draw_maze.ps) run")
         print("%%EndProlog\n")
@@ -297,12 +300,15 @@ class Grid():
     algorithms['aldous_broder'] = aldous_broder
     algorithms['wilson'] = wilson
 
-    def generate_maze(self, maze_algorithm: str):
+    def generate_maze(self, maze_algorithm: str) -> None:
         self.algorithms[maze_algorithm](self)
 
     outputs['ascii'] = ascii_print
     outputs['ps'] = ps_print
     outputs['png'] = png_print
+
+    def print(self, print_method: str, **kwargs) -> None:
+        self.outputs[print_method](self, **kwargs)
 
 def make_binary(maze_height: int, maze_width: int) -> Grid:
     grid = Grid(maze_height, maze_width)

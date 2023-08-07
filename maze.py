@@ -87,7 +87,7 @@ class Grid():
     def ascii_print(self,
             path: list[Position] = [],
             field: list[set[Position]] = [],
-            **kwargs
+            **kwargs: str
     ) -> None:
         field_for_position: dict[Position, int] = {}
         for i, positions in enumerate(field):
@@ -186,12 +186,12 @@ class Grid():
     def png_print(self,
             path: list[Position] = [],
             field: list[set[Position]] = [],
-            **kwargs
+            **kwargs: str
     ) -> None:
         import subprocess
         import os
         filename = '.temp.ps'
-        maze_name = kwargs.get('maze_name', 'temp')
+        maze_name = str(kwargs.get('maze_name', 'temp'))
         with open(filename, 'w') as f:
             f.write("%!\n(draw_maze.ps) run\n")
             f.write("/%s {" % (maze_name, ))
@@ -207,7 +207,7 @@ class Grid():
     def ps_print(self,
             path: list[Position] = [],
             field: list[set[Position]] = [],
-            **kwargs
+            **kwargs: str
     ) -> None:
         print("%!\n(draw_maze.ps) run")
         print("%%EndProlog\n")
@@ -299,10 +299,38 @@ class Grid():
                 visited.add(current)
             unvisited -= visited
 
+    def hunter_killer(self) -> None:
+        current: Position = self.random_point()
+        visited: set[Position] = {current}
+        # break when we fill the grid
+        while True:
+            # break when we paint ourselves into a corner
+            while True:
+                next_options = set(self.pos_neighbors(current)) - visited
+                if not next_options:
+                    break
+                next: Position = random.choice(list(next_options))
+                self.connect(current, next)
+                visited.add(next)
+                current = next
+            # choose a new start if possible
+            if len(visited) == len(self):
+                return
+            for start_option in sorted(self._grid.keys()):
+                if start_option not in visited:
+                    connection_options = set(self.pos_neighbors(start_option)) & visited
+                    if connection_options:
+                        connection: Position = random.choice(list(connection_options))
+                        self.connect(connection, start_option)
+                        current = start_option
+                        visited.add(current)
+                        break
+
     algorithms['binary'] = binary
     algorithms['sidewinder'] = sidewinder
     algorithms['aldous_broder'] = aldous_broder
     algorithms['wilson'] = wilson
+    algorithms['hunter_killer'] = hunter_killer
 
     def generate_maze(self, maze_algorithm: str) -> None:
         self.algorithms[maze_algorithm](self)
@@ -311,8 +339,13 @@ class Grid():
     outputs['ps'] = ps_print
     outputs['png'] = png_print
 
-    def print(self, print_method: str, **kwargs) -> None:
-        self.outputs[print_method](self, **kwargs)
+    def print(self,
+            print_method: str,
+            path: list[Position] = [],
+            field: list[set[Position]] = [],
+            **kwargs: str
+    ) -> None:
+        self.outputs[print_method](self, path, field, **kwargs)
 
 def make_binary(maze_height: int, maze_width: int) -> Grid:
     grid = Grid(maze_height, maze_width)

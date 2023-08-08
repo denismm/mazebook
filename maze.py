@@ -307,7 +307,7 @@ class Grid():
                 visited.add(current)
             unvisited -= visited
 
-    def hunter_killer(self) -> None:
+    def hunt_kill(self) -> None:
         current: Position = self.random_point()
         visited: set[Position] = {current}
         # break when we fill the grid
@@ -334,11 +334,25 @@ class Grid():
                         visited.add(current)
                         break
 
+    def backtrack(self) -> None:
+        stack: list[Position] = [self.random_point()]
+        visited: set[Position] = {stack[0]}
+        while stack:
+            next_options = set(self.pos_neighbors(stack[-1])) - visited
+            if next_options:
+                next: Position = random.choice(list(next_options))
+                self.connect(stack[-1], next)
+                stack.append(next)
+                visited.add(next)
+            else:
+                stack.pop()
+
     algorithms['binary'] = binary
     algorithms['sidewinder'] = sidewinder
     algorithms['aldous_broder'] = aldous_broder
     algorithms['wilson'] = wilson
-    algorithms['hunter_killer'] = hunter_killer
+    algorithms['hunt_kill'] = hunt_kill
+    algorithms['backtrack'] = backtrack
 
     def generate_maze(self, maze_algorithm: str) -> None:
         self.algorithms[maze_algorithm](self)

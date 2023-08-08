@@ -1,6 +1,7 @@
 from positions import Position, Direction, cardinal_directions, add_direction
 from typing import Any
 import random
+from collections import defaultdict
 
 CELL_WIDTH = 4
 CELL_HEIGHT = 3
@@ -81,6 +82,13 @@ class Grid():
             possibles = self[path[-1]].links & distance_points[distance]
             path.append(possibles.pop())
         return path
+
+    def node_analysis(self) -> dict[int, int]:
+        # how many positions have 0, 1, 2, 3, 4 connections
+        nodes_for_links: dict[int, int] = defaultdict(lambda: 0)
+        for cell in self._grid.values():
+            nodes_for_links[len(cell.links)] += 1
+        return dict(nodes_for_links)
 
     # I'm not modifying path or field so it's safe to use degenerate
     # cases as defaults

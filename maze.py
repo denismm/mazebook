@@ -1,5 +1,5 @@
 from positions import Position, Direction, cardinal_directions, add_direction
-from typing import Any
+from typing import Any, Optional
 import random
 from collections import defaultdict
 
@@ -18,18 +18,38 @@ class Cell():
     def add_link(self, link: Position) -> None:
         self.links.add(link)
 
+GridMask = set[Position]
 class Grid():
     algorithms = {}
     outputs = {}
 
-    def __init__(self, height: int, width: int) -> None:
+    def __init__(self, height: int, width: int, mask: Optional[GridMask]=None) -> None:
         self._grid: dict[Position, Cell] = {}
         self.width = width
         self.height = height
         for i in range(width):
             for j in range(height):
                 position = (i, j)
+                if mask and position not in mask:
+                    continue
                 self._grid[position] = Cell(position)
+
+    @classmethod
+    def from_mask_file(cls, filename: str) -> 'Grid':
+        space_characters = {' ', '.'}
+        grid_mask: GridMask= set()
+        width = 0
+        height = 0
+        with open(filename, 'r') as f:
+            lines: list[str] = [line.rstrip('\n') for line in f]
+        lines.reverse()
+        height = len(lines)
+        for row, line in enumerate(lines):
+            for column, cell in enumerate(line):
+                if cell in space_characters:
+                    grid_mask.add((column, row))
+            width = max(width, len(line))
+        return cls(height, width, mask=grid_mask)
 
     def __contains__(self, position: Position) -> bool:
         return position in self._grid
@@ -45,7 +65,7 @@ class Grid():
         self._grid[second].add_link(first)
 
     def random_point(self) -> Position:
-        return (random.randrange(self.width), random.randrange(self.height))
+        return (random.choice(list(self._grid.keys())))
 
     def pos_neighbors(self, start: Position) -> list[Position]:
         neighbors = [add_direction(start, dir) for dir in cardinal_directions]
@@ -67,8 +87,8 @@ class Grid():
         return far_points
 
     def longest_path(self) -> list[Position]:
-        # start at 0, 0
-        start: Position = (0, 0)
+        # start at random point
+        start: Position = self.random_point()
         # get farthest point
         first_point = self.dijkstra(start)[-1].pop()
         # get farthest point from there
@@ -97,10 +117,17 @@ class Grid():
             field: list[set[Position]] = [],
             **kwargs: str
     ) -> None:
+        def door_for_positions(a: Position, b: Position) -> str:
+            if a in self and b in self and b in self[a].links:
+                if a in path and b in path:
+                    return PATH
+                return SPACE
+            else:
+                return WALL
         field_for_position: dict[Position, int] = {}
-        for i, positions in enumerate(field):
+        for distance, positions in enumerate(field):
             for position in positions:
-                field_for_position[position] = i
+                field_for_position[position] = distance
         output: list[str] = []
         output.append(WALL * ((CELL_WIDTH + 1) * self.width + 1))
         for j in range(self.height):
@@ -109,9 +136,9 @@ class Grid():
             center_output = across_output
             for i in range(self.width):
                 position = (i, j)
-                across_position = (i + 1, j)
-                down_position = (i, j + 1)
-                if position in path:
+                if position not in self:
+                    interior = WALL
+                elif position in path:
                     interior = PATH
                 else:
                     interior = SPACE
@@ -125,24 +152,17 @@ class Grid():
                 else:
                     center_output += interior * CELL_WIDTH
                 across_output += interior * CELL_WIDTH
-                if across_position in self[position].links:
-                    if position in path and across_position in path:
-                        door = PATH
-                    else:
-                        door = SPACE
-                else:
-                    door = WALL
+
+                across_position = (i + 1, j)
+                door = door_for_positions(position, across_position)
                 across_output += door
                 center_output += door
-                if down_position in self[position].links:
-                    if position in path and down_position in path:
-                        door = PATH
-                    else:
-                        door = SPACE
-                else:
-                    door = WALL
+
+                down_position = (i, j + 1)
+                door = door_for_positions(position, down_position)
                 down_output += door * CELL_WIDTH
                 down_output += WALL
+
             for i in range(CELL_HEIGHT):
                 if i == CELL_HEIGHT // 2:
                     output.append(center_output)

@@ -31,7 +31,11 @@ if m := re.match(r'(\d+)x(\d+)$', args.size):
     height, width = [int(x) for x in m.groups()]
     grid = maze.Grid(height, width)
 elif os.access(args.size, os.R_OK):
-    grid = maze.Grid.from_mask_file(args.size)
+    mask_filename = args.size
+    if mask_filename[-4:] == '.png':
+        grid = maze.Grid.from_mask_png(mask_filename)
+    else:
+        grid = maze.Grid.from_mask_txt(mask_filename)
 else:
     raise ValueError(f"invalid size {args.size}")
 

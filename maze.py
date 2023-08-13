@@ -35,7 +35,7 @@ class Grid():
                 self._grid[position] = Cell(position)
 
     @classmethod
-    def from_mask_file(cls, filename: str) -> 'Grid':
+    def from_mask_txt(cls, filename: str) -> 'Grid':
         space_characters = {' ', '.'}
         grid_mask: GridMask= set()
         width = 0
@@ -49,6 +49,19 @@ class Grid():
                 if cell in space_characters:
                     grid_mask.add((column, row))
             width = max(width, len(line))
+        return cls(height, width, mask=grid_mask)
+
+    @classmethod
+    def from_mask_png(cls, filename: str) -> 'Grid':
+        import png
+        grid_mask: GridMask= set()
+        mask_image = png.Reader(filename=filename)
+        (width, height, rows, info) = mask_image.asRGBA8()
+        for row, line in enumerate(rows):
+            for column, cell in enumerate(zip(*[iter(line)]*4)):
+                (r, g, b, a) = cell
+                if a == 0 or (r == 255 and g == 255 and b == 255):
+                    grid_mask.add((column, row))
         return cls(height, width, mask=grid_mask)
 
     def __contains__(self, position: Position) -> bool:

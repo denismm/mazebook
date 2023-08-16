@@ -55,7 +55,7 @@ class Image:
     def stream(self) -> None: ...
     def write(self, file) -> None: ...
 
-ReaderResult = tuple[int, int, Iterator[list[int]], Any]
+ReaderResult = tuple[int, int, Iterator[list[int]], dict[str, Any]]
 
 class Reader:
     signature: Incomplete

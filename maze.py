@@ -61,7 +61,7 @@ class Grid():
             for column, cell in enumerate(zip(*[iter(line)]*4)):
                 (r, g, b, a) = cell
                 if a == 0 or (r == 255 and g == 255 and b == 255):
-                    grid_mask.add((column, row))
+                    grid_mask.add((column, height - row - 1))
         return cls(height, width, mask=grid_mask)
 
     def __contains__(self, position: Position) -> bool:

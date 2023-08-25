@@ -12,7 +12,8 @@
         /step field length 1 sub recip def
         0 1 field length 1 sub { /i arg
             gsave
-                i step mul 1 exch sub dup 1 setrgbcolor
+                % i step mul 1 exch sub dup 1 setrgbcolor
+                i step mul 360 mul setsinebowcolor
                 field i get {
                     gsave
                         aload pop translate
@@ -42,7 +43,8 @@
         grid /path get {
             aload pop goto
         } forall
-        1 0 0 setrgbcolor
+        % 1 0 0 setrgbcolor
+        1 setgray
         stroke
         grid /path get 0 get aload pop dot
         grid /path get dup length 1 sub get aload pop dot

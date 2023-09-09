@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-import maze
-import rectgrid
+from maze import BaseGrid
+from rectgrid import RectGrid
 import argparse
 import random
 import re
 import os
 from typing import Any
 
-algorithms = list(maze.BaseGrid.algorithms.keys())
+algorithms = list(BaseGrid.algorithms.keys())
 
 parser = argparse.ArgumentParser(
         prog="multimaze",
@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument('size', help="either a string like '8x10' or '10@' or the filename of a text or image mask")
 
 parser.add_argument('-a', '--algorithm', default="wilson", help="the maze algorithm to use", choices=algorithms)
-parser.add_argument('-o', '--output', default="ascii", help="the output format", choices=rectgrid.RectGrid.outputs)
+parser.add_argument('-o', '--output', default="ascii", help="the output format", choices=RectGrid.outputs)
 parser.add_argument('-n', '--name', help="the name to use for the output if generating a png")
 parser.add_argument('--field', action='store_true', help="whether to include a field of distances from the far point")
 parser.add_argument('--path', action='store_true', help="whether to include the path from the far point to the other far point")
@@ -30,16 +30,16 @@ if args.seed:
 
 if m := re.match(r'(\d+)x(\d+)$', args.size):
     height, width = [int(x) for x in m.groups()]
-    grid = rectgrid.RectGrid(height, width)
+    grid = RectGrid(height, width)
 elif m := re.match(r'(\d+)\@$', args.size):
     height = int(m.group(1))
-    grid = maze.CircleGrid(height)
+    grid = CircleGrid(height)
 elif os.access(args.size, os.R_OK):
     mask_filename = args.size
     if mask_filename[-4:] == '.png':
-        grid = rectgrid.RectGrid.from_mask_png(mask_filename)
+        grid = RectGrid.from_mask_png(mask_filename)
     else:
-        grid = rectgrid.RectGrid.from_mask_txt(mask_filename)
+        grid = RectGrid.from_mask_txt(mask_filename)
 else:
     raise ValueError(f"invalid size {args.size}")
 

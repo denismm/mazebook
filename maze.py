@@ -21,6 +21,8 @@ class Cell():
 GridMask = set[Position]
 class BaseGrid():
     algorithms = {}
+    def __init__(self) -> None:
+        self._grid: dict[Position, Cell] = {}
 
     def __contains__(self, position: Position) -> bool:
         return position in self._grid
@@ -209,7 +211,7 @@ class RectGrid(BaseGrid):
     outputs = {}
 
     def __init__(self, height: int, width: int, mask: Optional[GridMask]=None) -> None:
-        self._grid: dict[Position, Cell] = {}
+        super().__init__()
         self.width = width
         self.height = height
         for i in range(width):

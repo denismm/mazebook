@@ -1,6 +1,7 @@
 %!
 (dmmlib/base.ps) run
 (dmmlib/lines.ps) run
+(dmmlib/polar.ps) run
 
 /drawmaze { /grid arg
     0.1 setlinewidth
@@ -49,5 +50,99 @@
         grid /path get 0 get aload pop dot
         grid /path get dup length 1 sub get aload pop dot
     } if
+} def
+
+/drawcirclemaze { /grid arg
+    % grid fields:
+    % widths: array of ints, counting cells in each ring (from the middle out)
+    % cells: list of lists containing coord (ring, cell) then list of boolean walls for ccw, in, cw (out not included?)
+    % field: as before
+    % path: as before
+
+    0.1 setlinewidth 1 setlinecap 1 setlinejoin
+
+    /widths grid /widths get def
+    /height widths length def
+
+    /getcenter {
+        2 dict begin
+            /coord arg
+            % given a (ring, cell) coordinate, return (r, theta) of center
+            coord aload pop /cell arg /ring arg
+            /r ring def
+            /theta ring 0 eq { 0 } {
+                widths ring get 360 exch div cell 0.5 add mul
+            } ifelse def
+            [r theta]
+        end
+    } def
+    /getbox {
+        % given a ring/cell coordinate, return ccw, in, cw, out dimensions
+        % not valid for ring 0
+        2 dict begin
+            /coord arg
+            coord aload pop /cell arg /ring arg
+            /in ring 0.5 sub def
+            /out ring 0.5 add def
+            /turn widths ring get 360 exch div def
+            /ccw cell turn mul def
+            /cw cell 1 add turn mul def
+            [ccw in cw out]
+        end
+    } def
+    /getcellpath { /position arg
+        position 0 get 0 ne {
+            /box position getbox def
+            box 1 get box 0 get pgoto
+            box 3 get box 0 get pgoto
+            box 3 get box 2 get pgoto
+            box 1 get box 2 get pgoto
+            box 1 get box 0 get pgoto
+            closepath
+        } {
+            0 0 0.5 circle closepath
+        }ifelse
+    } def
+
+    grid /field known {
+        /field grid /field get def
+        /step field length 1 sub recip def
+        0 1 field length 1 sub { /i arg
+            gsave
+                % i step mul 1 exch sub dup 1 setrgbcolor
+                i step mul 360 mul setsinebowcolor
+                field i get {
+                    gsave
+                        getcellpath fill
+                    grestore
+                } forall
+            grestore
+        } for
+    } if
+
+    0 0 height 0.5 sub circle stroke
+    grid /cells get {
+        gsave
+            aload pop /walls arg /position arg
+            position 0 get 0 ne {
+                position getbox aload pop /out arg /cw arg /in arg /ccw arg
+                walls 0 get { in ccw pgoto out ccw pgoto stroke } if
+                walls 1 get { in ccw pgoto in cw pgoto stroke } if
+                walls 2 get { in cw pgoto out cw pgoto stroke } if
+                closepath stroke
+            } if
+        grestore
+    } forall
+
+    grid /path known {
+        grid /path get {
+            getcenter aload pop pgoto
+        } forall
+        1 setgray
+        stroke
+        grid /path get 0 get getcenter aload pop polar dot
+        grid /path get dup length 1 sub get getcenter aload pop polar dot
+    } if
+
 } def
 %%EndProlog

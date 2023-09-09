@@ -30,6 +30,9 @@ class BaseGrid():
     def __getitem__(self, position: Position) -> Cell:
         return self._grid[position]
 
+    def __len__(self) -> int:
+        return len(self._grid)
+
     def connect(self, first: Position, second: Position) -> None:
         self._grid[first].add_link(second)
         self._grid[second].add_link(first)
@@ -250,9 +253,6 @@ class RectGrid(BaseGrid):
                 if a == 0 or (r == 255 and g == 255 and b == 255):
                     grid_mask.add((column, height - row - 1))
         return cls(height, width, mask=grid_mask)
-
-    def __len__(self) -> int:
-        return self.height * self.width
 
     def pos_neighbors(self, start: Position) -> list[Position]:
         neighbors = [add_direction(start, dir) for dir in cardinal_directions]

@@ -3,8 +3,8 @@ from typing import Any, Optional
 import random
 from collections import defaultdict
 
-CELL_WIDTH = 4
-CELL_HEIGHT = 3
+TEXT_CELL_WIDTH = 4
+TEXT_CELL_HEIGHT = 3
 
 WALL = '#'
 SPACE = ' '
@@ -142,7 +142,7 @@ class Grid():
             for position in positions:
                 field_for_position[position] = distance
         output: list[str] = []
-        output.append(WALL * ((CELL_WIDTH + 1) * self.width + 1))
+        output.append(WALL * ((TEXT_CELL_WIDTH + 1) * self.width + 1))
         for j in range(self.height):
             across_output = WALL
             down_output = WALL
@@ -157,14 +157,14 @@ class Grid():
                     interior = SPACE
                 if position in field_for_position:
                     field_str = str(field_for_position[position])
-                    extra_space = CELL_WIDTH - len(field_str)
+                    extra_space = TEXT_CELL_WIDTH - len(field_str)
                     interior_output = interior * (extra_space // 2)
                     interior_output += field_str
-                    interior_output += interior * (CELL_WIDTH - len(interior_output))
+                    interior_output += interior * (TEXT_CELL_WIDTH - len(interior_output))
                     center_output += interior_output
                 else:
-                    center_output += interior * CELL_WIDTH
-                across_output += interior * CELL_WIDTH
+                    center_output += interior * TEXT_CELL_WIDTH
+                across_output += interior * TEXT_CELL_WIDTH
 
                 across_position = (i + 1, j)
                 door = door_for_positions(position, across_position)
@@ -173,11 +173,11 @@ class Grid():
 
                 down_position = (i, j + 1)
                 door = door_for_positions(position, down_position)
-                down_output += door * CELL_WIDTH
+                down_output += door * TEXT_CELL_WIDTH
                 down_output += WALL
 
-            for i in range(CELL_HEIGHT):
-                if i == CELL_HEIGHT // 2:
+            for i in range(TEXT_CELL_HEIGHT):
+                if i == TEXT_CELL_HEIGHT // 2:
                     output.append(center_output)
                 else:
                     output.append(across_output)

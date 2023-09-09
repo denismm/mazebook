@@ -19,50 +19,8 @@ class Cell():
         self.links.add(link)
 
 GridMask = set[Position]
-class Grid():
+class BaseGrid():
     algorithms = {}
-    outputs = {}
-
-    def __init__(self, height: int, width: int, mask: Optional[GridMask]=None) -> None:
-        self._grid: dict[Position, Cell] = {}
-        self.width = width
-        self.height = height
-        for i in range(width):
-            for j in range(height):
-                position = (i, j)
-                if mask and position not in mask:
-                    continue
-                self._grid[position] = Cell(position)
-
-    @classmethod
-    def from_mask_txt(cls, filename: str) -> 'Grid':
-        space_characters = {' ', '.'}
-        grid_mask: GridMask= set()
-        width = 0
-        height = 0
-        with open(filename, 'r') as f:
-            lines: list[str] = [line.rstrip('\n') for line in f]
-        lines.reverse()
-        height = len(lines)
-        for row, line in enumerate(lines):
-            for column, cell in enumerate(line):
-                if cell in space_characters:
-                    grid_mask.add((column, row))
-            width = max(width, len(line))
-        return cls(height, width, mask=grid_mask)
-
-    @classmethod
-    def from_mask_png(cls, filename: str) -> 'Grid':
-        import png
-        grid_mask: GridMask= set()
-        mask_image = png.Reader(filename=filename)
-        (width, height, rows, info) = mask_image.asRGBA8()
-        for row, line in enumerate(rows):
-            for column, cell in enumerate(zip(*[iter(line)]*4)):
-                (r, g, b, a) = cell
-                if a == 0 or (r == 255 and g == 255 and b == 255):
-                    grid_mask.add((column, height - row - 1))
-        return cls(height, width, mask=grid_mask)
 
     def __contains__(self, position: Position) -> bool:
         return position in self._grid
@@ -70,19 +28,12 @@ class Grid():
     def __getitem__(self, position: Position) -> Cell:
         return self._grid[position]
 
-    def __len__(self) -> int:
-        return self.height * self.width
-
     def connect(self, first: Position, second: Position) -> None:
         self._grid[first].add_link(second)
         self._grid[second].add_link(first)
 
     def random_point(self) -> Position:
         return (random.choice(list(self._grid.keys())))
-
-    def pos_neighbors(self, start: Position) -> list[Position]:
-        neighbors = [add_direction(start, dir) for dir in cardinal_directions]
-        return [neighbor for neighbor in neighbors if neighbor in self]
 
     def dijkstra(self, start: Position) -> list[set[Position]]:
         seen: set[Position] = {start}
@@ -117,11 +68,193 @@ class Grid():
         return path
 
     def node_analysis(self) -> dict[int, int]:
-        # how many positions have 0, 1, 2, 3, 4 connections
+        # how many positions have 0, 1, 2, ...  connections
         nodes_for_links: dict[int, int] = defaultdict(lambda: 0)
         for cell in self._grid.values():
             nodes_for_links[len(cell.links)] += 1
         return dict(nodes_for_links)
+
+    def binary(self) -> None:
+        ne = cardinal_directions[:2]
+        # nw = cardinal_directions[1:3]
+        for j in range(self.height):
+            for i in range(self.width):
+                position = (i, j)
+                possible_next: list[Position] = []
+                # possible_dirs = ne if j % 2 == 0 else nw
+                possible_dirs = ne
+                for direction in possible_dirs:
+                    next_position = add_direction(position, direction)
+                    if next_position in self:
+                        possible_next.append(next_position)
+                if possible_next:
+                    next_position = random.choice(possible_next)
+                    self.connect(position, next_position)
+
+    def sidewinder(self) -> None:
+        ne = cardinal_directions[:2]
+        for j in range(self.height):
+            run: list[Position] = []
+            for i in range(self.width):
+                position = (i, j)
+                run.append(position)
+                options: list[Direction] = []
+                for direction in ne:
+                    next_position = add_direction(position, direction)
+                    if next_position in self:
+                        options.append(direction)
+                if options:
+                    next_direction = random.choice(options)
+                    if next_direction == (0, 1):
+                        # close run and break north
+                        break_room = random.choice(run)
+                        next_position = add_direction(break_room, next_direction)
+                        self.connect(break_room, next_position)
+                        run = []
+                    else:
+                        # add next room to run
+                        next_position = add_direction(position, next_direction)
+                        self.connect(position, next_position)
+
+    def aldous_broder(self) -> None:
+        current: Position = self.random_point()
+        visited: set[Position] = {current}
+        steps = 0
+        while len(visited) < len(self):
+            steps += 1
+            next: Position = random.choice(self.pos_neighbors(current))
+            if next not in visited:
+                self.connect(current, next)
+                visited.add(next)
+            current = next
+
+    def wilson(self) -> None:
+        start: Position = self.random_point()
+        unvisited: set[Position] = set(self._grid.keys())
+        visited: set[Position] = {start}
+        unvisited -= visited
+        steps: int = 0
+        while len(unvisited):
+            current: Position = random.choice(list(unvisited))
+            path: list[Position] = [current]
+            steps += 1
+            while path[-1] not in visited:
+                steps += 1
+                next: Position = random.choice(self.pos_neighbors(current))
+                if next in path:
+                    # chop out loop
+                    path = path[:(path.index(next))]
+                path.append(next)
+                current = next
+            # connect path
+            for i in range(len(path) - 1):
+                current = path[i]
+                next = path[i + 1]
+                self.connect(current, next)
+                visited.add(current)
+            unvisited -= visited
+
+    def hunt_kill(self) -> None:
+        current: Position = self.random_point()
+        visited: set[Position] = {current}
+        # break when we fill the grid
+        while True:
+            # break when we paint ourselves into a corner
+            while True:
+                next_options = set(self.pos_neighbors(current)) - visited
+                if not next_options:
+                    break
+                next: Position = random.choice(list(next_options))
+                self.connect(current, next)
+                visited.add(next)
+                current = next
+            # choose a new start if possible
+            if len(visited) == len(self):
+                return
+            for start_option in sorted(self._grid.keys()):
+                if start_option not in visited:
+                    connection_options = set(self.pos_neighbors(start_option)) & visited
+                    if connection_options:
+                        connection: Position = random.choice(list(connection_options))
+                        self.connect(connection, start_option)
+                        current = start_option
+                        visited.add(current)
+                        break
+
+    def backtrack(self) -> None:
+        stack: list[Position] = [self.random_point()]
+        visited: set[Position] = {stack[0]}
+        while stack:
+            next_options = set(self.pos_neighbors(stack[-1])) - visited
+            if next_options:
+                next: Position = random.choice(list(next_options))
+                self.connect(stack[-1], next)
+                stack.append(next)
+                visited.add(next)
+            else:
+                stack.pop()
+
+    algorithms['binary'] = binary
+    algorithms['sidewinder'] = sidewinder
+    algorithms['aldous_broder'] = aldous_broder
+    algorithms['wilson'] = wilson
+    algorithms['hunt_kill'] = hunt_kill
+    algorithms['backtrack'] = backtrack
+
+    def generate_maze(self, maze_algorithm: str) -> None:
+        self.algorithms[maze_algorithm](self)
+
+
+class RectGrid(BaseGrid):
+    outputs = {}
+
+    def __init__(self, height: int, width: int, mask: Optional[GridMask]=None) -> None:
+        self._grid: dict[Position, Cell] = {}
+        self.width = width
+        self.height = height
+        for i in range(width):
+            for j in range(height):
+                position = (i, j)
+                if mask and position not in mask:
+                    continue
+                self._grid[position] = Cell(position)
+
+    @classmethod
+    def from_mask_txt(cls, filename: str) -> 'RectGrid':
+        space_characters = {' ', '.'}
+        grid_mask: GridMask= set()
+        width = 0
+        height = 0
+        with open(filename, 'r') as f:
+            lines: list[str] = [line.rstrip('\n') for line in f]
+        lines.reverse()
+        height = len(lines)
+        for row, line in enumerate(lines):
+            for column, cell in enumerate(line):
+                if cell in space_characters:
+                    grid_mask.add((column, row))
+            width = max(width, len(line))
+        return cls(height, width, mask=grid_mask)
+
+    @classmethod
+    def from_mask_png(cls, filename: str) -> 'RectGrid':
+        import png
+        grid_mask: GridMask= set()
+        mask_image = png.Reader(filename=filename)
+        (width, height, rows, info) = mask_image.asRGBA8()
+        for row, line in enumerate(rows):
+            for column, cell in enumerate(zip(*[iter(line)]*4)):
+                (r, g, b, a) = cell
+                if a == 0 or (r == 255 and g == 255 and b == 255):
+                    grid_mask.add((column, height - row - 1))
+        return cls(height, width, mask=grid_mask)
+
+    def __len__(self) -> int:
+        return self.height * self.width
+
+    def pos_neighbors(self, start: Position) -> list[Position]:
+        neighbors = [add_direction(start, dir) for dir in cardinal_directions]
+        return [neighbor for neighbor in neighbors if neighbor in self]
 
     # I'm not modifying path or field so it's safe to use degenerate
     # cases as defaults
@@ -260,136 +393,6 @@ class Grid():
         print(self.ps_instructions(path=path, field=field))
         print("showpage")
 
-    def binary(self) -> None:
-        ne = cardinal_directions[:2]
-        # nw = cardinal_directions[1:3]
-        for j in range(self.height):
-            for i in range(self.width):
-                position = (i, j)
-                possible_next: list[Position] = []
-                # possible_dirs = ne if j % 2 == 0 else nw
-                possible_dirs = ne
-                for direction in possible_dirs:
-                    next_position = add_direction(position, direction)
-                    if next_position in self:
-                        possible_next.append(next_position)
-                if possible_next:
-                    next_position = random.choice(possible_next)
-                    self.connect(position, next_position)
-
-    def sidewinder(self) -> None:
-        ne = cardinal_directions[:2]
-        for j in range(self.height):
-            run: list[Position] = []
-            for i in range(self.width):
-                position = (i, j)
-                run.append(position)
-                options: list[Direction] = []
-                for direction in ne:
-                    next_position = add_direction(position, direction)
-                    if next_position in self:
-                        options.append(direction)
-                if options:
-                    next_direction = random.choice(options)
-                    if next_direction == (0, 1):
-                        # close run and break north
-                        break_room = random.choice(run)
-                        next_position = add_direction(break_room, next_direction)
-                        self.connect(break_room, next_position)
-                        run = []
-                    else:
-                        # add next room to run
-                        next_position = add_direction(position, next_direction)
-                        self.connect(position, next_position)
-
-    def aldous_broder(self) -> None:
-        current: Position = self.random_point()
-        visited: set[Position] = {current}
-        steps = 0
-        while len(visited) < len(self):
-            steps += 1
-            next: Position = random.choice(self.pos_neighbors(current))
-            if next not in visited:
-                self.connect(current, next)
-                visited.add(next)
-            current = next
-
-    def wilson(self) -> None:
-        start: Position = self.random_point()
-        unvisited: set[Position] = set(self._grid.keys())
-        visited: set[Position] = {start}
-        unvisited -= visited
-        steps: int = 0
-        while len(unvisited):
-            current: Position = random.choice(list(unvisited))
-            path: list[Position] = [current]
-            steps += 1
-            while path[-1] not in visited:
-                steps += 1
-                next: Position = random.choice(self.pos_neighbors(current))
-                if next in path:
-                    # chop out loop
-                    path = path[:(path.index(next))]
-                path.append(next)
-                current = next
-            # connect path
-            for i in range(len(path) - 1):
-                current = path[i]
-                next = path[i + 1]
-                self.connect(current, next)
-                visited.add(current)
-            unvisited -= visited
-
-    def hunt_kill(self) -> None:
-        current: Position = self.random_point()
-        visited: set[Position] = {current}
-        # break when we fill the grid
-        while True:
-            # break when we paint ourselves into a corner
-            while True:
-                next_options = set(self.pos_neighbors(current)) - visited
-                if not next_options:
-                    break
-                next: Position = random.choice(list(next_options))
-                self.connect(current, next)
-                visited.add(next)
-                current = next
-            # choose a new start if possible
-            if len(visited) == len(self):
-                return
-            for start_option in sorted(self._grid.keys()):
-                if start_option not in visited:
-                    connection_options = set(self.pos_neighbors(start_option)) & visited
-                    if connection_options:
-                        connection: Position = random.choice(list(connection_options))
-                        self.connect(connection, start_option)
-                        current = start_option
-                        visited.add(current)
-                        break
-
-    def backtrack(self) -> None:
-        stack: list[Position] = [self.random_point()]
-        visited: set[Position] = {stack[0]}
-        while stack:
-            next_options = set(self.pos_neighbors(stack[-1])) - visited
-            if next_options:
-                next: Position = random.choice(list(next_options))
-                self.connect(stack[-1], next)
-                stack.append(next)
-                visited.add(next)
-            else:
-                stack.pop()
-
-    algorithms['binary'] = binary
-    algorithms['sidewinder'] = sidewinder
-    algorithms['aldous_broder'] = aldous_broder
-    algorithms['wilson'] = wilson
-    algorithms['hunt_kill'] = hunt_kill
-    algorithms['backtrack'] = backtrack
-
-    def generate_maze(self, maze_algorithm: str) -> None:
-        self.algorithms[maze_algorithm](self)
-
     outputs['ascii'] = ascii_print
     outputs['ps'] = ps_print
     outputs['png'] = png_print
@@ -402,24 +405,24 @@ class Grid():
     ) -> None:
         self.outputs[print_method](self, path, field, **kwargs)
 
-def make_binary(maze_height: int, maze_width: int) -> Grid:
-    grid = Grid(maze_height, maze_width)
+def make_binary(maze_height: int, maze_width: int) -> RectGrid:
+    grid = RectGrid(maze_height, maze_width)
     grid.binary()
     return grid
 
-def make_sidewinder(maze_height: int, maze_width: int) -> Grid:
-    grid = Grid(maze_height, maze_width)
+def make_sidewinder(maze_height: int, maze_width: int) -> RectGrid:
+    grid = RectGrid(maze_height, maze_width)
     grid.sidewinder()
     return grid
 
-def make_aldous_broder(maze_height: int, maze_width: int) -> Grid:
-    grid = Grid(maze_height, maze_width)
+def make_aldous_broder(maze_height: int, maze_width: int) -> RectGrid:
+    grid = RectGrid(maze_height, maze_width)
     grid.aldous_broder()
     # print(f"A-B done in {steps} steps")
     return grid
 
-def make_wilson(maze_height: int, maze_width: int) -> Grid:
-    grid = Grid(maze_height, maze_width)
+def make_wilson(maze_height: int, maze_width: int) -> RectGrid:
+    grid = RectGrid(maze_height, maze_width)
     grid.generate_maze('wilson')
     #  print(f"Wilson done in {steps} steps")
     return grid

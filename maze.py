@@ -1,5 +1,4 @@
 from positions import Position, Direction, cardinal_directions, add_direction
-from typing import Any, Optional
 import random
 from collections import defaultdict
 

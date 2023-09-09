@@ -33,6 +33,9 @@ class BaseGrid():
     def random_point(self) -> Position:
         return (random.choice(list(self._grid.keys())))
 
+    def pos_neighbors(self, start: Position) -> list[Position]:
+        raise ValueError("abstract method not overridden")
+
     def dijkstra(self, start: Position) -> list[set[Position]]:
         seen: set[Position] = {start}
         far_points: list[set[Position]] = [{start}]

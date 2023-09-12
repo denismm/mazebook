@@ -2,6 +2,7 @@
 
 from maze import BaseGrid
 from rectgrid import RectGrid
+from circlegrid import CircleGrid
 import argparse
 import random
 import re
@@ -16,7 +17,7 @@ parser = argparse.ArgumentParser(
     )
 parser.add_argument('size', help="either a string like '8x10' or '10@' or the filename of a text or image mask")
 
-parser.add_argument('-a', '--algorithm', default="wilson", help="the maze algorithm to use", choices=algorithms)
+parser.add_argument('-a', '--algorithm', default="backtrack", help="the maze algorithm to use", choices=algorithms)
 parser.add_argument('-o', '--output', default="ascii", help="the output format", choices=RectGrid.outputs)
 parser.add_argument('-n', '--name', help="the name to use for the output if generating a png")
 parser.add_argument('--field', action='store_true', help="whether to include a field of distances from the far point")
@@ -27,6 +28,8 @@ args = parser.parse_args()
 
 if args.seed:
     random.seed(args.seed)
+
+grid: BaseGrid
 
 if m := re.match(r'(\d+)x(\d+)$', args.size):
     height, width = [int(x) for x in m.groups()]

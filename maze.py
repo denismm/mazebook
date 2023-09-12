@@ -74,6 +74,14 @@ class BaseGrid():
             nodes_for_links[len(cell.links)] += 1
         return dict(nodes_for_links)
 
+    def print(self,
+            print_method: str,
+            path: list[Position] = [],
+            field: list[set[Position]] = [],
+            **kwargs: str
+    ) -> None:
+        raise ValueError("print not overridden")
+
     def binary(self) -> None:
         ne = cardinal_directions[:2]
         # nw = cardinal_directions[1:3]

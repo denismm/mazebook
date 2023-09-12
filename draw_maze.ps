@@ -44,8 +44,11 @@
         grid /path get {
             aload pop goto
         } forall
-        % 1 0 0 setrgbcolor
-        1 setgray
+        grid /field known {
+            1 setgray
+        } {
+            1 0 0 setrgbcolor
+        } ifelse
         stroke
         grid /path get 0 get aload pop dot
         grid /path get dup length 1 sub get aload pop dot
@@ -138,7 +141,11 @@
         grid /path get {
             getcenter aload pop pgoto
         } forall
-        1 setgray
+        grid /field known {
+            1 setgray
+        } {
+            1 0 0 setrgbcolor
+        } ifelse
         stroke
         grid /path get 0 get getcenter aload pop polar dot
         grid /path get dup length 1 sub get getcenter aload pop polar dot

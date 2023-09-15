@@ -152,4 +152,83 @@
     } if
 
 } def
+
+/drawhexmaze { /grid arg
+    % grid fields:
+    % radius: count of cells in a radius, not including center
+        % full distance across is 2 * radius + 1
+    % cells: list of lists containing coord (ese, n) then list of boolean walls
+        % for ene, n, wnw, wsw, s, ese
+    % field: as before
+    % path: as before
+
+    0.1 setlinewidth 1 setlinecap 1 setlinejoin
+
+    /radius grid /radius get def
+
+    /s3h 3 sqrt 2 div def
+
+    /getcenter { /hexcoord arg
+        % convert hex coordinate to x,y
+        hexcoord aload pop /n arg /ese arg
+        [
+            ese s3h mul
+            ese neg half n add
+        ]
+    } def
+
+    /hexpath {
+        % one cell, centered on 0, 0
+        6 {
+            3 sqrt recip 0 goto
+        } circrepeat
+        closepath
+    } def
+
+    grid /field known {
+        /field grid /field get def
+        /step field length 1 sub recip def
+        0 1 field length 1 sub { /i arg
+            gsave
+                i step mul 360 mul setsinebowcolor
+                field i get {
+                    gsave
+                        getcenter aload pop translate hexpath fill
+                    grestore
+                } forall
+            grestore
+        } for
+    } if
+
+    grid /cells get {
+        gsave
+            aload pop /walls arg /position arg
+            position getcenter aload pop translate
+            0 1 5 { /i arg
+                walls i get {
+                    gsave
+                        i 0.5 add 60 mul rotate
+                        0.5 3 sqrt 2 mul recip neg goto
+                        0.5 3 sqrt 2 mul recip goto
+                        stroke
+                    grestore
+                } if
+            } for
+        grestore
+    } forall
+
+    grid /path known {
+        grid /path get {
+            getcenter aload pop goto
+        } forall
+        grid /field known {
+            1 setgray
+        } {
+            1 0 0 setrgbcolor
+        } ifelse
+        stroke
+        grid /path get 0 get getcenter aload pop dot
+        grid /path get dup length 1 sub get getcenter aload pop dot
+    } if
+} def
 %%EndProlog

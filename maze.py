@@ -1,6 +1,8 @@
 from positions import Position, Direction, cardinal_directions, add_direction
 import random
 from collections import defaultdict
+from collections.abc import Iterable
+from typing import Any
 
 class Cell():
     def __init__(self, location: Position) -> None:
@@ -9,6 +11,10 @@ class Cell():
 
     def add_link(self, link: Position) -> None:
         self.links.add(link)
+
+# convenience for ps printing
+def ps_list(iterable: Iterable[Any]) -> str:
+    return '[' + ' '.join([str(x) for x in iterable]) + ']'
 
 GridMask = set[Position]
 class BaseGrid():

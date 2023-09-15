@@ -1,9 +1,9 @@
 from positions import Position, cardinal_directions, add_direction
-from typing import Any, Optional
+from typing import Optional
 from math import pi
 from functools import cache
 
-from maze import Cell, BaseGrid
+from maze import Cell, BaseGrid, ps_list
 
 class CircleGrid(BaseGrid):
     outputs = {}
@@ -49,11 +49,6 @@ class CircleGrid(BaseGrid):
             path: list[Position] = [],
             field: list[set[Position]] = [],
     ) -> str:
-        from collections.abc import Iterable
-
-        def ps_list(iterable: Iterable[Any]) -> str:
-            return '[' + ' '.join([str(x) for x in iterable]) + ']'
-
         output: list[str] = []
         output.append("<<")
         # width and height

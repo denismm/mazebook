@@ -14,14 +14,30 @@ class HexBaseGrid(BaseGrid):
         neighbors = [add_direction(start, dir) for dir in hex_directions]
         return [neighbor for neighbor in neighbors if neighbor in self]
 
+    @property
+    def ps_function(self) -> str:
+        raise ValueError("ps_function not overridden")
+
+    @property
+    def ps_size(self) -> str:
+        raise ValueError("ps_size not overridden")
+
+    @property
+    def png_alignment(self) -> list[str]:
+        raise ValueError("png_alignment not overridden")
+
+    @property
+    def ps_alignment(self) -> str:
+        raise ValueError("ps_alignment not overridden")
+
     def ps_instructions(self,
             path: list[Position] = [],
             field: list[set[Position]] = [],
     ) -> str:
         output: list[str] = []
         output.append("<<")
-        # radius
-        output.append(f"/radius {self.radius}")
+        # size
+        output.append(self.ps_size)
         # cells
         output.append("/cells [")
         for k, v in self._grid.items():
@@ -44,18 +60,6 @@ class HexBaseGrid(BaseGrid):
             ]))
         output.append(f">> {self.ps_function}")
         return "\n".join(output)
-
-    @property
-    def ps_function(self) -> str:
-        raise ValueError("ps_function not overridden")
-
-    @property
-    def png_alignment(self) -> list[str]:
-        raise ValueError("png_alignment not overridden")
-
-    @property
-    def ps_alignment(self) -> str:
-        raise ValueError("ps_alignment not overridden")
 
     def png_print(self,
             path: list[Position] = [],
@@ -109,6 +113,10 @@ class HexGrid(HexBaseGrid):
                     self._grid[position] = Cell(position)
 
     @property
+    def ps_size(self) -> str:
+        return f"/radius {self.radius}"
+
+    @property
     def ps_function(self) -> str:
         return "drawhexmaze"
 
@@ -120,7 +128,7 @@ class HexGrid(HexBaseGrid):
     def ps_alignment(self) -> str:
         return f"72 softscale 4.25 5.5 translate 4 {self.radius + 0.5} div dup scale"
 
-class TriGrid(HexGrid):
+class TriGrid(HexBaseGrid):
     def __init__(self, width: int) -> None:
         super().__init__()
         self.width = width
@@ -130,6 +138,10 @@ class TriGrid(HexGrid):
                 if (i + j) % 3 != 1:
                     position = (i, j)
                     self._grid[position] = Cell(position)
+
+    @property
+    def ps_size(self) -> str:
+        return f"/width {self.width}"
 
     @property
     def ps_function(self) -> str:

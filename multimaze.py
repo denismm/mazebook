@@ -3,7 +3,7 @@
 from grid.maze import BaseGrid
 from grid.rectgrid import RectGrid
 from grid.circlegrid import CircleGrid
-from grid.hexgrid import HexGrid
+from grid.hexgrid import HexGrid, TriGrid
 import argparse
 import random
 import re
@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(
         prog="multimaze",
         description="Generate a maze with a variety of algorithms and a variety of outputs",
     )
-parser.add_argument('size', help="either a string like '8x10' or '10@' or '7s' or the filename of a text or image mask")
+parser.add_argument('size', help="either a string like '8x10', '10@', '7s', '7d', or the filename of a text or image mask")
 
 parser.add_argument('-a', '--algorithm', default="backtrack", help="the maze algorithm to use", choices=algorithms)
 parser.add_argument('-o', '--output', default="ascii", help="the output format", choices=RectGrid.outputs)
@@ -41,6 +41,9 @@ elif m := re.match(r'(\d+)\@$', args.size):
 elif m := re.match(r'(\d+)s$', args.size):
     radius = int(m.group(1))
     grid = HexGrid(radius)
+elif m := re.match(r'(\d+)d$', args.size):
+    width = int(m.group(1))
+    grid = TriGrid(width)
 elif os.access(args.size, os.R_OK):
     mask_filename = args.size
     if mask_filename[-4:] == '.png':

@@ -8,14 +8,14 @@ from maze import Cell, BaseGrid, ps_list
 class CircleGrid(BaseGrid):
     outputs = {}
 
-    def __init__(self, height: int) -> None:
+    def __init__(self, radius: int) -> None:
         super().__init__()
-        self.height = height
+        self.radius = radius
         self.widths: list[int] = [1]
         self.ratios: list[int] = [0]
         # positions in CircleGrid are (r, theta)
         self._grid[(0,0)] = Cell((0,0))
-        for r in range(1,height + 1):
+        for r in range(1,radius + 1):
             # for now, use algorithm from book
             circumference = r * pi * 2
             last_width = self.widths[r - 1]
@@ -38,7 +38,7 @@ class CircleGrid(BaseGrid):
             neighbors.append((r, (theta - 1) % self.widths[r]))
             neighbors.append((r - 1, theta // self.ratios[r]))
             neighbors.append((r, (theta + 1) % self.widths[r]))
-        if r < self.height:
+        if r < self.radius:
             next_ratio = self.ratios[r + 1]
             neighbors += [(r + 1, theta * next_ratio + x) for x in range(next_ratio)]
 
@@ -51,8 +51,8 @@ class CircleGrid(BaseGrid):
     ) -> str:
         output: list[str] = []
         output.append("<<")
-        # width and height
-        output.append(f"/height {self.height}")
+        # widths and radius
+        output.append(f"/radius {self.radius}")
         output.append(f"/widths {ps_list(self.widths)}")
         # cells
         output.append("/cells [")
@@ -93,7 +93,7 @@ class CircleGrid(BaseGrid):
             f.write("\n } def\n")
             f.write("%%EndProlog\n")
         command = ['pstopng',
-            str(-1 * (self.height + 0.65)), 'd', 'd', 'd',
+            str(-1 * (self.radius + 0.65)), 'd', 'd', 'd',
             '20', filename, maze_name]
         subprocess.run(command, check=True)
         os.unlink(filename)
@@ -106,7 +106,7 @@ class CircleGrid(BaseGrid):
         print("%!\n(draw_maze.ps) run")
         print("%%EndProlog\n")
         print("72 softscale 4.25 5.5 translate")
-        print(f"4 {self.height + 0.5} div dup scale")
+        print(f"4 {self.radius + 0.5} div dup scale")
         print(self.ps_instructions(path=path, field=field))
         print("showpage")
 

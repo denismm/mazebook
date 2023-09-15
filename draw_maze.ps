@@ -65,7 +65,7 @@
     0.1 setlinewidth 1 setlinecap 1 setlinejoin
 
     /widths grid /widths get def
-    /height widths length def
+    /radius widths length def
 
     /getcenter {
         2 dict begin
@@ -123,7 +123,7 @@
         } for
     } if
 
-    0 0 height 0.5 sub circle stroke
+    0 0 radius 0.5 sub circle stroke
     grid /cells get {
         gsave
             aload pop /walls arg /position arg

@@ -1,7 +1,7 @@
 from positions import Position, Direction, add_direction
 from typing import Optional
 
-from maze import Cell, BaseGrid, ps_list
+from .maze import Cell, BaseGrid, ps_list
 
 hex_directions: tuple[Direction, ...] = ( 
     (1, 1), (0, 1), (-1, 0), (-1, -1), (0, -1), (1, 0)

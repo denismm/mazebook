@@ -1,7 +1,7 @@
 from positions import Position, cardinal_directions, add_direction
 from typing import Optional
 
-from maze import Cell, BaseGrid, ps_list
+from .maze import Cell, BaseGrid, ps_list
 
 TEXT_CELL_WIDTH = 4
 TEXT_CELL_HEIGHT = 3

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-from maze import BaseGrid
-from rectgrid import RectGrid
-from circlegrid import CircleGrid
-from hexgrid import HexGrid
+from grid.maze import BaseGrid
+from grid.rectgrid import RectGrid
+from grid.circlegrid import CircleGrid
+from grid.hexgrid import HexGrid
 import argparse
 import random
 import re

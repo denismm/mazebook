@@ -3,7 +3,7 @@ from typing import Optional
 from math import pi
 from functools import cache
 
-from maze import Cell, BaseGrid, ps_list
+from .maze import Cell, BaseGrid, ps_list
 
 class CircleGrid(BaseGrid):
     outputs = {}

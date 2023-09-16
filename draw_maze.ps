@@ -3,56 +3,35 @@
 (dmmlib/lines.ps) run
 (dmmlib/polar.ps) run
 
+/atranslate { aload pop translate } def
+
 /drawmaze { /grid arg
     0.1 setlinewidth
     1 setlinecap 1 setlinejoin
     % 0 0 grid /width get grid /height get box stroke
-    0.5 0.5 translate
-    grid /field known {
-        /field grid /field get def
-        /step field length 1 sub recip def
-        0 1 field length 1 sub { /i arg
-            gsave
-                % i step mul 1 exch sub dup 1 setrgbcolor
-                i step mul 360 mul setsinebowcolor
-                field i get {
-                    gsave
-                        aload pop translate
-                        -0.5 -0.5 0.5 0.5 box fill
-                    grestore
-                } forall
-            grestore
+    /getcenter { /position arg
+        [ position { 0.5 add } forall ]
+    } def
+    /getcellpath { /position arg
+        position getcenter atranslate
+        -0.5 -0.5 0.5 0.5 box
+    } def
+    /drawwalls { /walls arg /position arg
+        position getcenter atranslate
+        0 1 3 { /i arg
+            walls i get {
+                gsave
+                    i 0 sub 90 mul rotate
+                    0.5 -0.5 goto
+                    0.5 0.5 goto
+                    stroke
+                grestore
+            } if
         } for
-    } if
-    grid /cells get {
-        gsave
-            aload pop /walls arg /position arg
-            position aload pop translate
-            0 1 3 { /i arg
-                walls i get {
-                    gsave
-                        i 0 sub 90 mul rotate
-                        0.5 -0.5 goto
-                        0.5 0.5 goto
-                        stroke
-                    grestore
-                } if
-            } for
-        grestore
-    } forall
-    grid /path known {
-        grid /path get {
-            aload pop goto
-        } forall
-        grid /field known {
-            1 setgray
-        } {
-            1 0 0 setrgbcolor
-        } ifelse
-        stroke
-        grid /path get 0 get aload pop dot
-        grid /path get dup length 1 sub get aload pop dot
-    } if
+    } def
+
+    mazeengine
+
 } def
 
 /drawcirclemaze { /grid arg
@@ -61,8 +40,6 @@
     % cells: list of lists containing coord (ring, cell) then list of boolean walls for ccw, in, cw (out not included?)
     % field: as before
     % path: as before
-
-    0.1 setlinewidth 1 setlinecap 1 setlinejoin
 
     /widths grid /widths get def
     /radius widths length def
@@ -76,9 +53,10 @@
             /theta ring 0 eq { 0 } {
                 widths ring get 360 exch div cell 0.5 add mul
             } ifelse def
-            [r theta]
+            [ r theta polar]
         end
     } def
+
     /getbox {
         % given a ring/cell coordinate, return ccw, in, cw, out dimensions
         % not valid for ring 0
@@ -107,49 +85,19 @@
         }ifelse
     } def
 
-    grid /field known {
-        /field grid /field get def
-        /step field length 1 sub recip def
-        0 1 field length 1 sub { /i arg
-            gsave
-                % i step mul 1 exch sub dup 1 setrgbcolor
-                i step mul 360 mul setsinebowcolor
-                field i get {
-                    gsave
-                        getcellpath fill
-                    grestore
-                } forall
-            grestore
-        } for
-    } if
+    /drawwalls { /walls arg /position arg
+        position 0 get 0 ne {
+            position getbox aload pop /out arg /cw arg /in arg /ccw arg
+            walls 0 get { in ccw pgoto out ccw pgoto stroke } if
+            walls 1 get { in ccw pgoto in cw pgoto stroke } if
+            walls 2 get { in cw pgoto out cw pgoto stroke } if
+            closepath stroke
+        } if
+    } def
 
     0 0 radius 0.5 sub circle stroke
-    grid /cells get {
-        gsave
-            aload pop /walls arg /position arg
-            position 0 get 0 ne {
-                position getbox aload pop /out arg /cw arg /in arg /ccw arg
-                walls 0 get { in ccw pgoto out ccw pgoto stroke } if
-                walls 1 get { in ccw pgoto in cw pgoto stroke } if
-                walls 2 get { in cw pgoto out cw pgoto stroke } if
-                closepath stroke
-            } if
-        grestore
-    } forall
 
-    grid /path known {
-        grid /path get {
-            getcenter aload pop pgoto
-        } forall
-        grid /field known {
-            1 setgray
-        } {
-            1 0 0 setrgbcolor
-        } ifelse
-        stroke
-        grid /path get 0 get getcenter aload pop polar dot
-        grid /path get dup length 1 sub get getcenter aload pop polar dot
-    } if
+    mazeengine
 
 } def
 
@@ -174,65 +122,35 @@
     % field: as before
     % path: as before
 
-    0.1 setlinewidth 1 setlinecap 1 setlinejoin
-
     /radius grid /radius get def
 
     /getcenter { h2c } def
 
-    /hexpath {
-        % one cell, centered on 0, 0
+    /getcellpath { /position arg
+        % one cell, centered on position
+        position getcenter atranslate
         6 {
             3 sqrt recip 0 goto
         } circrepeat
         closepath
     } def
 
-    grid /field known {
-        /field grid /field get def
-        /step field length 1 sub recip def
-        0 1 field length 1 sub { /i arg
-            gsave
-                i step mul 360 mul setsinebowcolor
-                field i get {
-                    gsave
-                        getcenter aload pop translate hexpath fill
-                    grestore
-                } forall
-            grestore
+    /drawwalls { /walls arg /position arg
+        position getcenter atranslate
+        0 1 5 { /i arg
+            walls i get {
+                gsave
+                    i 0.5 add 60 mul rotate
+                    0.5 3 sqrt 2 mul recip neg goto
+                    0.5 3 sqrt 2 mul recip goto
+                    stroke
+                grestore
+            } if
         } for
-    } if
+    } def
 
-    grid /cells get {
-        gsave
-            aload pop /walls arg /position arg
-            position getcenter aload pop translate
-            0 1 5 { /i arg
-                walls i get {
-                    gsave
-                        i 0.5 add 60 mul rotate
-                        0.5 3 sqrt 2 mul recip neg goto
-                        0.5 3 sqrt 2 mul recip goto
-                        stroke
-                    grestore
-                } if
-            } for
-        grestore
-    } forall
+    mazeengine
 
-    grid /path known {
-        grid /path get {
-            getcenter aload pop goto
-        } forall
-        grid /field known {
-            1 setgray
-        } {
-            1 0 0 setrgbcolor
-        } ifelse
-        stroke
-        grid /path get 0 get getcenter aload pop dot
-        grid /path get dup length 1 sub get getcenter aload pop dot
-    } if
 } def
 
 /drawtrimaze { /grid arg
@@ -243,8 +161,6 @@
         % for n, wsw, ese
     % field: as before
     % path: as before
-
-    0.1 setlinewidth 1 setlinecap 1 setlinejoin
 
     /width grid /width get def
 
@@ -257,9 +173,9 @@
         ]
     } def
 
-    /tripath { /tripos arg
+    /getcellpath { /tripos arg
         % one cell, centered on tripos, oriented appropriately
-        tripos getcenter aload pop translate
+        tripos getcenter atranslate
         tripos aload pop add 3 mod 2 eq {
             180 rotate
         } if
@@ -269,57 +185,71 @@
         closepath
     } def
 
-    grid /field known {
-        /field grid /field get def
-        /step field length 1 sub recip def
-        0 1 field length 1 sub { /i arg
-            gsave
-                i step mul 360 mul setsinebowcolor
-                field i get {
-                    gsave
-                        tripath fill
-                    grestore
-                } forall
-            grestore
-        } for
-    } if
-
-    grid /cells get {
-        gsave
-            aload pop /walls arg /position arg
-            position getcenter aload pop translate
-            position aload pop add 3 mymod cvi /tritype arg 
-            tritype 1 eq {
-                0 setsinebowcolor doot
-            } {
-                tritype 0 eq { 30 rotate } { 90 rotate } ifelse
-                0 1 2 { /i arg
-                    walls i get {
-                        gsave
-                            i 120 mul rotate
-                            0.5 s3h neg goto
-                            0.5 s3h goto
-                            stroke
-                        grestore
-                    } if
-                } for
-            } ifelse
-        grestore
-    } forall
-
-    grid /path known {
-        grid /path get {
-            getcenter aload pop goto
-        } forall
-        grid /field known {
-            1 setgray
+    /drawwalls { /walls arg /position arg
+        position getcenter atranslate
+        position aload pop add 3 mymod cvi /tritype arg
+        tritype 1 eq {
+            0 setsinebowcolor doot
         } {
-            1 0 0 setrgbcolor
+            tritype 0 eq { 30 rotate } { 90 rotate } ifelse
+            0 1 2 { /i arg
+                walls i get {
+                    gsave
+                        i 120 mul rotate
+                        0.5 s3h neg goto
+                        0.5 s3h goto
+                        stroke
+                    grestore
+                } if
+            } for
         } ifelse
-        stroke
-        grid /path get 0 get getcenter aload pop dot
-        grid /path get dup length 1 sub get getcenter aload pop dot
-    } if
+    } def
+
+    mazeengine
+
+} def
+
+/mazeengine {
+    gsave
+        0.1 setlinewidth 1 setlinecap 1 setlinejoin
+
+        grid /field known {
+            /field grid /field get def
+            /step field length 1 sub recip def
+            0 1 field length 1 sub { /i arg
+                gsave
+                    i step mul 360 mul setsinebowcolor
+                    field i get {
+                        gsave
+                            getcellpath fill
+                        grestore
+                    } forall
+                grestore
+            } for
+        } if
+
+        grid /cells get {
+            gsave
+                aload pop /walls arg /position arg
+                position walls drawwalls
+            grestore
+        } forall
+
+        grid /path known {
+            % todo - some way to do this with pgoto for circular maze
+            grid /path get {
+                getcenter aload pop goto
+            } forall
+            grid /field known {
+                1 setgray
+            } {
+                1 0 0 setrgbcolor
+            } ifelse
+            stroke
+            grid /path get 0 get getcenter aload pop dot
+            grid /path get dup length 1 sub get getcenter aload pop dot
+        } if
+    grestore
 } def
 
 %%EndProlog

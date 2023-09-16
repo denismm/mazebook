@@ -217,3 +217,8 @@ class BaseGrid():
 
     def generate_maze(self, maze_algorithm: str) -> None:
         self.algorithms[maze_algorithm](self)
+
+class SingleSizeGrid(BaseGrid):
+    def __init__(self, size: int) -> None:
+        super().__init__()
+

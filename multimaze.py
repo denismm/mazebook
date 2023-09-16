@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from grid.maze import BaseGrid
+from grid.maze import BaseGrid, SingleSizeGrid
 from grid.rectgrid import RectGrid
 from grid.circlegrid import CircleGrid
 from grid.hexgrid import HexGrid, TriGrid
@@ -32,18 +32,19 @@ if args.seed:
 
 grid: BaseGrid
 
+class_for_char: dict[str, type[SingleSizeGrid]] = {
+    's': HexGrid,
+    '@': CircleGrid,
+    'd': TriGrid,
+}
+
 if m := re.match(r'(\d+)x(\d+)$', args.size):
     height, width = [int(x) for x in m.groups()]
     grid = RectGrid(height, width)
-elif m := re.match(r'(\d+)\@$', args.size):
-    height = int(m.group(1))
-    grid = CircleGrid(height)
-elif m := re.match(r'(\d+)s$', args.size):
-    radius = int(m.group(1))
-    grid = HexGrid(radius)
-elif m := re.match(r'(\d+)d$', args.size):
-    width = int(m.group(1))
-    grid = TriGrid(width)
+elif m := re.match(r'(\d+)([\@sd]$', args.size):
+    size = int(m.group(1))
+    grid_type = class_for_char[m.group(2)]
+    grid = grid_type(size)
 elif os.access(args.size, os.R_OK):
     mask_filename = args.size
     if mask_filename[-4:] == '.png':

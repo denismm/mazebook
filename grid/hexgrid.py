@@ -3,13 +3,13 @@
 from positions import Position, Direction, add_direction
 from typing import Optional
 
-from .maze import Cell, BaseGrid, ps_list
+from .maze import Cell, SingleSizeGrid, ps_list
 
 hex_directions: tuple[Direction, ...] = ( 
     (1, 1), (0, 1), (-1, 0), (-1, -1), (0, -1), (1, 0)
 )
 
-class HexBaseGrid(BaseGrid):
+class HexBaseGrid(SingleSizeGrid):
     outputs = {}
 
     @property
@@ -117,7 +117,7 @@ class HexBaseGrid(BaseGrid):
 
 class HexGrid(HexBaseGrid):
     def __init__(self, radius: int) -> None:
-        super().__init__()
+        super().__init__(radius)
         self.radius = radius
         for i in range(-radius, radius + 1):
             for j in range(-radius, radius + 1):
@@ -147,7 +147,7 @@ class HexGrid(HexBaseGrid):
 
 class TriGrid(HexBaseGrid):
     def __init__(self, width: int) -> None:
-        super().__init__()
+        super().__init__(width)
         self.width = width
         max_sum = 3 * (width - 1)
         for sum in range( max_sum + 1):

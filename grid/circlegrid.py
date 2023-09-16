@@ -5,13 +5,13 @@ from typing import Optional
 from math import pi
 from functools import cache
 
-from .maze import Cell, BaseGrid, ps_list
+from .maze import Cell, SingleSizeGrid, ps_list
 
-class CircleGrid(BaseGrid):
+class CircleGrid(SingleSizeGrid):
     outputs = {}
 
     def __init__(self, radius: int) -> None:
-        super().__init__()
+        super().__init__(radius)
         self.radius = radius
         self.widths: list[int] = [1]
         self.ratios: list[int] = [0]

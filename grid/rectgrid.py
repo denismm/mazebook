@@ -1,6 +1,6 @@
 # grids with cells in a square layout
 
-from positions import Position, cardinal_directions, add_direction
+from positions import Position, Direction, cardinal_directions, add_direction
 from typing import Optional
 
 from .maze import Cell, BaseGrid, ps_list
@@ -14,19 +14,107 @@ PATH = '.'
 
 GridMask = set[Position]
 
-class RectGrid(BaseGrid):
-    outputs = {}
-
-    def __init__(self, height: int, width: int, mask: Optional[GridMask]=None) -> None:
+class RectBaseGrid(BaseGrid):
+    def __init__(self, height: int, width: int) -> None:
         super().__init__()
         self.width = width
         self.height = height
+
+    def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
+        raise ValueError("not overridden")
+
+    @property
+    def ps_function(self) -> str:
+        raise ValueError("not overridden")
+
+    def pos_neighbors(self, start: Position) -> list[Position]:
+        neighbors = [add_direction(start, dir) for dir in self.neighbor_directions_for_start(start)]
+        return [neighbor for neighbor in neighbors if neighbor in self]
+
+    def ps_instructions(self,
+            path: list[Position] = [],
+            field: list[set[Position]] = [],
+    ) -> str:
+        output: list[str] = []
+        output.append("<<")
+        # width and height
+        output.append(f"/width {self.width}")
+        output.append(f"/height {self.height}")
+        # cells
+        output.append("/cells [")
+        for k, v in self._grid.items():
+            walls: list[str] = []
+            for dir in self.neighbor_directions_for_start(k):
+                walls.append(str(add_direction(k, dir) not in v.links).lower())
+            output.append(f"[ {ps_list(k)} {ps_list(walls)} ]")
+        output.append("]")
+        if path:
+            output.append("/path ")
+            output.append(ps_list([
+                ps_list(position) for position in path
+            ]))
+        if field:
+            output.append("/field ")
+            output.append(ps_list([
+                ps_list([
+                    ps_list(position) for position in frontier
+                ]) for frontier in field
+            ]))
+        output.append(f">> {self.ps_function}")
+        return "\n".join(output)
+
+    def png_print(self,
+            path: list[Position] = [],
+            field: list[set[Position]] = [],
+            **kwargs: str
+    ) -> None:
+        import subprocess
+        import os
+        filename = '.temp.ps'
+        maze_name = str(kwargs.get('maze_name', 'temp'))
+        with open(filename, 'w') as f:
+            f.write("%!\n(draw_maze.ps) run\n")
+            f.write("/%s {" % (maze_name, ))
+            f.write(self.ps_instructions(path=path, field=field))
+            f.write("\n } def\n")
+            f.write("%%EndProlog\n")
+        command = ['pstopng',
+            '-0.05', 'd', str(self.width + 0.05), str(self.height + 0.05),
+            '20', filename, maze_name]
+        subprocess.run(command, check=True)
+        os.unlink(filename)
+
+    def ps_print(self,
+            path: list[Position] = [],
+            field: list[set[Position]] = [],
+            **kwargs: str
+    ) -> None:
+        print("%!\n(draw_maze.ps) run")
+        print("%%EndProlog\n")
+        print("72 softscale 0.25 0.25 translate")
+        if self.width / 8 > self.height / 10.5:
+            print(f"8 {self.width} div dup scale")
+        else:
+            print(f"10.5 {self.height} div dup scale")
+        print(self.ps_instructions(path=path, field=field))
+        print("showpage")
+
+
+class RectGrid(RectBaseGrid):
+    outputs = {}
+
+    def __init__(self, height: int, width: int, mask: Optional[GridMask]=None) -> None:
+        super().__init__(height, width)
         for i in range(width):
             for j in range(height):
                 position = (i, j)
                 if mask and position not in mask:
                     continue
                 self._grid[position] = Cell(position)
+
+    @property
+    def ps_function(self) -> str:
+        return "drawmaze"
 
     @classmethod
     def from_mask_txt(cls, filename: str) -> 'RectGrid':
@@ -58,12 +146,9 @@ class RectGrid(BaseGrid):
                     grid_mask.add((column, height - row - 1))
         return cls(height, width, mask=grid_mask)
 
-    def pos_neighbors(self, start: Position) -> list[Position]:
-        neighbors = [add_direction(start, dir) for dir in cardinal_directions]
-        return [neighbor for neighbor in neighbors if neighbor in self]
+    def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
+        return cardinal_directions
 
-    # I'm not modifying path or field so it's safe to use degenerate
-    # cases as defaults
     def ascii_print(self,
             path: list[Position] = [],
             field: list[set[Position]] = [],
@@ -126,77 +211,9 @@ class RectGrid(BaseGrid):
         for line in output:
             print(line)
 
-    def ps_instructions(self,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-    ) -> str:
-        output: list[str] = []
-        output.append("<<")
-        # width and height
-        output.append(f"/width {self.width}")
-        output.append(f"/height {self.height}")
-        # cells
-        output.append("/cells [")
-        for k, v in self._grid.items():
-            walls: list[str] = []
-            for dir in cardinal_directions:
-                walls.append(str(add_direction(k, dir) not in v.links).lower())
-            output.append(f"[ {ps_list(k)} {ps_list(walls)} ]")
-        output.append("]")
-        if path:
-            output.append("/path ")
-            output.append(ps_list([
-                ps_list(position) for position in path
-            ]))
-        if field:
-            output.append("/field ")
-            output.append(ps_list([
-                ps_list([
-                    ps_list(position) for position in frontier
-                ]) for frontier in field
-            ]))
-        output.append(">> drawmaze")
-        return "\n".join(output)
-
-    def png_print(self,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        import subprocess
-        import os
-        filename = '.temp.ps'
-        maze_name = str(kwargs.get('maze_name', 'temp'))
-        with open(filename, 'w') as f:
-            f.write("%!\n(draw_maze.ps) run\n")
-            f.write("/%s {" % (maze_name, ))
-            f.write(self.ps_instructions(path=path, field=field))
-            f.write("\n } def\n")
-            f.write("%%EndProlog\n")
-        command = ['pstopng',
-            '-0.05', 'd', str(self.width + 0.05), str(self.height + 0.05),
-            '20', filename, maze_name]
-        subprocess.run(command, check=True)
-        os.unlink(filename)
-
-    def ps_print(self,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        print("%!\n(draw_maze.ps) run")
-        print("%%EndProlog\n")
-        print("72 softscale 0.25 0.25 translate")
-        if self.width / 8 > self.height / 10.5:
-            print(f"8 {self.width} div dup scale")
-        else:
-            print(f"10.5 {self.height} div dup scale")
-        print(self.ps_instructions(path=path, field=field))
-        print("showpage")
-
     outputs['ascii'] = ascii_print
-    outputs['ps'] = ps_print
-    outputs['png'] = png_print
+    outputs['ps'] = RectBaseGrid.ps_print
+    outputs['png'] = RectBaseGrid.png_print
 
     def print(self,
             print_method: str,
@@ -206,24 +223,65 @@ class RectGrid(BaseGrid):
     ) -> None:
         self.outputs[print_method](self, path, field, **kwargs)
 
-def make_binary(maze_height: int, maze_width: int) -> RectGrid:
-    grid = RectGrid(maze_height, maze_width)
-    grid.binary()
-    return grid
+class ZetaGrid(RectBaseGrid):
+    outputs = {}
 
-def make_sidewinder(maze_height: int, maze_width: int) -> RectGrid:
-    grid = RectGrid(maze_height, maze_width)
-    grid.sidewinder()
-    return grid
+    def __init__(self, height: int, width: int) -> None:
+        super().__init__(height, width)
+        for i in range(width):
+            for j in range(height):
+                position = (i, j)
+                self._grid[position] = Cell(position)
 
-def make_aldous_broder(maze_height: int, maze_width: int) -> RectGrid:
-    grid = RectGrid(maze_height, maze_width)
-    grid.aldous_broder()
-    # print(f"A-B done in {steps} steps")
-    return grid
+    def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
+        return ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1))
 
-def make_wilson(maze_height: int, maze_width: int) -> RectGrid:
-    grid = RectGrid(maze_height, maze_width)
-    grid.generate_maze('wilson')
-    #  print(f"Wilson done in {steps} steps")
-    return grid
+    @property
+    def ps_function(self) -> str:
+        return "drawzetamaze"
+
+    outputs['ps'] = RectBaseGrid.ps_print
+    outputs['png'] = RectBaseGrid.png_print
+
+    def print(self,
+            print_method: str,
+            path: list[Position] = [],
+            field: list[set[Position]] = [],
+            **kwargs: str
+    ) -> None:
+        self.outputs[print_method](self, path, field, **kwargs)
+
+class UpsilonGrid(RectBaseGrid):
+    outputs = {}
+
+    def __init__(self, height: int, width: int) -> None:
+        super().__init__(height, width)
+        for i in range(width):
+            for j in range(height):
+                position = (i * 2, j * 2)
+                self._grid[position] = Cell(position)
+        for i in range(width - 1):
+            for j in range(height - 1):
+                position = (1 + i * 2, 1 + j * 2)
+                self._grid[position] = Cell(position)
+
+    def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
+        if start[0] % 2 == 0:
+            return ((2, 0), (1, 1), (0, 2), (-1, 1), (-2, 0), (-1, -1), (0, -2), (1, -1))
+        else:
+            return ((1, 1), (-1, 1), (-1, -1), (1, -1))
+
+    @property
+    def ps_function(self) -> str:
+        return "drawupsilonmaze"
+
+    outputs['ps'] = RectBaseGrid.ps_print
+    outputs['png'] = RectBaseGrid.png_print
+
+    def print(self,
+            print_method: str,
+            path: list[Position] = [],
+            field: list[set[Position]] = [],
+            **kwargs: str
+    ) -> None:
+        self.outputs[print_method](self, path, field, **kwargs)

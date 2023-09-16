@@ -6,8 +6,6 @@
 /atranslate { aload pop translate } def
 
 /drawmaze { /grid arg
-    0.1 setlinewidth
-    1 setlinecap 1 setlinejoin
     % 0 0 grid /width get grid /height get box stroke
     /getcenter { /position arg
         [ position { 0.5 add } forall ]
@@ -25,6 +23,93 @@
                     0.5 -0.5 goto
                     0.5 0.5 goto
                     stroke
+                grestore
+            } if
+        } for
+    } def
+
+    mazeengine
+
+} def
+
+/drawupsilonmaze { /grid arg
+    /octagon_offset 0.5 22.5 tan mul def
+    /diamond_offset 0.5 octagon_offset sub def
+    /getcenter { /position arg
+        [ position { 2 div 0.5 add } forall ]
+    } def
+    /getcellpath { /position arg
+        position getcenter atranslate
+        position 0 get 2 mod 0 eq {
+            4 {
+                0.5 octagon_offset neg goto
+                0.5 octagon_offset goto
+            } circrepeat closepath
+        } {
+            4 {
+                diamond_offset 0 goto
+            } circrepeat closepath
+        } ifelse
+    } def
+    /drawwalls { /walls arg /position arg
+        position getcenter atranslate
+        position 0 get 2 mod 0 eq {
+            0 1 7 { /i arg
+                walls i get {
+                    gsave
+                        i 45 mul rotate
+                        0.5 octagon_offset neg goto
+                        0.5 octagon_offset goto
+                        stroke
+                    grestore
+                } if
+            } for
+        } {
+            0 1 3 { /i arg
+                walls i get {
+                    gsave
+                        i 90 mul rotate
+                        diamond_offset 0 goto
+                        0 diamond_offset goto
+                        stroke
+                    grestore
+                } if
+            } for
+        } ifelse
+    } def
+
+    mazeengine
+
+} def
+
+/drawzetamaze { /grid arg
+    % 0 0 grid /width get grid /height get box stroke
+    /getcenter { /position arg
+        [ position { 0.5 add } forall ]
+    } def
+    /getcellpath { /position arg
+        position getcenter atranslate
+        -0.5 -0.5 0.5 0.5 box
+    } def
+    /drawwalls { /walls arg /position arg
+        position getcenter atranslate
+        0 2 6 { /i arg
+            walls i get {
+                gsave
+                    i 0 sub 45 mul rotate
+                    0.5 -0.5 goto
+                    0.5 0.5 goto
+                    stroke
+                grestore
+            } if
+        } for
+        % zeta paths
+        1 2 7 { /i arg
+            walls i get not {
+                gsave
+                    i 45 mul rotate
+                    0.5 thicken
+                    0.5 0 dot
                 grestore
             } if
         } for

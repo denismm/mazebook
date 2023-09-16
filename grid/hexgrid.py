@@ -10,8 +10,18 @@ hex_directions: tuple[Direction, ...] = (
 class HexBaseGrid(BaseGrid):
     outputs = {}
 
+    @property
+    def neighbor_directions(self) -> tuple[tuple[Direction, ...], ...]:
+        raise ValueError("neighbor_directions not overridden")
+
+    def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
+        all_nd = self.neighbor_directions
+        directions_index = sum(start) % len(all_nd)
+        return all_nd[directions_index]
+
     def pos_neighbors(self, start: Position) -> list[Position]:
-        neighbors = [add_direction(start, dir) for dir in hex_directions]
+        neighbor_directions = self.neighbor_directions_for_start(start)
+        neighbors = [add_direction(start, dir) for dir in neighbor_directions]
         return [neighbor for neighbor in neighbors if neighbor in self]
 
     @property
@@ -42,7 +52,8 @@ class HexBaseGrid(BaseGrid):
         output.append("/cells [")
         for k, v in self._grid.items():
             walls: list[str] = []
-            for dir in hex_directions:
+            neighbor_directions = self.neighbor_directions_for_start(k)
+            for dir in neighbor_directions:
                 walls.append(str(add_direction(k, dir) not in v.links).lower())
             output.append(f"[ {ps_list(k)} {ps_list(walls)} ]")
         output.append("]")
@@ -113,6 +124,10 @@ class HexGrid(HexBaseGrid):
                     self._grid[position] = Cell(position)
 
     @property
+    def neighbor_directions(self) -> tuple[tuple[Direction, ...], ...]:
+        return (hex_directions,)
+
+    @property
     def ps_size(self) -> str:
         return f"/radius {self.radius}"
 
@@ -133,11 +148,21 @@ class TriGrid(HexBaseGrid):
         super().__init__()
         self.width = width
         max_sum = 3 * (width - 1)
-        for i in range(2 * width - 1): # last i is 2(w - 1)
-            for j in range( i // 2, max_sum - i + 1):
-                if (i + j) % 3 != 1:
+        for sum in range( max_sum + 1):
+            if sum % 3 != 1:
+                start_i = (sum + 1) // 3
+                for i in range(start_i, sum - start_i + 1):
+                    j = sum - i
                     position = (i, j)
                     self._grid[position] = Cell(position)
+
+    @property
+    def neighbor_directions(self) -> tuple[tuple[Direction, ...], ...]:
+        return (
+            ((1, 1), (-1, 0), (0, -1),),
+            (),
+            ((0, 1), (-1, -1), (1, 0),)
+        )
 
     @property
     def ps_size(self) -> str:
@@ -149,8 +174,9 @@ class TriGrid(HexBaseGrid):
 
     @property
     def png_alignment(self) -> list[str]:
-        return [str(-0.65), 'd', str(self.width + 0.65), 'd']
+        from math import sqrt
+        return [str(-1.3), 'd', str((self.width - 1) * sqrt(3) + 1.3), str(self.width * 1.5 + 0.5)]
 
     @property
     def ps_alignment(self) -> str:
-        return f"72 softscale 0.25 dup translate 8 {self.width + 1} div dup scale"
+        return f"72 softscale 0.25 dup translate 8 {self.width} 3 sqrt mul div dup scale 3 sqrt half dup translate"

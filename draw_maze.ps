@@ -37,9 +37,7 @@
 /drawcirclemaze { /grid arg
     % grid fields:
     % widths: array of ints, counting cells in each ring (from the middle out)
-    % cells: list of lists containing coord (ring, cell) then list of boolean walls for ccw, in, cw (out not included?)
-    % field: as before
-    % path: as before
+    % cells: list of lists containing coord (ring, cell) then list of boolean walls for ccw, in, cw, outs
 
     /widths grid /widths get def
     /radius widths length def

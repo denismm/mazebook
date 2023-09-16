@@ -1,3 +1,5 @@
+# grids with cells in a square layout
+
 from positions import Position, cardinal_directions, add_direction
 from typing import Optional
 

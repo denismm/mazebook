@@ -1,3 +1,5 @@
+# grids with a central node surrounded by rings of cells
+
 from positions import Position, cardinal_directions, add_direction
 from typing import Optional
 from math import pi

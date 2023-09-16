@@ -1,3 +1,5 @@
+# grids that use hexagonal geometry
+
 from positions import Position, Direction, add_direction
 from typing import Optional
 

@@ -5,10 +5,27 @@ from typing import Optional
 from math import pi
 from functools import cache
 
-from .maze import Cell, SingleSizeGrid, ps_list
+from .maze import Cell, SingleSizeGrid, BaseGrid, ps_list
 
 class CircleGrid(SingleSizeGrid):
     outputs = {}
+
+    ps_function = "drawcirclemaze"
+
+    # key and value for size in draw_maze.ps
+    @property
+    def ps_size(self) -> str:
+        return f"/radius {self.radius} /widths {ps_list(self.widths)}"
+
+    # ps command to size and align ps output
+    @property
+    def ps_alignment(self) -> str:
+        return f"72 softscale 4.25 5.5 translate 4 {self.radius + 0.5} div dup scale"
+
+    # command subset for pstopng
+    @property
+    def png_alignment(self) -> list[str]:
+        return [str(-1 * (self.radius + 0.65)), 'd', 'd', 'd']
 
     def __init__(self, radius: int) -> None:
         super().__init__(radius)
@@ -79,41 +96,8 @@ class CircleGrid(SingleSizeGrid):
         output.append(">> drawcirclemaze")
         return "\n".join(output)
 
-    def png_print(self,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        import subprocess
-        import os
-        filename = '.temp.ps'
-        maze_name = str(kwargs.get('maze_name', 'temp'))
-        with open(filename, 'w') as f:
-            f.write("%!\n(draw_maze.ps) run\n")
-            f.write("/%s {" % (maze_name, ))
-            f.write(self.ps_instructions(path=path, field=field))
-            f.write("\n } def\n")
-            f.write("%%EndProlog\n")
-        command = ['pstopng',
-            str(-1 * (self.radius + 0.65)), 'd', 'd', 'd',
-            '20', filename, maze_name]
-        subprocess.run(command, check=True)
-        os.unlink(filename)
-
-    def ps_print(self,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        print("%!\n(draw_maze.ps) run")
-        print("%%EndProlog\n")
-        print("72 softscale 4.25 5.5 translate")
-        print(f"4 {self.radius + 0.5} div dup scale")
-        print(self.ps_instructions(path=path, field=field))
-        print("showpage")
-
-    outputs['ps'] = ps_print
-    outputs['png'] = png_print
+    outputs['ps'] = BaseGrid.ps_print
+    outputs['png'] = BaseGrid.png_print
 
     def print(self,
             print_method: str,

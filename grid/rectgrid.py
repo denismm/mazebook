@@ -23,13 +23,22 @@ class RectBaseGrid(BaseGrid):
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
         raise ValueError("not overridden")
 
-    @property
-    def ps_function(self) -> str:
-        raise ValueError("not overridden")
-
     def pos_neighbors(self, start: Position) -> list[Position]:
         neighbors = [add_direction(start, dir) for dir in self.neighbor_directions_for_start(start)]
         return [neighbor for neighbor in neighbors if neighbor in self]
+
+    @property
+    def png_alignment(self) -> list[str]:
+        return ['-0.05', 'd', str(self.width + 0.05), str(self.height + 0.05)]
+
+    @property
+    def ps_alignment(self) -> str:
+        output = "72 softscale 0.25 0.25 translate "
+        if self.width / 8 > self.height / 10.5:
+            output += f"8 {self.width} div dup scale"
+        else:
+            output += f"10.5 {self.height} div dup scale"
+        return output
 
     def ps_instructions(self,
             path: list[Position] = [],
@@ -63,43 +72,6 @@ class RectBaseGrid(BaseGrid):
         output.append(f">> {self.ps_function}")
         return "\n".join(output)
 
-    def png_print(self,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        import subprocess
-        import os
-        filename = '.temp.ps'
-        maze_name = str(kwargs.get('maze_name', 'temp'))
-        with open(filename, 'w') as f:
-            f.write("%!\n(draw_maze.ps) run\n")
-            f.write("/%s {" % (maze_name, ))
-            f.write(self.ps_instructions(path=path, field=field))
-            f.write("\n } def\n")
-            f.write("%%EndProlog\n")
-        command = ['pstopng',
-            '-0.05', 'd', str(self.width + 0.05), str(self.height + 0.05),
-            '20', filename, maze_name]
-        subprocess.run(command, check=True)
-        os.unlink(filename)
-
-    def ps_print(self,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        print("%!\n(draw_maze.ps) run")
-        print("%%EndProlog\n")
-        print("72 softscale 0.25 0.25 translate")
-        if self.width / 8 > self.height / 10.5:
-            print(f"8 {self.width} div dup scale")
-        else:
-            print(f"10.5 {self.height} div dup scale")
-        print(self.ps_instructions(path=path, field=field))
-        print("showpage")
-
-
 class RectGrid(RectBaseGrid):
     outputs = {}
 
@@ -112,9 +84,7 @@ class RectGrid(RectBaseGrid):
                     continue
                 self._grid[position] = Cell(position)
 
-    @property
-    def ps_function(self) -> str:
-        return "drawmaze"
+    ps_function: str = "drawmaze"
 
     @classmethod
     def from_mask_txt(cls, filename: str) -> 'RectGrid':
@@ -236,9 +206,7 @@ class ZetaGrid(RectBaseGrid):
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
         return ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1))
 
-    @property
-    def ps_function(self) -> str:
-        return "drawzetamaze"
+    ps_function: str = "drawzetamaze"
 
     outputs['ps'] = RectBaseGrid.ps_print
     outputs['png'] = RectBaseGrid.png_print
@@ -271,9 +239,7 @@ class UpsilonGrid(RectBaseGrid):
         else:
             return ((1, 1), (-1, 1), (-1, -1), (1, -1))
 
-    @property
-    def ps_function(self) -> str:
-        return "drawupsilonmaze"
+    ps_function = "drawupsilonmaze"
 
     outputs['ps'] = RectBaseGrid.ps_print
     outputs['png'] = RectBaseGrid.png_print

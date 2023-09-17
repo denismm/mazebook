@@ -18,9 +18,10 @@ def ps_list(iterable: Iterable[Any]) -> str:
 
 GridMask = set[Position]
 class BaseGrid():
-    algorithms = {}
     def __init__(self) -> None:
         self._grid: dict[Position, Cell] = {}
+
+    algorithms = {}
 
     def __contains__(self, position: Position) -> bool:
         return position in self._grid
@@ -79,6 +80,60 @@ class BaseGrid():
         for cell in self._grid.values():
             nodes_for_links[len(cell.links)] += 1
         return dict(nodes_for_links)
+
+    # function in draw_maze.ps to draw this kind of grid
+    ps_function: str = ""
+
+    # key and value for size in draw_maze.ps
+    @property
+    def ps_size(self) -> str:
+        raise ValueError("not overridden")
+
+    # ps command to align ps output
+    @property
+    def ps_alignment(self) -> str:
+        raise ValueError("not overridden")
+
+    # command subset for pstopng
+    @property
+    def png_alignment(self) -> list[str]:
+        raise ValueError("not overridden")
+
+    def ps_instructions(self,
+            path: list[Position] = [],
+            field: list[set[Position]] = [],
+    ) -> str:
+        raise ValueError("not overridden")
+
+    def png_print(self,
+            path: list[Position] = [],
+            field: list[set[Position]] = [],
+            **kwargs: str
+    ) -> None:
+        import subprocess
+        import os
+        filename = '.temp.ps'
+        maze_name = str(kwargs.get('maze_name', 'temp'))
+        with open(filename, 'w') as f:
+            f.write("%!\n(draw_maze.ps) run\n")
+            f.write("/%s {" % (maze_name, ))
+            f.write(self.ps_instructions(path=path, field=field))
+            f.write("\n } def\n")
+            f.write("%%EndProlog\n")
+        command = ['pstopng'] + self.png_alignment + ['20', filename, maze_name]
+        subprocess.run(command, check=True)
+        os.unlink(filename)
+
+    def ps_print(self,
+            path: list[Position] = [],
+            field: list[set[Position]] = [],
+            **kwargs: str
+    ) -> None:
+        print("%!\n(draw_maze.ps) run")
+        print("%%EndProlog\n")
+        print(self.ps_alignment)
+        print(self.ps_instructions(path=path, field=field))
+        print("showpage")
 
     def print(self,
             print_method: str,

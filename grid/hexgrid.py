@@ -3,7 +3,7 @@
 from positions import Position, Direction, add_direction
 from typing import Optional
 
-from .maze import Cell, SingleSizeGrid, ps_list
+from .maze import Cell, BaseGrid, SingleSizeGrid, ps_list
 
 hex_directions: tuple[Direction, ...] = ( 
     (1, 1), (0, 1), (-1, 0), (-1, -1), (0, -1), (1, 0)
@@ -12,9 +12,7 @@ hex_directions: tuple[Direction, ...] = (
 class HexBaseGrid(SingleSizeGrid):
     outputs = {}
 
-    @property
-    def neighbor_directions(self) -> tuple[tuple[Direction, ...], ...]:
-        raise ValueError("neighbor_directions not overridden")
+    neighbor_directions: tuple[tuple[Direction, ...], ...] = ()
 
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
         all_nd = self.neighbor_directions
@@ -25,22 +23,6 @@ class HexBaseGrid(SingleSizeGrid):
         neighbor_directions = self.neighbor_directions_for_start(start)
         neighbors = [add_direction(start, dir) for dir in neighbor_directions]
         return [neighbor for neighbor in neighbors if neighbor in self]
-
-    @property
-    def ps_function(self) -> str:
-        raise ValueError("ps_function not overridden")
-
-    @property
-    def ps_size(self) -> str:
-        raise ValueError("ps_size not overridden")
-
-    @property
-    def png_alignment(self) -> list[str]:
-        raise ValueError("png_alignment not overridden")
-
-    @property
-    def ps_alignment(self) -> str:
-        raise ValueError("ps_alignment not overridden")
 
     def ps_instructions(self,
             path: list[Position] = [],
@@ -74,38 +56,8 @@ class HexBaseGrid(SingleSizeGrid):
         output.append(f">> {self.ps_function}")
         return "\n".join(output)
 
-    def png_print(self,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        import subprocess
-        import os
-        filename = '.temp.ps'
-        maze_name = str(kwargs.get('maze_name', 'temp'))
-        with open(filename, 'w') as f:
-            f.write("%!\n(draw_maze.ps) run\n")
-            f.write("/%s {" % (maze_name, ))
-            f.write(self.ps_instructions(path=path, field=field))
-            f.write("\n } def\n")
-            f.write("%%EndProlog\n")
-        command = ['pstopng'] + self.png_alignment + ['20', filename, maze_name]
-        subprocess.run(command, check=True)
-        os.unlink(filename)
-
-    def ps_print(self,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        print("%!\n(draw_maze.ps) run")
-        print("%%EndProlog\n")
-        print(self.ps_alignment)
-        print(self.ps_instructions(path=path, field=field))
-        print("showpage")
-
-    outputs['ps'] = ps_print
-    outputs['png'] = png_print
+    outputs['ps'] = BaseGrid.ps_print
+    outputs['png'] = BaseGrid.png_print
 
     def print(self,
             print_method: str,
@@ -125,17 +77,13 @@ class HexGrid(HexBaseGrid):
                     position = (i, j)
                     self._grid[position] = Cell(position)
 
-    @property
-    def neighbor_directions(self) -> tuple[tuple[Direction, ...], ...]:
-        return (hex_directions,)
+    neighbor_directions: tuple[tuple[Direction, ...], ...] = (hex_directions,)
 
     @property
     def ps_size(self) -> str:
         return f"/radius {self.radius}"
 
-    @property
-    def ps_function(self) -> str:
-        return "drawhexmaze"
+    ps_function: str = "drawhexmaze"
 
     @property
     def png_alignment(self) -> list[str]:
@@ -158,9 +106,7 @@ class TriGrid(HexBaseGrid):
                     position = (i, j)
                     self._grid[position] = Cell(position)
 
-    @property
-    def neighbor_directions(self) -> tuple[tuple[Direction, ...], ...]:
-        return (
+    neighbor_directions: tuple[tuple[Direction, ...], ...] = (
             ((1, 1), (-1, 0), (0, -1),),
             (),
             ((0, 1), (-1, -1), (1, 0),)
@@ -170,9 +116,7 @@ class TriGrid(HexBaseGrid):
     def ps_size(self) -> str:
         return f"/width {self.width}"
 
-    @property
-    def ps_function(self) -> str:
-        return "drawtrimaze"
+    ps_function: str = "drawtrimaze"
 
     @property
     def png_alignment(self) -> list[str]:

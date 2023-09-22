@@ -81,6 +81,13 @@ class BaseGrid():
             nodes_for_links[len(cell.links)] += 1
         return dict(nodes_for_links)
 
+    def dead_ends(self) -> list[Position]:
+        ret: list[Position] = []
+        for location, cell in self._grid.items():
+            if cell.links == 1:
+                ret.append(location)
+        return ret
+
     # function in draw_maze.ps to draw this kind of grid
     ps_function: str = ""
 

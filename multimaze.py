@@ -29,7 +29,10 @@ parser.add_argument('-b', '--braid', type=float, help="the proportion of dead en
 args = parser.parse_args()
 
 if args.seed:
-    random.seed(args.seed)
+    if args.seed.isnumeric():
+        random.seed(int(args.seed))
+    else:
+        random.seed(args.seed)
 
 grid: BaseGrid
 

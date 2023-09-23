@@ -14,6 +14,7 @@
         position getcenter atranslate
         -0.5 -0.5 0.5 0.5 box
     } def
+    /mgoto { goto } def
     /drawwalls { /walls arg /position arg
         position getcenter atranslate
         0 1 3 { /i arg
@@ -51,6 +52,7 @@
             } circrepeat closepath
         } ifelse
     } def
+    /mgoto { goto } def
     /drawwalls { /walls arg /position arg
         position getcenter atranslate
         position 0 get 2 mod 0 eq {
@@ -91,6 +93,7 @@
         position getcenter atranslate
         -0.5 -0.5 0.5 0.5 box
     } def
+    /mgoto { goto } def
     /drawwalls { /walls arg /position arg
         position getcenter atranslate
         0 2 6 { /i arg
@@ -168,6 +171,8 @@
         }ifelse
     } def
 
+    /mgoto { ralop pgoto } def
+
     /drawwalls { /walls arg /position arg
         /outstart position 0 get 0 eq { 0 } { 3 } ifelse def
         outstart 0 ne {
@@ -176,19 +181,18 @@
             walls 1 get { in ccw pgoto in cw pgoto stroke } if
             walls 2 get { in cw pgoto out cw pgoto stroke } if
             closepath stroke
-        } if
-        outstart 0 eq {
+        } {
             /ccw 0 def
             /cw 360 def
             /out 0.5 def
-        } if
+        } ifelse
         /outwall_n walls length outstart sub def
         outwall_n 0 ne {
             /outwall_len cw ccw sub outwall_n div def
             0 1 outwall_n 1 sub { /i arg
                 walls outstart i add get {
-                    out i       outwall_len mul pgoto
-                    out i 1 add outwall_len mul pgoto stroke
+                    out i       outwall_len mul ccw add pgoto
+                    out i 1 add outwall_len mul ccw add pgoto stroke
                 } if
             } for
         } if
@@ -233,6 +237,8 @@
         } circrepeat
         closepath
     } def
+
+    /mgoto { goto } def
 
     /drawwalls { /walls arg /position arg
         position getcenter atranslate
@@ -283,6 +289,8 @@
         } circrepeat
         closepath
     } def
+
+    /mgoto { goto } def
 
     /drawwalls { /walls arg /position arg
         position getcenter atranslate
@@ -337,7 +345,7 @@
         grid /path known {
             % todo - some way to do this with pgoto for circular maze
             grid /path get {
-                getcenter aload pop goto
+                getcenter aload pop mgoto
             } forall
             grid /field known {
                 1 setgray

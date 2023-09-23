@@ -53,7 +53,7 @@ class CircleGrid(SingleSizeGrid):
         r, theta = start
         neighbors: list[Position] = []
         if r > 0:
-            # left, right, down
+            # left, down, right
             neighbors.append((r, (theta - 1) % self.widths[r]))
             neighbors.append((r - 1, theta // self.ratios[r]))
             neighbors.append((r, (theta + 1) % self.widths[r]))
@@ -79,6 +79,8 @@ class CircleGrid(SingleSizeGrid):
             walls: list[str] = []
             for npos in self.pos_neighbors(v.position):
                 walls.append(str(npos not in v.links).lower())
+            if k[0] == self.radius:
+                walls.append('true')
             output.append(f"[ {ps_list(k)} {ps_list(walls)} ]")
         output.append("]")
         if path:

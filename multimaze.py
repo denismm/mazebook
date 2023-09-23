@@ -21,9 +21,10 @@ parser.add_argument('size', help="either a string like '8x10', '10@', '7s', '7d'
 parser.add_argument('-a', '--algorithm', default="backtrack", help="the maze algorithm to use", choices=algorithms)
 parser.add_argument('-o', '--output', default="ascii", help="the output format", choices=RectGrid.outputs)
 parser.add_argument('-n', '--name', help="the name to use for the output if generating a png")
-parser.add_argument('--field', action='store_true', help="whether to include a field of distances from the far point")
-parser.add_argument('--path', action='store_true', help="whether to include the path from the far point to the other far point")
-parser.add_argument('--seed', help="if provided, the seed for the rng")
+parser.add_argument('-f', '--field', action='store_true', help="whether to include a field of distances from the far point")
+parser.add_argument('-p', '--path', action='store_true', help="whether to include the path from the far point to the other far point")
+parser.add_argument('-s', '--seed', help="if provided, the seed for the rng")
+parser.add_argument('-b', '--braid', type=float, help="the proportion of dead ends to braid")
 
 args = parser.parse_args()
 
@@ -63,6 +64,9 @@ else:
     raise ValueError(f"invalid size {args.size}")
 
 grid.generate_maze(args.algorithm)
+if args.braid:
+    grid.braid(args.braid)
+
 print_args: dict[str, Any] = {}
 
 if args.path or args.field:

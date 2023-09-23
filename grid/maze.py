@@ -84,9 +84,36 @@ class BaseGrid():
     def dead_ends(self) -> list[Position]:
         ret: list[Position] = []
         for location, cell in self._grid.items():
-            if cell.links == 1:
+            if len(cell.links) == 1:
                 ret.append(location)
         return ret
+
+    def braid(self, proportion: float) -> None:
+        # rule out forced dead-ends, such as the corner of a triangle
+        dead_ends = [de for de in self.dead_ends() if len(self.pos_neighbors(de)) > 1]
+        target_dead_ends = round(len(dead_ends) * (1 - proportion))
+        while len(dead_ends) > target_dead_ends:
+            # pick a dead end
+            braidable = random.choice(dead_ends)
+            # braid to a dead end or a passage
+            current_link = self[braidable].links
+            all_neighbors = self.pos_neighbors(braidable)
+            possible_targets = [p for p in all_neighbors if p not in current_link]
+            dead_targets: list[Position] = []
+            other_targets: list[Position] = []
+            for p in possible_targets:
+                if len(self[p].links) == 1:
+                    dead_targets.append(p)
+                else:
+                    other_targets.append(p)
+            targets = dead_targets or other_targets
+            target = random.choice(targets)
+            self.connect(braidable, target)
+            dead_ends.remove(braidable)
+            try:
+                dead_ends.remove(target)
+            except ValueError:
+                pass
 
     # function in draw_maze.ps to draw this kind of grid
     ps_function: str = ""

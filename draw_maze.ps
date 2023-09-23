@@ -169,12 +169,28 @@
     } def
 
     /drawwalls { /walls arg /position arg
-        position 0 get 0 ne {
+        /outstart position 0 get 0 eq { 0 } { 3 } ifelse def
+        outstart 0 ne {
             position getbox aload pop /out arg /cw arg /in arg /ccw arg
             walls 0 get { in ccw pgoto out ccw pgoto stroke } if
             walls 1 get { in ccw pgoto in cw pgoto stroke } if
             walls 2 get { in cw pgoto out cw pgoto stroke } if
             closepath stroke
+        } if
+        outstart 0 eq {
+            /ccw 0 def
+            /cw 360 def
+            /out 0.5 def
+        } if
+        /outwall_n walls length outstart sub def
+        outwall_n 0 ne {
+            /outwall_len cw ccw sub outwall_n div def
+            0 1 outwall_n 1 sub { /i arg
+                walls outstart i add get {
+                    out i       outwall_len mul pgoto
+                    out i 1 add outwall_len mul pgoto stroke
+                } if
+            } for
         } if
     } def
 

@@ -337,13 +337,14 @@
 
         grid /cells get {
             gsave
-                aload pop /walls arg /position arg
+                /cell arg
+                cell 0 get /position arg
+                cell 1 get /walls arg
                 position walls drawwalls
             grestore
         } forall
 
         grid /path known {
-            % todo - some way to do this with pgoto for circular maze
             grid /path get {
                 getcenter aload pop mgoto
             } forall

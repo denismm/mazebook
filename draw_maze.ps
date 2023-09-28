@@ -10,22 +10,39 @@
     /getcenter { /position arg
         [ position { 0.5 add } forall ]
     } def
-    /getcellpath { /position arg
+    /inset 0.1 def
+    /getcellpath { /walls arg /position arg
         position getcenter atranslate
-        -0.5 -0.5 0.5 0.5 box
+        /walls_i 0 def
+        4 {
+            0.5 inset sub dup neg goto
+            walls walls_i get not {
+                0.5 dup inset sub neg goto
+                0.5 dup inset sub goto
+            } if
+            /walls_i walls_i 1 add def
+        } circrepeat
+        closepath
     } def
     /mgoto { goto } def
     /drawwalls { /walls arg /position arg
         position getcenter atranslate
         0 1 3 { /i arg
-            walls i get {
-                gsave
-                    i 0 sub 90 mul rotate
-                    0.5 -0.5 goto
-                    0.5 0.5 goto
+            gsave
+                i 0 sub 90 mul rotate
+                walls i get {
+                    0.5 inset sub dup neg goto
+                    0.5 inset sub dup goto
                     stroke
-                grestore
-            } if
+                } {
+                    0.5 inset sub dup neg goto
+                    0.5 dup inset sub neg goto
+                    stroke
+                    0.5 inset sub dup goto
+                    0.5 dup inset sub goto
+                    stroke
+                } ifelse
+            grestore
         } for
     } def
 
@@ -39,7 +56,7 @@
     /getcenter { /position arg
         [ position { 2 div 0.5 add } forall ]
     } def
-    /getcellpath { /position arg
+    /getcellpath { /walls arg /position arg
         position getcenter atranslate
         position 0 get 2 mod 0 eq {
             4 {
@@ -89,7 +106,7 @@
     /getcenter { /position arg
         [ position { 0.5 add } forall ]
     } def
-    /getcellpath { /position arg
+    /getcellpath { /walls arg /position arg
         position getcenter atranslate
         -0.5 -0.5 0.5 0.5 box
     } def
@@ -157,7 +174,7 @@
             [ccw in cw out]
         end
     } def
-    /getcellpath { /position arg
+    /getcellpath { /walls arg /position arg
         position 0 get 0 ne {
             /box position getbox def
             box 1 get box 0 get pgoto
@@ -229,7 +246,7 @@
 
     /getcenter { h2c } def
 
-    /getcellpath { /position arg
+    /getcellpath { /walls arg /position arg
         % one cell, centered on position
         position getcenter atranslate
         6 {
@@ -278,7 +295,7 @@
         ]
     } def
 
-    /getcellpath { /tripos arg
+    /getcellpath { /walls arg /tripos arg
         % one cell, centered on tripos, oriented appropriately
         tripos getcenter atranslate
         tripos aload pop add 3 mod 2 eq {
@@ -333,7 +350,7 @@
                 grid /field known {
                     gsave
                         field fieldstep mul 360 mul setsinebowcolor
-                        position getcellpath fill
+                        position walls getcellpath fill
                     grestore
                 } if
                 position walls drawwalls

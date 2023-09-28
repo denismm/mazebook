@@ -137,6 +137,33 @@ class BaseGrid():
             path: list[Position] = [],
             field: list[set[Position]] = [],
     ) -> str:
+        output: list[str] = []
+        output.append("<<")
+        # size
+        output.append(self.ps_size)
+        # cells
+        output.append("/cells [")
+        for k, v in self._grid.items():
+            walls = self.walls_for_cell(v)
+            walls_text = ps_list([str(w).lower() for w in walls])
+            output.append(f"[ {ps_list(k)} {walls_text} ]")
+        output.append("]")
+        if path:
+            output.append("/path ")
+            output.append(ps_list([
+                ps_list(position) for position in path
+            ]))
+        if field:
+            output.append("/field ")
+            output.append(ps_list([
+                ps_list([
+                    ps_list(position) for position in frontier
+                ]) for frontier in field
+            ]))
+        output.append(f">> {self.ps_function}")
+        return "\n".join(output)
+
+    def walls_for_cell(self, cell: Cell) -> list[bool]:
         raise ValueError("not overridden")
 
     def png_print(self,

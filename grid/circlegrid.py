@@ -64,39 +64,14 @@ class CircleGrid(SingleSizeGrid):
         neighbors = [neighbor for neighbor in neighbors if neighbor in self]
         return neighbors
 
-    def ps_instructions(self,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-    ) -> str:
-        output: list[str] = []
-        output.append("<<")
-        # widths and radius
-        output.append(f"/radius {self.radius}")
-        output.append(f"/widths {ps_list(self.widths)}")
-        # cells
-        output.append("/cells [")
-        for k, v in self._grid.items():
-            walls: list[str] = []
-            for npos in self.pos_neighbors(v.position):
-                walls.append(str(npos not in v.links).lower())
-            if k[0] == self.radius:
-                walls.append('true')
-            output.append(f"[ {ps_list(k)} {ps_list(walls)} ]")
-        output.append("]")
-        if path:
-            output.append("/path ")
-            output.append(ps_list([
-                ps_list(position) for position in path
-            ]))
-        if field:
-            output.append("/field ")
-            output.append(ps_list([
-                ps_list([
-                    ps_list(position) for position in frontier
-                ]) for frontier in field
-            ]))
-        output.append(">> drawcirclemaze")
-        return "\n".join(output)
+    def walls_for_cell(self, cell: Cell) -> list[bool]:
+        walls: list[bool] = []
+        position = cell.position
+        for npos in self.pos_neighbors(position):
+            walls.append(npos not in cell.links)
+        if position[0] == self.radius:
+            walls.append(True)
+        return walls
 
     outputs['ps'] = BaseGrid.ps_print
     outputs['png'] = BaseGrid.png_print

@@ -24,37 +24,13 @@ class HexBaseGrid(SingleSizeGrid):
         neighbors = [add_direction(start, dir) for dir in neighbor_directions]
         return [neighbor for neighbor in neighbors if neighbor in self]
 
-    def ps_instructions(self,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-    ) -> str:
-        output: list[str] = []
-        output.append("<<")
-        # size
-        output.append(self.ps_size)
-        # cells
-        output.append("/cells [")
-        for k, v in self._grid.items():
-            walls: list[str] = []
-            neighbor_directions = self.neighbor_directions_for_start(k)
-            for dir in neighbor_directions:
-                walls.append(str(add_direction(k, dir) not in v.links).lower())
-            output.append(f"[ {ps_list(k)} {ps_list(walls)} ]")
-        output.append("]")
-        if path:
-            output.append("/path ")
-            output.append(ps_list([
-                ps_list(position) for position in path
-            ]))
-        if field:
-            output.append("/field ")
-            output.append(ps_list([
-                ps_list([
-                    ps_list(position) for position in frontier
-                ]) for frontier in field
-            ]))
-        output.append(f">> {self.ps_function}")
-        return "\n".join(output)
+    def walls_for_cell(self, cell: Cell) -> list[bool]:
+        walls: list[bool] = []
+        position = cell.position
+        neighbor_directions = self.neighbor_directions_for_start(position)
+        for dir in neighbor_directions:
+            walls.append(add_direction(position, dir) not in cell.links)
+        return walls
 
     outputs['ps'] = BaseGrid.ps_print
     outputs['png'] = BaseGrid.png_print

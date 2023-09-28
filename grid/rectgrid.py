@@ -40,37 +40,17 @@ class RectBaseGrid(BaseGrid):
             output += f"10.5 {self.height} div dup scale"
         return output
 
-    def ps_instructions(self,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-    ) -> str:
-        output: list[str] = []
-        output.append("<<")
-        # width and height
-        output.append(f"/width {self.width}")
-        output.append(f"/height {self.height}")
-        # cells
-        output.append("/cells [")
-        for k, v in self._grid.items():
-            walls: list[str] = []
-            for dir in self.neighbor_directions_for_start(k):
-                walls.append(str(add_direction(k, dir) not in v.links).lower())
-            output.append(f"[ {ps_list(k)} {ps_list(walls)} ]")
-        output.append("]")
-        if path:
-            output.append("/path ")
-            output.append(ps_list([
-                ps_list(position) for position in path
-            ]))
-        if field:
-            output.append("/field ")
-            output.append(ps_list([
-                ps_list([
-                    ps_list(position) for position in frontier
-                ]) for frontier in field
-            ]))
-        output.append(f">> {self.ps_function}")
-        return "\n".join(output)
+    @property
+    def ps_size(self) -> str:
+        return f"/width {self.width} /height {self.height}"
+
+    def walls_for_cell(self, cell: Cell) -> list[bool]:
+        walls: list[bool] = []
+        position = cell.position
+        neighbor_directions = self.neighbor_directions_for_start(position)
+        for dir in neighbor_directions:
+            walls.append(add_direction(position, dir) not in cell.links)
+        return walls
 
 class RectGrid(RectBaseGrid):
     outputs = {}

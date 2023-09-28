@@ -321,18 +321,7 @@
         0.1 setlinewidth 1 setlinecap 1 setlinejoin
 
         grid /field known {
-            /field grid /field get def
-            /step field length 1 sub recip def
-            0 1 field length 1 sub { /i arg
-                gsave
-                    i step mul 360 mul setsinebowcolor
-                    field i get {
-                        gsave
-                            getcellpath fill
-                        grestore
-                    } forall
-                grestore
-            } for
+            /fieldstep grid /field get length 1 sub recip def
         } if
 
         grid /cells get {
@@ -340,6 +329,13 @@
                 /cell arg
                 cell 0 get /position arg
                 cell 1 get /walls arg
+                cell 2 get /field arg
+                grid /field known {
+                    gsave
+                        field fieldstep mul 360 mul setsinebowcolor
+                        position getcellpath fill
+                    grestore
+                } if
                 position walls drawwalls
             grestore
         } forall

@@ -141,12 +141,19 @@ class BaseGrid():
         output.append("<<")
         # size
         output.append(self.ps_size)
+        # make field lookup
+        field_for_position: dict[Position, int] = {}
+        if field:
+            for i, frontier in enumerate(field):
+                for position in frontier:
+                    field_for_position[position] = i
         # cells
         output.append("/cells [")
         for k, v in self._grid.items():
             walls = self.walls_for_cell(v)
             walls_text = ps_list([str(w).lower() for w in walls])
-            output.append(f"[ {ps_list(k)} {walls_text} ]")
+            field_text = str(field_for_position.get(k, 0))
+            output.append(ps_list([ ps_list(k), walls_text, field_text ]))
         output.append("]")
         if path:
             output.append("/path ")

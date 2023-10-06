@@ -8,7 +8,7 @@
 /drawmaze { /grid arg
     % 0 0 grid /width get grid /height get box stroke
     /getcenter { /position arg
-        [ position { 0.5 add } forall ]
+        [ position 0 2 getinterval { 0.5 add } forall ]
     } def
     /inset 0.1 def
     /getcellpath { /walls arg /position arg
@@ -54,7 +54,7 @@
     /octagon_offset 0.5 22.5 tan mul def
     /diamond_offset 0.5 octagon_offset sub def
     /getcenter { /position arg
-        [ position { 2 div 0.5 add } forall ]
+        [ position 0 2 getinterval { 2 div 0.5 add } forall ]
     } def
     /getcellpath { /walls arg /position arg
         position getcenter atranslate
@@ -104,7 +104,7 @@
 /drawzetamaze { /grid arg
     % 0 0 grid /width get grid /height get box stroke
     /getcenter { /position arg
-        [ position { 0.5 add } forall ]
+        [ position 0 2 getinterval { 0.5 add } forall ]
     } def
     /getcellpath { /walls arg /position arg
         position getcenter atranslate
@@ -193,7 +193,7 @@
     /drawwalls { /walls arg /position arg
         /outstart position 0 get 0 eq { 0 } { 3 } ifelse def
         outstart 0 ne {
-            position getbox aload pop /out arg /cw arg /in arg /ccw arg
+            position 0 2 getinterval getbox aload pop /out arg /cw arg /in arg /ccw arg
             walls 0 get { in ccw pgoto out ccw pgoto stroke } if
             walls 1 get { in ccw pgoto in cw pgoto stroke } if
             walls 2 get { in cw pgoto out cw pgoto stroke } if
@@ -311,7 +311,7 @@
 
     /drawwalls { /walls arg /position arg
         position getcenter atranslate
-        position aload pop add 3 mymod cvi /tritype arg
+        position 0 2 getinterval aload pop add 3 mymod cvi /tritype arg
         tritype 1 eq {
             0 setsinebowcolor doot
         } {

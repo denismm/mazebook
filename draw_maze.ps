@@ -31,9 +31,12 @@
             gsave
                 i 0 sub 90 mul rotate
                 walls i get {
-                    0.5 inset sub dup neg goto
-                    0.5 inset sub dup goto
-                    stroke
+                    % don't draw walls for link cells
+                    position length 3 ne {
+                        0.5 inset sub dup neg goto
+                        0.5 inset sub dup goto
+                        stroke
+                    } if
                 } {
                     0.5 inset sub dup neg goto
                     0.5 dup inset sub neg goto

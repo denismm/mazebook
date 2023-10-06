@@ -23,6 +23,7 @@ parser.add_argument('-o', '--output', default="ascii", help="the output format",
 parser.add_argument('-n', '--name', help="the name to use for the output if generating a png")
 parser.add_argument('-f', '--field', action='store_true', help="whether to include a field of distances from the far point")
 parser.add_argument('-p', '--path', action='store_true', help="whether to include the path from the far point to the other far point")
+parser.add_argument('-w', '--weave', action='store_true', help="whether to weave links above and below other links")
 parser.add_argument('-s', '--seed', help="if provided, the seed for the rng")
 parser.add_argument('-b', '--braid', type=float, help="the proportion of dead ends to braid")
 
@@ -65,6 +66,8 @@ elif os.access(args.size, os.R_OK):
         grid = RectGrid.from_mask_txt(mask_filename)
 else:
     raise ValueError(f"invalid size {args.size}")
+
+grid.set_weave(args.weave)
 
 grid.generate_maze(args.algorithm)
 if args.braid:

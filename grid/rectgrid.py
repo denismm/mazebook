@@ -1,6 +1,6 @@
 # grids with cells in a square layout
 
-from positions import Position, Direction, cardinal_directions, add_direction
+from positions import Position, Direction, cardinal_directions, add_direction, manhattan
 from typing import Optional
 
 from .maze import Cell, BaseGrid, ps_list
@@ -47,9 +47,10 @@ class RectBaseGrid(BaseGrid):
     def walls_for_cell(self, cell: Cell) -> list[bool]:
         walls: list[bool] = []
         position = cell.position
+        flat_links = [p[:2] for p in cell.links]
         neighbor_directions = self.neighbor_directions_for_start(position)
         for dir in neighbor_directions:
-            walls.append(add_direction(position, dir) not in cell.links)
+            walls.append(add_direction(position, dir) not in flat_links)
         return walls
 
 class RectGrid(RectBaseGrid):
@@ -65,6 +66,45 @@ class RectGrid(RectBaseGrid):
                 self._grid[position] = Cell(position)
 
     ps_function: str = "drawmaze"
+
+    def pos_neighbors_for_walls(self, start: Position) -> list[Position]:
+        return super().pos_neighbors(start)
+
+    def pos_neighbors(self, start: Position) -> list[Position]:
+        if not self.weave:
+            return super().pos_neighbors(start)
+        # for each direction, check for weave-ability
+        neighbors: list[Position] = []
+        for dir in self.neighbor_directions_for_start(start):
+            target_pos = add_direction(start, dir)
+            if target_pos not in self:
+                continue
+            target_cell = self[target_pos]
+            # is this already connected?
+            link_count = len(target_cell.links)
+            # only tunnelable if straight across
+            if link_count != 2:
+                neighbors.append(target_pos)
+                continue
+            other_side = add_direction(target_pos, dir)
+            if other_side in self:
+                if not ({start, other_side} & set(target_cell.links)):
+                    # tunnel ok!
+                    neighbors.append(other_side)
+        return neighbors
+
+    def connect(self, first: Position, second: Position) -> None:
+        # what if there's a distance between the two cells?
+        if manhattan(first, second) == 1:
+            return super().connect(first, second)
+        # link square is between both, add third dimension
+        link_pos: Position = tuple([
+            (a+b) // 2 for a, b in zip (first, second)
+        ] + [1])
+        link_cell = Cell(link_pos)
+        self._grid[link_pos] = link_cell
+        self.connect(first, link_pos)
+        self.connect(second, link_pos)
 
     @classmethod
     def from_mask_txt(cls, filename: str) -> 'RectGrid':

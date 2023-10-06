@@ -2,7 +2,7 @@ from positions import Position, Direction, cardinal_directions, add_direction
 import random
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Any
+from typing import Any, Optional
 
 class Cell():
     def __init__(self, location: Position) -> None:
@@ -18,8 +18,9 @@ def ps_list(iterable: Iterable[Any]) -> str:
 
 GridMask = set[Position]
 class BaseGrid():
-    def __init__(self) -> None:
+    def __init__(self, weave: Optional[bool] = False) -> None:
         self._grid: dict[Position, Cell] = {}
+        self.weave = weave
 
     algorithms = {}
 
@@ -31,6 +32,9 @@ class BaseGrid():
 
     def __len__(self) -> int:
         return len(self._grid)
+
+    def set_weave(self, weave: bool):
+        self.weave = weave
 
     def connect(self, first: Position, second: Position) -> None:
         self._grid[first].add_link(second)
@@ -152,7 +156,9 @@ class BaseGrid():
                     field_for_position[position] = i
         # cells
         output.append("/cells [")
-        for k, v in self._grid.items():
+        # draw link cells first
+        for k in sorted(self._grid.keys(), key=lambda p: -(len(p))):
+            v = self._grid[k]
             walls = self.walls_for_cell(v)
             walls_text = ps_list([str(w).lower() for w in walls])
             field_text = str(field_for_position.get(k, 0))

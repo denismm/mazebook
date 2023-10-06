@@ -42,6 +42,9 @@ class BaseGrid():
     def pos_neighbors(self, start: Position) -> list[Position]:
         raise ValueError("abstract method not overridden")
 
+    def pos_neighbors_for_walls(self, start: Position) -> list[Position]:
+        return self.pos_neighbors(start)
+
     def dijkstra(self, start: Position) -> list[set[Position]]:
         seen: set[Position] = {start}
         far_points: list[set[Position]] = [{start}]

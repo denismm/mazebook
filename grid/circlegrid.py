@@ -67,7 +67,7 @@ class CircleGrid(SingleSizeGrid):
     def walls_for_cell(self, cell: Cell) -> list[bool]:
         walls: list[bool] = []
         position = cell.position
-        for npos in self.pos_neighbors(position):
+        for npos in self.pos_neighbors_for_walls(position):
             walls.append(npos not in cell.links)
         if position[0] == self.radius:
             walls.append(True)

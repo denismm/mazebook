@@ -10,7 +10,6 @@
     /getcenter { /position arg
         [ position 0 2 getinterval { 0.5 add } forall ]
     } def
-    /inset 0.1 def
     /getcellpath { /walls arg /position arg
         position getcenter atranslate
         /walls_i 0 def
@@ -149,6 +148,8 @@
 
     /widths grid /widths get def
     /radius widths length def
+
+    (L) set_polar_corner_mode
 
     /getcenter {
         2 dict begin
@@ -340,6 +341,11 @@
     gsave
         0.1 setlinewidth 1 setlinecap 1 setlinejoin
 
+        grid /weave known {
+            0.1
+        } {
+            0
+        } ifelse /inset arg
         grid /field known {
             /fieldstep grid /field get length 1 sub recip def
         } if

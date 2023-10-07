@@ -159,6 +159,8 @@ class BaseGrid():
             for i, frontier in enumerate(field):
                 for position in frontier:
                     field_for_position[position] = i
+        if self.weave:
+            output.append("/weave true")
         # cells
         output.append("/cells [")
         # draw link cells first

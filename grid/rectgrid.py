@@ -47,7 +47,7 @@ class RectBaseGrid(BaseGrid):
     def walls_for_cell(self, cell: Cell) -> list[bool]:
         walls: list[bool] = []
         position = cell.position
-        flat_links = [p[:2] for p in cell.links]
+        flat_links = cell.flat_links
         neighbor_directions = self.neighbor_directions_for_start(position)
         for dir in neighbor_directions:
             walls.append(add_direction(position, dir) not in flat_links)
@@ -88,7 +88,7 @@ class RectGrid(RectBaseGrid):
                 continue
             other_side = add_direction(target_pos, dir)
             if other_side in self:
-                if not ({start, other_side} & set(target_cell.links)):
+                if not ({start, other_side} & target_cell.flat_links):
                     # tunnel ok!
                     neighbors.append(other_side)
         return neighbors

@@ -12,6 +12,11 @@ class Cell():
     def add_link(self, link: Position) -> None:
         self.links.add(link)
 
+    @property
+    def flat_links(self) -> set[Position]:
+        # for weaving it can be useful to ignore the 3rd coord of a link
+        return set([p[:2] for p in self.links])
+
 # convenience for ps printing
 def ps_list(iterable: Iterable[Any]) -> str:
     return '[' + ' '.join([str(x) for x in iterable]) + ']'
@@ -33,7 +38,7 @@ class BaseGrid():
     def __len__(self) -> int:
         return len(self._grid)
 
-    def set_weave(self, weave: bool):
+    def set_weave(self, weave: bool) -> None:
         self.weave = weave
 
     def connect(self, first: Position, second: Position) -> None:

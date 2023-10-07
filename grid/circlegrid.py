@@ -53,10 +53,10 @@ class CircleGrid(SingleSizeGrid):
         r, theta = start
         neighbors: list[Position] = []
         if r > 0:
-            # left, down, right
-            neighbors.append((r, (theta - 1) % self.widths[r]))
-            neighbors.append((r - 1, theta // self.ratios[r]))
+            # right, down, left
             neighbors.append((r, (theta + 1) % self.widths[r]))
+            neighbors.append((r - 1, theta // self.ratios[r]))
+            neighbors.append((r, (theta - 1) % self.widths[r]))
         if r < self.radius:
             next_ratio = self.ratios[r + 1]
             neighbors += [(r + 1, theta * next_ratio + x) for x in range(next_ratio)]

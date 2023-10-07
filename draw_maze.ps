@@ -166,6 +166,7 @@
 
     /getbox {
         % given a ring/cell coordinate, return ccw, in, cw, out dimensions
+        % of the entire box, not including insets
         % not valid for ring 0
         2 dict begin
             /coord arg
@@ -178,18 +179,88 @@
             [ccw in cw out]
         end
     } def
+    /ao 10 dict def
+    /get_ao { /query_rad arg
+        ao query_rad known not {
+            ao query_rad
+                inset query_rad div asin 
+            put
+        } if
+        ao query_rad get
+    } def
+    /ao_point { /direction arg /angle arg /rad arg
+        rad angle rad get_ao direction mul add
+    } def
     /getcellpath { /walls arg /position arg
-        position 0 get 0 ne {
-            /box position getbox def
-            box 1 get box 0 get pgoto
-            box 3 get box 0 get pgoto
-            box 3 get box 2 get pgoto
-            box 1 get box 2 get pgoto
-            box 1 get box 0 get pgoto
-            closepath
+        inset 0 eq {
+            position 0 get 0 ne {
+                /cbox position getbox def
+                cbox 1 get cbox 0 get pgoto
+                cbox 3 get cbox 0 get pgoto
+                cbox 3 get cbox 2 get pgoto
+                cbox 1 get cbox 2 get pgoto
+                cbox 1 get cbox 0 get pgoto
+                closepath
+            } {
+                0 0 0.5 circle closepath
+            } ifelse
         } {
-            0 0 0.5 circle closepath
-        }ifelse
+            % deal with insets
+            /outstart position 0 get 0 eq { 0 } { 3 } ifelse def
+            % figure out angle offsets as we go
+            outstart 0 ne {
+                position getbox aload pop /out arg /cw arg /in arg /ccw arg
+                /nin in inset add def
+            } {
+                /ccw 0 def
+                /cw 360 def
+                /out 0.5 def
+            } ifelse
+            /nout out inset sub def
+            outstart 0 ne {
+                % side walls
+                nout cw -1 ao_point pgoto
+                walls 0 get {
+                    nin cw -1 ao_point polar goto
+                } {
+                    nout cw pgoto
+                    nin cw polar goto
+                    nin cw -1 ao_point pgoto
+                } ifelse
+                walls 1 get {
+                    nin ccw 1 ao_point pgoto
+                } {
+                    in cw -1 ao_point polar goto
+                    in ccw 1 ao_point pgoto
+                    nin ccw 1 ao_point polar goto
+                } ifelse
+                walls 2 get {
+                    nout ccw 1 ao_point polar goto
+                } {
+                    nin ccw pgoto
+                    nout ccw polar goto
+                    nout ccw 1 ao_point pgoto
+                 } ifelse
+            } if
+            /outwall_n walls length outstart sub def
+            outwall_n 0 eq {
+                nout ccw 1 ao_point pgoto
+            } {
+                /outwall_len cw ccw sub outwall_n div def
+                0 1 outwall_n 1 sub { /i arg
+                    /door_ccw i       outwall_len mul ccw add def
+                    /door_cw  i 1 add outwall_len mul ccw add def
+                    nout door_ccw 1 ao_point pgoto
+                    walls outstart i add get {
+                        nout door_cw -1 ao_point pgoto
+                    } {
+                        out door_ccw 1 ao_point polar goto
+                        out door_cw -1 ao_point pgoto
+                        nout door_cw -1 ao_point polar goto
+                    } ifelse
+                } for
+            } ifelse
+        } ifelse
     } def
 
     /mgoto { ralop pgoto } def
@@ -197,29 +268,63 @@
     /drawwalls { /walls arg /position arg
         /outstart position 0 get 0 eq { 0 } { 3 } ifelse def
         outstart 0 ne {
-            position 0 2 getinterval getbox aload pop /out arg /cw arg /in arg /ccw arg
-            walls 0 get { in ccw pgoto out ccw pgoto stroke } if
-            walls 1 get { in ccw pgoto in cw pgoto stroke } if
-            walls 2 get { in cw pgoto out cw pgoto stroke } if
-            closepath stroke
+            position getbox aload pop /out arg /cw arg /in arg /ccw arg
+            /nin in inset add def
         } {
             /ccw 0 def
             /cw 360 def
             /out 0.5 def
         } ifelse
+        /nout out inset sub def
+        nout cw -1 ao_point pgoto
+        outstart 0 ne {
+            % side walls
+            walls 0 get {
+                nin cw -1 ao_point polar goto
+            } {
+                nout cw pgoto
+                stroke
+                nin cw polar goto
+                nin cw -1 ao_point pgoto
+            } ifelse
+            walls 1 get {
+                nin ccw 1 ao_point pgoto
+            } {
+                in cw -1 ao_point polar goto
+                stroke
+                in ccw 1 ao_point pgoto
+                nin ccw 1 ao_point polar goto
+            } ifelse
+            walls 2 get {
+                nout ccw 1 ao_point polar goto
+            } {
+                nin ccw pgoto
+                stroke
+                nout ccw polar goto
+                nout ccw 1 ao_point pgoto
+             } ifelse
+        } if
         /outwall_n walls length outstart sub def
-        outwall_n 0 ne {
+        outwall_n 0 eq {
+            nout ccw 1 ao_point pgoto
+        } {
             /outwall_len cw ccw sub outwall_n div def
             0 1 outwall_n 1 sub { /i arg
+                /door_ccw i       outwall_len mul ccw add def
+                /door_cw  i 1 add outwall_len mul ccw add def
+                nout door_ccw 1 ao_point pgoto
                 walls outstart i add get {
-                    out i       outwall_len mul ccw add pgoto
-                    out i 1 add outwall_len mul ccw add pgoto stroke
-                } if
+                    nout door_cw -1 ao_point pgoto
+                } {
+                    out door_ccw 1 ao_point polar goto
+                    stroke
+                    out door_cw -1 ao_point pgoto
+                    nout door_cw -1 ao_point polar goto
+                } ifelse
             } for
-        } if
+        } ifelse
+        stroke
     } def
-
-    0 0 radius 0.5 sub circle stroke
 
     mazeengine
 

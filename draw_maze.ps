@@ -331,11 +331,17 @@
                 /door_cw  i 1 add outwall_len mul ccw add def
                 walls outstart i add get {
                     all_walls {
+                        i 0 ne {
+                            nout door_ccw -1 ao_point pgoto
+                        } if
                         nout door_ccw 1 ao_point pgoto
                         nout door_cw -1 ao_point pgoto
                         stroke
                     } if
                 } {
+                    i 0 ne {
+                        nout door_ccw -1 ao_point pgoto
+                    } if
                     nout door_ccw 1 ao_point pgoto
                     out door_ccw 1 ao_point polar goto
                     stroke

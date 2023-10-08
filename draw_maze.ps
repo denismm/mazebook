@@ -155,7 +155,7 @@
         2 dict begin
             /coord arg
             % given a (ring, cell) coordinate, return (r, theta) of center
-            coord aload pop /cell arg /ring arg
+            coord 0 2 getinterval aload pop /cell arg /ring arg
             /r ring def
             /theta ring 0 eq { 0 } {
                 widths ring get 360 exch div cell 0.5 add mul
@@ -169,7 +169,7 @@
         % of the entire box, not including insets
         % not valid for ring 0
         2 dict begin
-            /coord arg
+            0 2 getinterval /coord arg
             coord aload pop /cell arg /ring arg
             /in ring 0.5 sub def
             /out ring 0.5 add def
@@ -266,6 +266,7 @@
     /mgoto { ralop pgoto } def
 
     /drawwalls { /walls arg /position arg
+        /all_walls position length 2 eq def
         /outstart position 0 get 0 eq { 0 } { 3 } ifelse def
         outstart 0 ne {
             position getbox aload pop /out arg /cw arg /in arg /ccw arg
@@ -276,32 +277,48 @@
             /out 0.5 def
         } ifelse
         /nout out inset sub def
-        nout cw -1 ao_point pgoto
         outstart 0 ne {
             % side walls
             walls 0 get {
-                nin cw -1 ao_point polar goto
+                all_walls {
+                    nout cw -1 ao_point pgoto
+                    nin cw -1 ao_point polar goto
+                    stroke
+                } if
             } {
                 nout cw pgoto
                 stroke
                 nin cw polar goto
                 nin cw -1 ao_point pgoto
+                stroke
             } ifelse
             walls 1 get {
-                nin ccw 1 ao_point pgoto
+                all_walls {
+                    nin cw -1 ao_point pgoto
+                    nin ccw 1 ao_point pgoto
+                    stroke
+                } if
             } {
+                nin cw -1 ao_point pgoto
                 in cw -1 ao_point polar goto
                 stroke
                 in ccw 1 ao_point pgoto
                 nin ccw 1 ao_point polar goto
+                stroke
             } ifelse
             walls 2 get {
-                nout ccw 1 ao_point polar goto
+                all_walls {
+                    nin ccw 1 ao_point polar goto
+                    nout ccw 1 ao_point polar goto
+                    stroke
+                } if
             } {
+                nin ccw 1 ao_point polar goto
                 nin ccw pgoto
                 stroke
                 nout ccw polar goto
                 nout ccw 1 ao_point pgoto
+                stroke
              } ifelse
         } if
         /outwall_n walls length outstart sub def
@@ -312,14 +329,19 @@
             0 1 outwall_n 1 sub { /i arg
                 /door_ccw i       outwall_len mul ccw add def
                 /door_cw  i 1 add outwall_len mul ccw add def
-                nout door_ccw 1 ao_point pgoto
                 walls outstart i add get {
-                    nout door_cw -1 ao_point pgoto
+                    all_walls {
+                        nout door_ccw 1 ao_point pgoto
+                        nout door_cw -1 ao_point pgoto
+                        stroke
+                    } if
                 } {
+                    nout door_ccw 1 ao_point pgoto
                     out door_ccw 1 ao_point polar goto
                     stroke
                     out door_cw -1 ao_point pgoto
                     nout door_cw -1 ao_point polar goto
+                    stroke
                 } ifelse
             } for
         } ifelse

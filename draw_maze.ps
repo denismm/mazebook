@@ -282,10 +282,12 @@
             walls 0 get {
                 all_walls {
                     nout cw -1 ao_point pgoto
+                    nout cw -1 ao_point pgoto
                     nin cw -1 ao_point polar goto
                     stroke
                 } if
             } {
+                nout cw -1 ao_point pgoto
                 nout cw pgoto
                 stroke
                 nin cw polar goto
@@ -326,27 +328,27 @@
             nout ccw 1 ao_point pgoto
         } {
             /outwall_len cw ccw sub outwall_n div def
-            0 1 outwall_n 1 sub { /i arg
-                /door_ccw i       outwall_len mul ccw add def
-                /door_cw  i 1 add outwall_len mul ccw add def
-                walls outstart i add get {
+            0 1 outwall_n 1 sub { /door_i arg
+                /door_ccw door_i       outwall_len mul ccw add def
+                /door_cw  door_i 1 add outwall_len mul ccw add def
+                walls outstart door_i add get {
                     all_walls {
-                        i 0 ne {
-                            nout door_ccw -1 ao_point pgoto
-                        } if
+                        door_i 0 ne position 0 get 0 eq or { nout door_ccw pgoto } if
                         nout door_ccw 1 ao_point pgoto
                         nout door_cw -1 ao_point pgoto
+                        door_i outwall_n 1 sub ne position 0 get 0 eq or {
+                            nout door_cw pgoto
+                        } if
                         stroke
                     } if
                 } {
-                    i 0 ne {
-                        nout door_ccw -1 ao_point pgoto
-                    } if
+                    door_i 0 ne position 0 get 0 eq or { nout door_ccw pgoto } if
                     nout door_ccw 1 ao_point pgoto
                     out door_ccw 1 ao_point polar goto
                     stroke
                     out door_cw -1 ao_point pgoto
                     nout door_cw -1 ao_point polar goto
+                    door_i outwall_n 1 sub ne position 0 get 0 eq or { nout door_cw pgoto } if
                     stroke
                 } ifelse
             } for

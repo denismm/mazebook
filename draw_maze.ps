@@ -356,6 +356,9 @@
         stroke
     } def
 
+    grid /bg known {
+        0 0 radius circle fill
+    } if
     mazeengine
 
 } def
@@ -474,10 +477,21 @@
 
 /mazeengine {
     gsave
-        0.1 setlinewidth 1 setlinecap 1 setlinejoin
+        grid /linewidth known {
+            grid /linewidth get
+        } {
+            0.1
+        } ifelse
+        setlinewidth
+        1 setlinecap
+        1 setlinejoin
 
         grid /weave known {
-            0.1
+            grid /inset known {
+                grid /inset get
+            } {
+                0.1
+            } ifelse
         } {
             0
         } ifelse /inset arg
@@ -491,12 +505,22 @@
                 cell 0 get /position arg
                 cell 1 get /walls arg
                 cell 2 get /field arg
-                grid /field known {
-                    gsave
+                gsave
+                    grid /field known {
                         field fieldstep mul 360 mul setsinebowcolor
-                        position walls getcellpath fill
-                    grestore
-                } if
+                    } {
+                        grid /pathcolor known {
+                            grid /pathcolor get aload pop
+                        } {
+                            1 dup dup
+                        } ifelse
+                        setrgbcolor
+                    } ifelse
+                    position length 3 eq {
+                        1.5 darken
+                    } if
+                    position walls getcellpath fill
+                grestore
                 position walls drawwalls
             grestore
         } forall

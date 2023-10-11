@@ -23,9 +23,15 @@ def ps_list(iterable: Iterable[Any]) -> str:
 
 GridMask = set[Position]
 class BaseGrid():
-    def __init__(self, weave: Optional[bool] = False) -> None:
+    def __init__(self,
+        weave: Optional[bool] = False,
+        pathcolor: Optional[list[float]] = None,
+        bg: Optional[bool] = None,
+        linewidth: Optional[float] = None,
+        inset: Optional[float] = None,
+    ) -> None:
         self._grid: dict[Position, Cell] = {}
-        self.weave = weave
+        self.set_options(weave, pathcolor, bg, linewidth, inset)
 
     algorithms = {}
 
@@ -38,8 +44,18 @@ class BaseGrid():
     def __len__(self) -> int:
         return len(self._grid)
 
-    def set_weave(self, weave: bool) -> None:
+    def set_options(self,
+        weave: Optional[bool] = False,
+        pathcolor: Optional[list[float]] = None,
+        bg: Optional[bool] = None,
+        linewidth: Optional[float] = None,
+        inset: Optional[float] = None,
+    ) -> None:
         self.weave = weave
+        self.pathcolor = pathcolor
+        self.bg = bg
+        self.linewidth = linewidth
+        self.inset = inset
 
     def connect(self, first: Position, second: Position) -> None:
         self._grid[first].add_link(second)
@@ -161,6 +177,14 @@ class BaseGrid():
                     field_for_position[position] = i
         if self.weave:
             output.append("/weave true")
+        if self.pathcolor:
+            output.append("/pathcolor " + ps_list(self.pathcolor))
+        if self.bg:
+            output.append("/bg true")
+        if self.linewidth:
+            output.append(f"/linewidth {self.linewidth}")
+        if self.inset:
+            output.append(f"/inset {self.inset}")
         # cells
         output.append("/cells [")
         # draw link cells first

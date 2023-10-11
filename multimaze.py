@@ -26,6 +26,10 @@ parser.add_argument('-p', '--path', action='store_true', help="whether to includ
 parser.add_argument('-w', '--weave', action='store_true', help="whether to weave links above and below other links")
 parser.add_argument('-s', '--seed', help="if provided, the seed for the rng")
 parser.add_argument('-b', '--braid', type=float, help="the proportion of dead ends to braid")
+parser.add_argument('--bg', action='store_true', help="whether to draw a black background")
+parser.add_argument('--pathcolor', help="string of rgb float values for path, if no field")
+parser.add_argument('--linewidth', type=float, help="thickness of line, where 1 is the cell width")
+parser.add_argument('--inset', type=float, help="depth of inset when weave is true, where 1 is the cell width")
 
 args = parser.parse_args()
 
@@ -67,7 +71,19 @@ elif os.access(args.size, os.R_OK):
 else:
     raise ValueError(f"invalid size {args.size}")
 
-grid.set_weave(args.weave)
+option_kwargs = {}
+if args.weave:
+    option_kwargs['weave'] = True
+if args.bg:
+    option_kwargs['bg'] = True
+if args.pathcolor:
+    option_kwargs['pathcolor'] = [float(c) for c in args.pathcolor.split()]
+if args.inset:
+    option_kwargs['inset'] = args.inset
+if args.linewidth:
+    option_kwargs['linewidth'] = args.linewidth
+
+grid.set_options(**option_kwargs)
 
 grid.generate_maze(args.algorithm)
 if args.braid:

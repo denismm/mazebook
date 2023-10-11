@@ -2,6 +2,7 @@
 
 from positions import Position, Direction, cardinal_directions, add_direction, manhattan
 from typing import Optional
+import random
 
 from .maze import Cell, BaseGrid, ps_list
 
@@ -55,6 +56,7 @@ class RectBaseGrid(BaseGrid):
 
 class RectGrid(RectBaseGrid):
     outputs = {}
+    algorithms = dict(BaseGrid.algorithms)
 
     def __init__(self, height: int, width: int, mask: Optional[GridMask]=None) -> None:
         super().__init__(height, width)
@@ -212,6 +214,52 @@ class RectGrid(RectBaseGrid):
             **kwargs: str
     ) -> None:
         self.outputs[print_method](self, path, field, **kwargs)
+
+    def binary(self) -> None:
+        ne = cardinal_directions[:2]
+        # nw = cardinal_directions[1:3]
+        for j in range(self.height):
+            for i in range(self.width):
+                position = (i, j) 
+                possible_next: list[Position] = []
+                # possible_dirs = ne if j % 2 == 0 else nw
+                possible_dirs = ne
+                for direction in possible_dirs:
+                    next_position = add_direction(position, direction)
+                    if next_position in self:
+                        possible_next.append(next_position)
+                if possible_next:
+                    next_position = random.choice(possible_next)
+                    self.connect(position, next_position)
+                
+    def sidewinder(self) -> None:
+        ne = cardinal_directions[:2]
+        for j in range(self.height):
+            run: list[Position] = []
+            for i in range(self.width):
+                position = (i, j)
+                run.append(position)
+                options: list[Direction] = []
+                for direction in ne:
+                    next_position = add_direction(position, direction)
+                    if next_position in self:
+                        options.append(direction)
+                if options: 
+                    next_direction = random.choice(options)
+                    if next_direction == (0, 1):
+                        # close run and break north
+                        break_room = random.choice(run)
+                        next_position = add_direction(break_room, next_direction)
+                        self.connect(break_room, next_position)
+                        run = []
+                    else:
+                        # add next room to run
+                        next_position = add_direction(position, next_direction)
+                        self.connect(position, next_position)
+
+    algorithms['binary'] = binary               # type: ignore [assignment]
+    algorithms['sidewinder'] = sidewinder       # type: ignore [assignment]
+
 
 class ZetaGrid(RectBaseGrid):
     outputs = {}

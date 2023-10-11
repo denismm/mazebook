@@ -10,15 +10,13 @@ import re
 import os
 from typing import Any
 
-algorithms = list(BaseGrid.algorithms.keys())
-
 parser = argparse.ArgumentParser(
         prog="multimaze",
         description="Generate a maze with a variety of algorithms and a variety of outputs",
     )
 parser.add_argument('size', help="either a string like '8x10', '10@', '7s', '7d', or the filename of a text or image mask")
 
-parser.add_argument('-a', '--algorithm', default="backtrack", help="the maze algorithm to use", choices=algorithms)
+parser.add_argument('-a', '--algorithm', default="backtrack", help="the maze algorithm to use")
 parser.add_argument('-o', '--output', default="ascii", help="the output format", choices=RectGrid.outputs)
 parser.add_argument('-n', '--name', help="the name to use for the output if generating a png")
 parser.add_argument('-f', '--field', action='store_true', help="whether to include a field of distances from the far point")

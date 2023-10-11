@@ -1,14 +1,14 @@
 # grids with a central node surrounded by rings of cells
 
 from positions import Position, Direction, add_direction
-from typing import Optional
+from typing import Optional, Any
 from math import pi
 from functools import cache
 from sys import stderr
 
 from .maze import Cell, SingleSizeGrid, BaseGrid, ps_list
 
-def warn(*args, **kwargs) -> None:
+def warn(*args: Any, **kwargs: Any) -> None:
     print(*args, file=stderr, **kwargs)
 
 class CircleGrid(SingleSizeGrid):

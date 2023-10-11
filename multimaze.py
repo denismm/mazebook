@@ -71,7 +71,7 @@ elif os.access(args.size, os.R_OK):
 else:
     raise ValueError(f"invalid size {args.size}")
 
-option_kwargs = {}
+option_kwargs: dict[str, Any] = {}
 if args.weave:
     option_kwargs['weave'] = True
 if args.bg:

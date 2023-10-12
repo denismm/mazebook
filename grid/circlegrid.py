@@ -12,8 +12,6 @@ def warn(*args: Any, **kwargs: Any) -> None:
     print(*args, file=stderr, **kwargs)
 
 class CircleGrid(SingleSizeGrid):
-    outputs = {}
-
     ps_function = "drawcirclemaze"
 
     # key and value for size in draw_maze.ps
@@ -142,14 +140,3 @@ class CircleGrid(SingleSizeGrid):
         if position[0] == self.radius:
             walls.append(True)
         return walls
-
-    outputs['ps'] = BaseGrid.ps_print
-    outputs['png'] = BaseGrid.png_print
-
-    def print(self,
-            print_method: str,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        self.outputs[print_method](self, path, field, **kwargs)

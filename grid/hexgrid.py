@@ -10,8 +10,6 @@ hex_directions: tuple[Direction, ...] = (
 )
 
 class HexBaseGrid(SingleSizeGrid):
-    outputs = {}
-
     neighbor_directions: tuple[tuple[Direction, ...], ...] = ()
 
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
@@ -31,17 +29,6 @@ class HexBaseGrid(SingleSizeGrid):
         for dir in neighbor_directions:
             walls.append(add_direction(position, dir) not in cell.links)
         return walls
-
-    outputs['ps'] = BaseGrid.ps_print
-    outputs['png'] = BaseGrid.png_print
-
-    def print(self,
-            print_method: str,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        self.outputs[print_method](self, path, field, **kwargs)
 
 class HexGrid(HexBaseGrid):
     def __init__(self, radius: int) -> None:

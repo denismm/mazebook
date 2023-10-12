@@ -55,7 +55,7 @@ class RectBaseGrid(BaseGrid):
         return walls
 
 class RectGrid(RectBaseGrid):
-    outputs = {}
+    outputs = dict(BaseGrid.outputs)
     algorithms = dict(BaseGrid.algorithms)
 
     def __init__(self, height: int, width: int, mask: Optional[GridMask]=None) -> None:
@@ -203,17 +203,7 @@ class RectGrid(RectBaseGrid):
         for line in output:
             print(line)
 
-    outputs['ascii'] = ascii_print
-    outputs['ps'] = RectBaseGrid.ps_print
-    outputs['png'] = RectBaseGrid.png_print
-
-    def print(self,
-            print_method: str,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        self.outputs[print_method](self, path, field, **kwargs)
+    outputs['ascii'] = ascii_print # type: ignore [assignment]
 
     def binary(self) -> None:
         ne = cardinal_directions[:2]
@@ -262,8 +252,6 @@ class RectGrid(RectBaseGrid):
 
 
 class ZetaGrid(RectBaseGrid):
-    outputs = {}
-
     def __init__(self, height: int, width: int) -> None:
         super().__init__(height, width)
         for i in range(width):
@@ -276,20 +264,7 @@ class ZetaGrid(RectBaseGrid):
 
     ps_function: str = "drawzetamaze"
 
-    outputs['ps'] = RectBaseGrid.ps_print
-    outputs['png'] = RectBaseGrid.png_print
-
-    def print(self,
-            print_method: str,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        self.outputs[print_method](self, path, field, **kwargs)
-
 class UpsilonGrid(RectBaseGrid):
-    outputs = {}
-
     def __init__(self, height: int, width: int) -> None:
         super().__init__(height, width)
         for i in range(width):
@@ -308,14 +283,3 @@ class UpsilonGrid(RectBaseGrid):
             return ((1, 1), (-1, 1), (-1, -1), (1, -1))
 
     ps_function = "drawupsilonmaze"
-
-    outputs['ps'] = RectBaseGrid.ps_print
-    outputs['png'] = RectBaseGrid.png_print
-
-    def print(self,
-            print_method: str,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        self.outputs[print_method](self, path, field, **kwargs)

@@ -34,6 +34,7 @@ class BaseGrid():
         self.set_options(weave, pathcolor, bg, linewidth, inset)
 
     algorithms = {}
+    outputs = {}
 
     def __contains__(self, position: Position) -> bool:
         return position in self._grid
@@ -243,13 +244,16 @@ class BaseGrid():
         print(self.ps_instructions(path=path, field=field))
         print("showpage")
 
+    outputs['ps'] = ps_print
+    outputs['png'] = png_print
+
     def print(self,
-            print_method: str,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        raise ValueError("print not overridden")
+        print_method: str,
+        path: list[Position] = [],
+        field: list[set[Position]] = [],
+        **kwargs: str
+) -> None:
+        self.outputs[print_method](self, path, field, **kwargs)
 
     def aldous_broder(self) -> None:
         current: Position = self.random_point()

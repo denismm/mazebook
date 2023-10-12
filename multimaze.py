@@ -60,7 +60,10 @@ if m := re.match(r'(\d+)x(\d+)([guz]?)$', args.size):
 elif m := re.match(r'(\d+)([\@sd])$', args.size):
     size = int(m.group(1))
     single_size_grid_type = ssg_for_char[m.group(2)]
-    grid = single_size_grid_type(size, firstring=args.firstring)
+    if args.firstring and single_size_grid_type == CircleGrid:
+        grid = CircleGrid(size, firstring=args.firstring)
+    else:
+        grid = single_size_grid_type(size)
 elif os.access(args.size, os.R_OK):
     mask_filename = args.size
     if mask_filename[-4:] == '.png':

@@ -46,7 +46,7 @@ class HexGrid(HexBaseGrid):
     def size_dict(self) -> dict[str, int | list[int]]:
         return {"radius": self.radius}
 
-    ps_function: str = "drawhexmaze"
+    maze_type = "hexmaze"
 
     @property
     def png_alignment(self) -> list[str]:
@@ -79,7 +79,7 @@ class TriGrid(HexBaseGrid):
     def size_dict(self) -> dict[str, int | list[int]]:
         return {"width": self.width}
 
-    ps_function: str = "drawtrimaze"
+    maze_type = "trimaze"
 
     @property
     def png_alignment(self) -> list[str]:

@@ -67,7 +67,7 @@ class RectGrid(RectBaseGrid):
                     continue
                 self._grid[position] = Cell(position)
 
-    ps_function: str = "drawmaze"
+    maze_type = "rectmaze"
 
     def pos_neighbors_for_walls(self, start: Position) -> list[Position]:
         return super().pos_neighbors(start)
@@ -262,7 +262,7 @@ class ZetaGrid(RectBaseGrid):
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
         return ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1))
 
-    ps_function: str = "drawzetamaze"
+    maze_type = "zetamaze"
 
 class UpsilonGrid(RectBaseGrid):
     def __init__(self, height: int, width: int) -> None:
@@ -282,4 +282,4 @@ class UpsilonGrid(RectBaseGrid):
         else:
             return ((1, 1), (-1, 1), (-1, -1), (1, -1))
 
-    ps_function = "drawupsilonmaze"
+    maze_type = "upsilonmaze"

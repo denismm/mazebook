@@ -145,8 +145,8 @@ class BaseGrid():
             except ValueError:
                 pass
 
-    # function in draw_maze.ps to draw this kind of grid
-    ps_function: str = ""
+    # function in draw_maze.ps to draw this kind of grid will be "draw" + this
+    maze_type = ""
 
     # key and value for size in draw_maze.ps
     @property
@@ -213,7 +213,7 @@ class BaseGrid():
                     ps_list(position) for position in frontier
                 ]) for frontier in field
             ]))
-        output.append(f">> {self.ps_function}")
+        output.append(f">> draw{self.maze_type}")
         return "\n".join(output)
 
     def walls_for_cell(self, cell: Cell) -> list[bool]:
@@ -268,7 +268,7 @@ class BaseGrid():
             output_data['path'] = path
         if field:
             output_data['field'] = [list(x) for x in field]
-        output_data['mazetype'] = self.ps_function
+        output_data['maze_type'] = self.maze_type
         print(json.dumps(output_data))
 
     outputs['ps'] = ps_print

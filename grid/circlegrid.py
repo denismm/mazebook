@@ -12,7 +12,7 @@ def warn(*args: Any, **kwargs: Any) -> None:
     print(*args, file=stderr, **kwargs)
 
 class CircleGrid(SingleSizeGrid):
-    ps_function = "drawcirclemaze"
+    maze_type = "circlemaze"
 
     # key and value for size in draw_maze.ps
     @property

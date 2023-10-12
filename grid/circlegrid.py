@@ -16,8 +16,8 @@ class CircleGrid(SingleSizeGrid):
 
     # key and value for size in draw_maze.ps
     @property
-    def ps_size(self) -> str:
-        return f"/radius {self.radius} /widths {ps_list(self.widths)}"
+    def size_dict(self) -> dict[str, int | list[int]]:
+        return {'radius': self.radius, 'widths':  self.widths}
 
     # ps command to size and align ps output
     @property

@@ -42,8 +42,8 @@ class RectBaseGrid(BaseGrid):
         return output
 
     @property
-    def ps_size(self) -> str:
-        return f"/width {self.width} /height {self.height}"
+    def size_dict(self) -> dict[str, int | list[int]]:
+        return {"width": self.width, "height": self.height}
 
     def walls_for_cell(self, cell: Cell) -> list[bool]:
         walls: list[bool] = []

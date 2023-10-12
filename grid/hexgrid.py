@@ -43,8 +43,8 @@ class HexGrid(HexBaseGrid):
     neighbor_directions: tuple[tuple[Direction, ...], ...] = (hex_directions,)
 
     @property
-    def ps_size(self) -> str:
-        return f"/radius {self.radius}"
+    def size_dict(self) -> dict[str, int | list[int]]:
+        return {"radius": self.radius}
 
     ps_function: str = "drawhexmaze"
 
@@ -76,8 +76,8 @@ class TriGrid(HexBaseGrid):
         )
 
     @property
-    def ps_size(self) -> str:
-        return f"/width {self.width}"
+    def size_dict(self) -> dict[str, int | list[int]]:
+        return {"width": self.width}
 
     ps_function: str = "drawtrimaze"
 

@@ -29,7 +29,7 @@ class CircleGrid(SingleSizeGrid):
     def png_alignment(self) -> list[str]:
         return [str(-1 * (self.radius + 0.65)), 'd', 'd', 'd']
 
-    def __init__(self, radius: int) -> None:
+    def __init__(self, radius: int, firstring: Optional[int] = None) -> None:
         super().__init__(radius)
         self.radius = radius
         self.widths: list[int] = [1]
@@ -37,12 +37,16 @@ class CircleGrid(SingleSizeGrid):
         # positions in CircleGrid are (r, theta)
         self._grid[(0,0)] = Cell((0,0))
         for r in range(1,radius + 1):
-            # for now, use algorithm from book
-            circumference = r * pi * 2
-            last_width = self.widths[r - 1]
-            estimated_cell_width = circumference / last_width
-            ratio = round(estimated_cell_width)
-            width = last_width * ratio
+            if r == 1 and firstring is not None:
+                width = firstring
+                ratio = width
+            else:
+                # for now, use algorithm from book
+                circumference = r * pi * 2
+                last_width = self.widths[r - 1]
+                estimated_cell_width = circumference / last_width
+                ratio = round(estimated_cell_width)
+                width = last_width * ratio
             self.widths.append(width)
             self.ratios.append(ratio)
             for theta in range(width):

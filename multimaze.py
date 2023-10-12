@@ -28,6 +28,7 @@ parser.add_argument('--bg', action='store_true', help="whether to draw a black b
 parser.add_argument('--pathcolor', help="string of rgb float values for path, if no field")
 parser.add_argument('--linewidth', type=float, help="thickness of line, where 1 is the cell width")
 parser.add_argument('--inset', type=float, help="depth of inset when weave is true, where 1 is the cell width")
+parser.add_argument('--firstring', type=int, help="cells in the first non-trivial ring of a circular maze")
 
 args = parser.parse_args()
 
@@ -59,7 +60,7 @@ if m := re.match(r'(\d+)x(\d+)([guz]?)$', args.size):
 elif m := re.match(r'(\d+)([\@sd])$', args.size):
     size = int(m.group(1))
     single_size_grid_type = ssg_for_char[m.group(2)]
-    grid = single_size_grid_type(size)
+    grid = single_size_grid_type(size, firstring=args.firstring)
 elif os.access(args.size, os.R_OK):
     mask_filename = args.size
     if mask_filename[-4:] == '.png':

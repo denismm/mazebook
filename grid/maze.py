@@ -3,6 +3,7 @@ import random
 from collections import defaultdict
 from collections.abc import Iterable
 from typing import Any, Optional
+import json
 
 class Cell():
     def __init__(self, location: Position) -> None:
@@ -248,8 +249,31 @@ class BaseGrid():
         print(self.ps_instructions(path=path, field=field))
         print("showpage")
 
+    def json_print(self,
+            path: list[Position] = [],
+            field: list[set[Position]] = [],
+            **kwargs: str
+    ) -> None:
+        output_data: dict[str, Any] = {}
+        # size
+        output_data.update(self.size_dict)
+        if self.weave:
+            output_data['weave'] = True
+        output_cells: list[dict[str, Position | list[Position]]] = []
+        for k, v in self._grid.items():
+            cell_info: dict[str, Position| list[Position]] = {"position": k, "links": list(v.links)}
+            output_cells.append(cell_info)
+        output_data['cells'] = output_cells
+        if path:
+            output_data['path'] = path
+        if field:
+            output_data['field'] = [list(x) for x in field]
+        output_data['mazetype'] = self.ps_function
+        print(json.dumps(output_data))
+
     outputs['ps'] = ps_print
     outputs['png'] = png_print
+    outputs['json'] = json_print
 
     def print(self,
         print_method: str,

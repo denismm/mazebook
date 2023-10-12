@@ -199,7 +199,8 @@ class BaseGrid():
             walls = self.walls_for_cell(v)
             walls_text = ps_list([str(w).lower() for w in walls])
             field_text = str(field_for_position.get(k, 0))
-            output.append(ps_list([ ps_list(k), walls_text, field_text ]))
+            links_text = ps_list(v.links)
+            output.append(ps_list([ ps_list(k), walls_text, field_text ]) + f" % {links_text}")
         output.append("]")
         if path:
             output.append("/path ")

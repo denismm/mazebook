@@ -32,7 +32,9 @@ class CircleGrid(SingleSizeGrid):
     def __init__(self, radius: int, firstring: Optional[int] = None) -> None:
         super().__init__(radius)
         self.radius = radius
+        # width of ring r
         self.widths: list[int] = [1]
+        # for convenience: width of ring r / width of ring r-1
         self.ratios: list[int] = [0]
         # positions in CircleGrid are (r, theta)
         self._grid[(0,0)] = Cell((0,0))
@@ -84,8 +86,8 @@ class CircleGrid(SingleSizeGrid):
             if target_pos not in self:
                 continue
             target_r, target_theta = target_pos
+            # not tunnelable if not square
             if target_r + 1 >= len(self.ratios) or self.ratios[target_r + 1] != 1:
-                # not tunnelable if not square
                 neighbors.append(target_pos)
                 continue
             target_cell = self[target_pos]
@@ -127,8 +129,9 @@ class CircleGrid(SingleSizeGrid):
                     1
                 )
         else:
-            # different rings but this is one below whichever is higher
-            link_pos = (max([first[0], second[0]]) - 1, first[1], 1)
+            # different rings but this is one in from whichever is higher
+            higher = max([first, second])
+            link_pos = (higher[0] - 1, higher[1], 1)
 
         link_cell = Cell(link_pos)
         self._grid[link_pos] = link_cell

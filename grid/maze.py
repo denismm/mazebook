@@ -150,7 +150,7 @@ class BaseGrid():
 
     # key and value for size in draw_maze.ps
     @property
-    def size_dict(self) -> dict[str, int | list[int]]:
+    def size_dict(self) -> dict[str, int | bool | list[int]]:
         raise ValueError("not overridden")
 
     # ps command to align ps output
@@ -173,6 +173,8 @@ class BaseGrid():
         for size_key, size_value in self.size_dict.items():
             if isinstance(size_value, list):
                 output.append(f"/{size_key} {ps_list(size_value)}")
+            elif isinstance(size_value, bool):
+                output.append(f"/{size_key} {str(size_value).lower()}")
             elif isinstance(size_value, int):
                 output.append(f"/{size_key} {size_value}")
         # make field lookup

@@ -57,13 +57,14 @@ if m := re.match(r'(\d+)x(\d+)([guz]?)$', args.size):
     height, width = [int(x) for x in m.groups()[:2]]
     rect_grid_type = rg_for_char[m.group(3)]
     grid = rect_grid_type(height, width)
-elif m := re.match(r'(\d+)([\@sd])$', args.size):
+elif m := re.match(r'(\d+)([sd])$', args.size):
     size = int(m.group(1))
     single_size_grid_type = ssg_for_char[m.group(2)]
-    if args.firstring and single_size_grid_type == CircleGrid:
-        grid = CircleGrid(size, firstring=args.firstring)
-    else:
-        grid = single_size_grid_type(size)
+    grid = single_size_grid_type(size)
+elif m := re.match(r'(\d+)([\@o])$', args.size):
+    size = int(m.group(1))
+    center_cell = (m.group(2) == '@')
+    grid = CircleGrid(size, firstring=args.firstring, center_cell=center_cell)
 elif os.access(args.size, os.R_OK):
     mask_filename = args.size
     if mask_filename[-4:] == '.png':

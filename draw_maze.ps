@@ -494,11 +494,11 @@
         inset 0 eq {
             center_cell not position 0 get 0 ne or {
                 /cbox position getbox def
-                cbox 1 get cbox 0 get ggoto
-                cbox 3 get cbox 0 get ggoto
-                cbox 3 get cbox 2 get ggoto
-                cbox 1 get cbox 2 get ggoto
-                cbox 1 get cbox 0 get ggoto
+                cbox 1 get cbox 0 get ppgoto
+                cbox 3 get cbox 0 get ppgoto
+                cbox 3 get cbox 2 get ppgoto
+                cbox 1 get cbox 2 get ppgoto
+                cbox 1 get cbox 0 get ppgoto
                 closepath
             } {
                 0 0 0.5 circle closepath
@@ -523,28 +523,28 @@
             /nout out inset sub def
             outstart 0 ne {
                 % side wall
-                nout cw -1 ao_point ggoto
+                nout cw -1 ao_point ppgoto
                 walls 0 get {
                     inner_flag not {
                         nin cw -1 ao_point polypolar goto
                     } if
                 } {
-                    nout cw ggoto
+                    nout cw ppgoto
                     inner_flag {
                         innerpoint cw polypolar goto
-                        innerpoint ccw innerangle add ggoto
+                        innerpoint ccw innerangle add ppgoto
                     } {
                         nin cw polypolar goto
-                        nin cw -1 ao_point ggoto
+                        nin cw -1 ao_point ppgoto
                     } ifelse
                 } ifelse
                 % lower wall if appropriate
                 position 0 get 0 ne {
                     walls 1 get {
-                        nin ccw 1 ao_point ggoto
+                        nin ccw 1 ao_point ppgoto
                     } {
                         in cw -1 ao_point polypolar goto
-                        in ccw 1 ao_point ggoto
+                        in ccw 1 ao_point ppgoto
                         nin ccw 1 ao_point polypolar goto
                     } ifelse
                 } {
@@ -555,28 +555,28 @@
                     nout ccw 1 ao_point polypolar goto
                 } {
                     inner_flag {
-                        innerpoint ccw ggoto
+                        innerpoint ccw ppgoto
                     } {
-                        nin ccw ggoto
+                        nin ccw ppgoto
                     } ifelse
                     nout ccw polypolar goto
-                    nout ccw 1 ao_point ggoto
+                    nout ccw 1 ao_point ppgoto
                  } ifelse
             } if
             /outwall_n walls length outstart sub def
             outwall_n 0 eq {
-                nout ccw 1 ao_point ggoto
+                nout ccw 1 ao_point ppgoto
             } {
                 /outwall_len cw ccw sub outwall_n div def
                 0 1 outwall_n 1 sub { /i arg
                     /door_ccw i       outwall_len mul ccw add def
                     /door_cw  i 1 add outwall_len mul ccw add def
-                    nout door_ccw 1 ao_point ggoto
+                    nout door_ccw 1 ao_point ppgoto
                     walls outstart i add get {
-                        nout door_cw -1 ao_point ggoto
+                        nout door_cw -1 ao_point ppgoto
                     } {
                         out door_ccw 1 ao_point polypolar goto
-                        out door_cw -1 ao_point ggoto
+                        out door_cw -1 ao_point ppgoto
                         nout door_cw -1 ao_point polypolar goto
                     } ifelse
                 } for
@@ -584,7 +584,7 @@
         } ifelse
     } def
 
-    /mgoto { ggoto } def
+    /mgoto { ppgoto } def
 
     /drawwalls { /walls arg /position arg
         /all_walls position length 2 eq def
@@ -605,8 +605,8 @@
             % side walls
             walls 0 get {
                 all_walls {
-                    nout cw -1 ao_point ggoto
-                    nout cw -1 ao_point ggoto
+                    nout cw -1 ao_point ppgoto
+                    nout cw -1 ao_point ppgoto
                     inner_flag {
                         innerpoint ccw innerangle add polypolar goto
                     } {
@@ -615,30 +615,30 @@
                     stroke
                 } if
             } {
-                nout cw -1 ao_point ggoto
-                nout cw ggoto
+                nout cw -1 ao_point ppgoto
+                nout cw ppgoto
                 stroke
                 inner_flag {
                     innerpoint cw polypolar goto
-                    innerpoint ccw innerangle add ggoto
+                    innerpoint ccw innerangle add ppgoto
                 } {
                     nin cw polypolar goto
-                    nin cw -1 ao_point ggoto
+                    nin cw -1 ao_point ppgoto
                 } ifelse
                 stroke
             } ifelse
             position 0 get 0 ne {
                 walls 1 get {
                     all_walls {
-                        nin cw -1 ao_point ggoto
-                        nin ccw 1 ao_point ggoto
+                        nin cw -1 ao_point ppgoto
+                        nin ccw 1 ao_point ppgoto
                         stroke
                     } if
                 } {
-                    nin cw -1 ao_point ggoto
+                    nin cw -1 ao_point ppgoto
                     in cw -1 ao_point polypolar goto
                     stroke
-                    in ccw 1 ao_point ggoto
+                    in ccw 1 ao_point ppgoto
                     nin ccw 1 ao_point polypolar goto
                     stroke
                 } ifelse
@@ -646,7 +646,7 @@
             walls outstart 1 sub get {
                 all_walls {
                     inner_flag {
-                        innerpoint ccw innerangle add ggoto
+                        innerpoint ccw innerangle add ppgoto
                     } {
                         nin ccw 1 ao_point polypolar goto
                     } ifelse
@@ -655,21 +655,21 @@
                 } if
             } {
                 inner_flag {
-                    innerpoint ccw innerangle add ggoto
-                    innerpoint ccw ggoto
+                    innerpoint ccw innerangle add ppgoto
+                    innerpoint ccw ppgoto
                 } {
                     nin ccw 1 ao_point polypolar goto
-                    nin ccw ggoto
+                    nin ccw ppgoto
                 } ifelse
                 stroke
                 nout ccw polypolar goto
-                nout ccw 1 ao_point ggoto
+                nout ccw 1 ao_point ppgoto
                 stroke
              } ifelse
         } if
         /outwall_n walls length outstart sub def
         outwall_n 0 eq {
-            nout ccw 1 ao_point ggoto
+            nout ccw 1 ao_point ppgoto
         } {
             /full_circle position 0 get 0 eq center_cell and def
             /outwall_len cw ccw sub outwall_n div def
@@ -678,22 +678,22 @@
                 /door_cw  door_i 1 add outwall_len mul ccw add def
                 walls outstart door_i add get {
                     all_walls {
-                        door_i 0 ne full_circle or { nout door_ccw ggoto } if
-                        nout door_ccw 1 ao_point ggoto
-                        nout door_cw -1 ao_point ggoto
+                        door_i 0 ne full_circle or { nout door_ccw ppgoto } if
+                        nout door_ccw 1 ao_point ppgoto
+                        nout door_cw -1 ao_point ppgoto
                         door_i outwall_n 1 sub ne full_circle or {
-                            nout door_cw ggoto
+                            nout door_cw ppgoto
                         } if
                         stroke
                     } if
                 } {
-                    door_i 0 ne full_circle or { nout door_ccw ggoto } if
-                    nout door_ccw 1 ao_point ggoto
+                    door_i 0 ne full_circle or { nout door_ccw ppgoto } if
+                    nout door_ccw 1 ao_point ppgoto
                     out door_ccw 1 ao_point polypolar goto
                     stroke
-                    out door_cw -1 ao_point ggoto
+                    out door_cw -1 ao_point ppgoto
                     nout door_cw -1 ao_point polypolar goto
-                    door_i outwall_n 1 sub ne full_circle or { nout door_cw ggoto } if
+                    door_i outwall_n 1 sub ne full_circle or { nout door_cw ppgoto } if
                     stroke
                 } ifelse
             } for

@@ -435,21 +435,7 @@
     /radius widths length def
     /center_cell grid /center_cell get def
     /sides grid /sides get def
-    /big_angle 360 sides div def
-    /g2c {
-        /theta arg
-        /r arg
-        /pre theta big_angle div cvi big_angle mul def
-        /post pre big_angle add def
-        /sub_angle theta big_angle mymod big_angle div def
-        /x_points [pre cos r mul post cos r mul] def
-        /y_points [pre sin r mul post sin r mul] def
-        sub_angle x_points interpolate
-        sub_angle y_points interpolate
-    } def
-    /ggoto {
-        g2c goto
-    } def
+    sides set_polypolar_sides
 
     /getcenter {
         2 dict begin
@@ -540,15 +526,15 @@
                 nout cw -1 ao_point ggoto
                 walls 0 get {
                     inner_flag not {
-                        nin cw -1 ao_point g2c goto
+                        nin cw -1 ao_point polypolar goto
                     } if
                 } {
                     nout cw ggoto
                     inner_flag {
-                        innerpoint cw g2c goto
+                        innerpoint cw polypolar goto
                         innerpoint ccw innerangle add ggoto
                     } {
-                        nin cw g2c goto
+                        nin cw polypolar goto
                         nin cw -1 ao_point ggoto
                     } ifelse
                 } ifelse
@@ -557,23 +543,23 @@
                     walls 1 get {
                         nin ccw 1 ao_point ggoto
                     } {
-                        in cw -1 ao_point g2c goto
+                        in cw -1 ao_point polypolar goto
                         in ccw 1 ao_point ggoto
-                        nin ccw 1 ao_point g2c goto
+                        nin ccw 1 ao_point polypolar goto
                     } ifelse
                 } {
-                    innerpoint ccw innerangle add g2c goto
+                    innerpoint ccw innerangle add polypolar goto
                 } ifelse
                 % other side
                 walls outstart 1 sub get {
-                    nout ccw 1 ao_point g2c goto
+                    nout ccw 1 ao_point polypolar goto
                 } {
                     inner_flag {
                         innerpoint ccw ggoto
                     } {
                         nin ccw ggoto
                     } ifelse
-                    nout ccw g2c goto
+                    nout ccw polypolar goto
                     nout ccw 1 ao_point ggoto
                  } ifelse
             } if
@@ -589,9 +575,9 @@
                     walls outstart i add get {
                         nout door_cw -1 ao_point ggoto
                     } {
-                        out door_ccw 1 ao_point g2c goto
+                        out door_ccw 1 ao_point polypolar goto
                         out door_cw -1 ao_point ggoto
-                        nout door_cw -1 ao_point g2c goto
+                        nout door_cw -1 ao_point polypolar goto
                     } ifelse
                 } for
             } ifelse
@@ -622,9 +608,9 @@
                     nout cw -1 ao_point ggoto
                     nout cw -1 ao_point ggoto
                     inner_flag {
-                        innerpoint ccw innerangle add g2c goto
+                        innerpoint ccw innerangle add polypolar goto
                     } {
-                        nin cw -1 ao_point g2c goto
+                        nin cw -1 ao_point polypolar goto
                     } ifelse
                     stroke
                 } if
@@ -633,10 +619,10 @@
                 nout cw ggoto
                 stroke
                 inner_flag {
-                    innerpoint cw g2c goto
+                    innerpoint cw polypolar goto
                     innerpoint ccw innerangle add ggoto
                 } {
-                    nin cw g2c goto
+                    nin cw polypolar goto
                     nin cw -1 ao_point ggoto
                 } ifelse
                 stroke
@@ -650,10 +636,10 @@
                     } if
                 } {
                     nin cw -1 ao_point ggoto
-                    in cw -1 ao_point g2c goto
+                    in cw -1 ao_point polypolar goto
                     stroke
                     in ccw 1 ao_point ggoto
-                    nin ccw 1 ao_point g2c goto
+                    nin ccw 1 ao_point polypolar goto
                     stroke
                 } ifelse
             } if
@@ -662,9 +648,9 @@
                     inner_flag {
                         innerpoint ccw innerangle add ggoto
                     } {
-                        nin ccw 1 ao_point g2c goto
+                        nin ccw 1 ao_point polypolar goto
                     } ifelse
-                    nout ccw 1 ao_point g2c goto
+                    nout ccw 1 ao_point polypolar goto
                     stroke
                 } if
             } {
@@ -672,11 +658,11 @@
                     innerpoint ccw innerangle add ggoto
                     innerpoint ccw ggoto
                 } {
-                    nin ccw 1 ao_point g2c goto
+                    nin ccw 1 ao_point polypolar goto
                     nin ccw ggoto
                 } ifelse
                 stroke
-                nout ccw g2c goto
+                nout ccw polypolar goto
                 nout ccw 1 ao_point ggoto
                 stroke
              } ifelse
@@ -703,10 +689,10 @@
                 } {
                     door_i 0 ne full_circle or { nout door_ccw ggoto } if
                     nout door_ccw 1 ao_point ggoto
-                    out door_ccw 1 ao_point g2c goto
+                    out door_ccw 1 ao_point polypolar goto
                     stroke
                     out door_cw -1 ao_point ggoto
-                    nout door_cw -1 ao_point g2c goto
+                    nout door_cw -1 ao_point polypolar goto
                     door_i outwall_n 1 sub ne full_circle or { nout door_cw ggoto } if
                     stroke
                 } ifelse

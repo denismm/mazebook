@@ -428,6 +428,308 @@
 
 } def
 
+/drawpolygonmaze { /grid arg
+    % grid fields:
+    % widths: array of ints, counting cells in each ring (from the middle out)
+    % sides: number of sides of the polygon, must divide into widths
+    % centercell: true if 0,0 is a single shape in the middle
+    % cells: list of lists containing coord (ring, cell) then list of boolean walls for ccw, in, cw, outs
+
+    /widths grid /widths get def
+    /radius widths length def
+    /center_cell grid /center_cell get def
+    /sides grid /sides get def
+    /big_angle 360 sides div def
+    /g2c {
+        /theta arg
+        /r arg
+        /pre theta big_angle div cvi big_angle mul def
+        /post pre big_angle add def
+        /sub_angle theta big_angle mymod big_angle div def
+        /x_points [pre cos r mul post cos r mul] def
+        /y_points [pre sin r mul post sin r mul] def
+        sub_angle x_points interpolate
+        sub_angle y_points interpolate
+    } def
+    /ggoto {
+        g2c goto
+    } def
+
+    /getcenter {
+        2 dict begin
+            /coord arg
+            % given a (ring, cell) coordinate, return (r, theta) of center
+            coord 0 2 getinterval aload pop /cell arg /ring arg
+            /r ring def
+            /theta center_cell ring 0 eq and { 0 } {
+                widths ring get 360 exch div cell
+                center_cell {
+                    0.5 add
+                } ifelse
+                mul
+            } ifelse def
+            [ r theta g2c]
+        end
+    } def
+
+    /getbox {
+        % given a ring/cell coordinate, return ccw, in, cw, out dimensions
+        % of the entire box, not including insets
+        % not valid for center cell
+        2 dict begin
+            0 2 getinterval /coord arg
+            coord aload pop /cell arg /ring arg
+            /out ring center_cell {0.5 add} {1 add} ifelse def
+            /in out 1 sub def
+            /turn widths ring get 360 exch div def
+            /ccw cell turn mul def
+            /cw cell 1 add turn mul def
+            [ccw in cw out]
+        end
+    } def
+    /ao 10 dict def
+    % special handling for 0
+    ao 0 0 put
+    /get_ao { /query_rad arg
+        ao query_rad known not {
+            ao query_rad
+                inset query_rad div asin
+            put
+        } if
+        ao query_rad get
+    } def
+    /ao_point { /direction arg /angle arg /rad arg
+        rad angle rad get_ao direction mul add
+    } def
+
+    /getcellpath { /walls arg /position arg
+        % sometimes we need a special lowest point
+        center_cell not inset 0 ne and {
+            /innerangle where {
+                pop
+            } {
+                /innerangle 360 widths 0 get div half def
+                /innerpoint inset innerangle sin div def
+            } ifelse
+        } if
+
+        inset 0 eq {
+            center_cell not position 0 get 0 ne or {
+                /cbox position getbox def
+                cbox 1 get cbox 0 get ggoto
+                cbox 3 get cbox 0 get ggoto
+                cbox 3 get cbox 2 get ggoto
+                cbox 1 get cbox 2 get ggoto
+                cbox 1 get cbox 0 get ggoto
+                closepath
+            } {
+                0 0 0.5 circle closepath
+            } ifelse
+        } {
+            % deal with insets
+            /outstart position 0 get 0 eq {
+                center_cell { 0 } { 2 } ifelse
+            } { 3 } ifelse def
+            % flag for innerpoint handling
+            /inner_flag position 0 get 0 eq center_cell not and def
+
+            % figure out angle offsets as we go
+            outstart 0 ne {
+                position getbox aload pop /out arg /cw arg /in arg /ccw arg
+                /nin in inset add def
+            } {
+                /ccw 0 def
+                /cw 360 def
+                /out 0.5 def
+            } ifelse
+            /nout out inset sub def
+            outstart 0 ne {
+                % side wall
+                nout cw -1 ao_point ggoto
+                walls 0 get {
+                    inner_flag not {
+                        nin cw -1 ao_point g2c goto
+                    } if
+                } {
+                    nout cw ggoto
+                    inner_flag {
+                        innerpoint cw g2c goto
+                        innerpoint ccw innerangle add ggoto
+                    } {
+                        nin cw g2c goto
+                        nin cw -1 ao_point ggoto
+                    } ifelse
+                } ifelse
+                % lower wall if appropriate
+                position 0 get 0 ne {
+                    walls 1 get {
+                        nin ccw 1 ao_point ggoto
+                    } {
+                        in cw -1 ao_point g2c goto
+                        in ccw 1 ao_point ggoto
+                        nin ccw 1 ao_point g2c goto
+                    } ifelse
+                } {
+                    innerpoint ccw innerangle add g2c goto
+                } ifelse
+                % other side
+                walls outstart 1 sub get {
+                    nout ccw 1 ao_point g2c goto
+                } {
+                    inner_flag {
+                        innerpoint ccw ggoto
+                    } {
+                        nin ccw ggoto
+                    } ifelse
+                    nout ccw polar goto
+                    nout ccw 1 ao_point ggoto
+                 } ifelse
+            } if
+            /outwall_n walls length outstart sub def
+            outwall_n 0 eq {
+                nout ccw 1 ao_point ggoto
+            } {
+                /outwall_len cw ccw sub outwall_n div def
+                0 1 outwall_n 1 sub { /i arg
+                    /door_ccw i       outwall_len mul ccw add def
+                    /door_cw  i 1 add outwall_len mul ccw add def
+                    nout door_ccw 1 ao_point ggoto
+                    walls outstart i add get {
+                        nout door_cw -1 ao_point ggoto
+                    } {
+                        out door_ccw 1 ao_point g2c goto
+                        out door_cw -1 ao_point ggoto
+                        nout door_cw -1 ao_point g2c goto
+                    } ifelse
+                } for
+            } ifelse
+        } ifelse
+    } def
+
+    /mgoto { ggoto } def
+
+    /drawwalls { /walls arg /position arg
+        /all_walls position length 2 eq def
+        /outstart position 0 get 0 eq {
+            center_cell { 0 } { 2 } ifelse
+        } { 3 } ifelse def
+        /inner_flag position 0 get 0 eq center_cell not and def
+        outstart 0 ne {
+            position getbox aload pop /out arg /cw arg /in arg /ccw arg
+            /nin in inset add def
+        } {
+            /ccw 0 def
+            /cw 360 def
+            /out 0.5 def
+        } ifelse
+        /nout out inset sub def
+        outstart 0 ne {
+            % side walls
+            walls 0 get {
+                all_walls {
+                    nout cw -1 ao_point ggoto
+                    nout cw -1 ao_point ggoto
+                    inner_flag {
+                        innerpoint ccw innerangle add g2c goto
+                    } {
+                        nin cw -1 ao_point g2c goto
+                    } ifelse
+                    stroke
+                } if
+            } {
+                nout cw -1 ao_point ggoto
+                nout cw ggoto
+                stroke
+                inner_flag {
+                    innerpoint cw g2c goto
+                    innerpoint ccw innerangle add ggoto
+                } {
+                    nin cw g2c goto
+                    nin cw -1 ao_point ggoto
+                } ifelse
+                stroke
+            } ifelse
+            position 0 get 0 ne {
+                walls 1 get {
+                    all_walls {
+                        nin cw -1 ao_point ggoto
+                        nin ccw 1 ao_point ggoto
+                        stroke
+                    } if
+                } {
+                    nin cw -1 ao_point ggoto
+                    in cw -1 ao_point g2c goto
+                    stroke
+                    in ccw 1 ao_point ggoto
+                    nin ccw 1 ao_point g2c goto
+                    stroke
+                } ifelse
+            } if
+            walls outstart 1 sub get {
+                all_walls {
+                    inner_flag {
+                        innerpoint ccw innerangle add ggoto
+                    } {
+                        nin ccw 1 ao_point g2c goto
+                    } ifelse
+                    nout ccw 1 ao_point g2c goto
+                    stroke
+                } if
+            } {
+                inner_flag {
+                    innerpoint ccw innerangle add ggoto
+                    innerpoint ccw ggoto
+                } {
+                    nin ccw 1 ao_point g2c goto
+                    nin ccw ggoto
+                } ifelse
+                stroke
+                nout ccw g2c goto
+                nout ccw 1 ao_point ggoto
+                stroke
+             } ifelse
+        } if
+        /outwall_n walls length outstart sub def
+        outwall_n 0 eq {
+            nout ccw 1 ao_point ggoto
+        } {
+            /full_circle position 0 get 0 eq center_cell and def
+            /outwall_len cw ccw sub outwall_n div def
+            0 1 outwall_n 1 sub { /door_i arg
+                /door_ccw door_i       outwall_len mul ccw add def
+                /door_cw  door_i 1 add outwall_len mul ccw add def
+                walls outstart door_i add get {
+                    all_walls {
+                        door_i 0 ne full_circle or { nout door_ccw ggoto } if
+                        nout door_ccw 1 ao_point ggoto
+                        nout door_cw -1 ao_point ggoto
+                        door_i outwall_n 1 sub ne full_circle or {
+                            nout door_cw ggoto
+                        } if
+                        stroke
+                    } if
+                } {
+                    door_i 0 ne full_circle or { nout door_ccw ggoto } if
+                    nout door_ccw 1 ao_point ggoto
+                    out door_ccw 1 ao_point g2c goto
+                    stroke
+                    out door_cw -1 ao_point ggoto
+                    nout door_cw -1 ao_point g2c goto
+                    door_i outwall_n 1 sub ne full_circle or { nout door_cw ggoto } if
+                    stroke
+                } ifelse
+            } for
+        } ifelse
+        stroke
+    } def
+
+    grid /bg known {
+        0 0 radius 2 mul circle fill
+    } if
+    mazeengine
+
+} def
+
 /s3h 3 sqrt 2 div def
 
 /h2c { /hexcoord arg

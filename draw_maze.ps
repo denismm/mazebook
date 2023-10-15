@@ -447,7 +447,7 @@
             /theta center_cell ring 0 eq and { 0 } {
                 widths ring get 360 exch div cell 0.5 add mul
             } ifelse def
-            [ r theta ]
+            [ r theta polypolar ]
         end
     } def
 
@@ -502,7 +502,9 @@
                 cbox 1 get cbox 0 get ppgoto
                 closepath
             } {
-                0 0 0.5 circle closepath
+                sides {
+                    0.5 0 goto
+                } circrepeat closepath
             } ifelse
         } {
             % deal with insets
@@ -585,7 +587,7 @@
         } ifelse
     } def
 
-    /mgoto { ppgoto } def
+    /mgoto { polyralop ppgoto } def
 
     /drawwalls { /walls arg /position arg
         /all_walls position length 2 eq def

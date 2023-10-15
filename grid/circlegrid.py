@@ -164,3 +164,18 @@ class CircleGrid(SingleSizeGrid):
         if position[0] == len(self.widths) - 1:
             walls.append(True)
         return walls
+
+class PolygonGrid(CircleGrid):
+    maze_type = "polygonmaze"
+
+    def __init__(self, radius: int, sides: int, firstring: Optional[int] = None, center_cell: bool = True, ) -> None:
+        if firstring is None:
+            firstring = sides
+        super().__init__(radius, firstring=firstring, center_cell=center_cell)
+        self.sides = sides
+
+    # key and value for size in draw_maze.ps
+    @property
+    def size_dict(self) -> dict[str, int | bool | list[int]]:
+        return {'radius': self.radius, 'sides': self.sides, 'widths':  self.widths, 'center_cell': self.center_cell}
+

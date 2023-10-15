@@ -2,7 +2,7 @@
 
 from grid.maze import BaseGrid, SingleSizeGrid
 from grid.rectgrid import RectBaseGrid, RectGrid, ZetaGrid, UpsilonGrid
-from grid.circlegrid import CircleGrid
+from grid.circlegrid import CircleGrid, PolygonGrid
 from grid.hexgrid import HexGrid, TriGrid
 import argparse
 import random
@@ -61,10 +61,14 @@ elif m := re.match(r'(\d+)([sd])$', args.size):
     size = int(m.group(1))
     single_size_grid_type = ssg_for_char[m.group(2)]
     grid = single_size_grid_type(size)
-elif m := re.match(r'(\d+)([\@o])$', args.size):
+elif m := re.match(r'(\d+)([\@o])(\d*)$', args.size):
     size = int(m.group(1))
     center_cell = (m.group(2) == '@')
-    grid = CircleGrid(size, firstring=args.firstring, center_cell=center_cell)
+    if len(m.group(3)):
+        sides = int(m.group(3))
+        grid = PolygonGrid(size, sides, firstring=args.firstring, center_cell=center_cell)
+    else:
+        grid = CircleGrid(size, firstring=args.firstring, center_cell=center_cell)
 elif os.access(args.size, os.R_OK):
     mask_filename = args.size
     if mask_filename[-4:] == '.png':

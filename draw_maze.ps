@@ -163,7 +163,7 @@
                 widths ring get 360 exch div cell
                 center_cell {
                     0.5 add
-                } ifelse
+                } if
                 mul
             } ifelse def
             [ r theta polar]
@@ -465,10 +465,10 @@
                 widths ring get 360 exch div cell
                 center_cell {
                     0.5 add
-                } ifelse
+                } if
                 mul
             } ifelse def
-            [ r theta g2c]
+            [ r theta ]
         end
     } def
 
@@ -581,7 +581,7 @@
                     } {
                         nin ccw ggoto
                     } ifelse
-                    nout ccw polar goto
+                    nout ccw g2c goto
                     nout ccw 1 ao_point ggoto
                  } ifelse
             } if

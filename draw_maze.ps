@@ -158,13 +158,9 @@
             /coord arg
             % given a (ring, cell) coordinate, return (r, theta) of center
             coord 0 2 getinterval aload pop /cell arg /ring arg
-            /r ring def
+            /r ring center_cell not { 0.5 add } if def
             /theta center_cell ring 0 eq and { 0 } {
-                widths ring get 360 exch div cell
-                center_cell {
-                    0.5 add
-                } if
-                mul
+                widths ring get 360 exch div cell 0.5 add mul
             } ifelse def
             [ r theta polar]
         end
@@ -460,13 +456,9 @@
             /coord arg
             % given a (ring, cell) coordinate, return (r, theta) of center
             coord 0 2 getinterval aload pop /cell arg /ring arg
-            /r ring def
+            /r ring center_cell not { 0.5 add } if def
             /theta center_cell ring 0 eq and { 0 } {
-                widths ring get 360 exch div cell
-                center_cell {
-                    0.5 add
-                } if
-                mul
+                widths ring get 360 exch div cell 0.5 add mul
             } ifelse def
             [ r theta ]
         end

@@ -29,6 +29,7 @@ parser.add_argument('--pathcolor', help="string of rgb float values for path, if
 parser.add_argument('--linewidth', type=float, help="thickness of line, where 1 is the cell width")
 parser.add_argument('--inset', type=float, help="depth of inset when weave is true, where 1 is the cell width")
 parser.add_argument('--firstring', type=int, help="cells in the first non-trivial ring of a circular maze")
+parser.add_argument('--pixels', type=float, help="how many pixels to map one maze height to, when printing to png")
 
 args = parser.parse_args()
 
@@ -89,6 +90,8 @@ if args.inset:
     option_kwargs['inset'] = args.inset
 if args.linewidth:
     option_kwargs['linewidth'] = args.linewidth
+if args.pixels:
+    option_kwargs['pixels'] = args.pixels
 
 grid.set_options(**option_kwargs)
 

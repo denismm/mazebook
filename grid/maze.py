@@ -30,9 +30,10 @@ class BaseGrid():
         bg: Optional[bool] = None,
         linewidth: Optional[float] = None,
         inset: Optional[float] = None,
+        pixels: Optional[float] = None,
     ) -> None:
         self._grid: dict[Position, Cell] = {}
-        self.set_options(weave, pathcolor, bg, linewidth, inset)
+        self.set_options(weave, pathcolor, bg, linewidth, inset, pixels)
 
     algorithms = {}
     outputs = {}
@@ -52,12 +53,16 @@ class BaseGrid():
         bg: Optional[bool] = None,
         linewidth: Optional[float] = None,
         inset: Optional[float] = None,
+        pixels: Optional[float] = None,
     ) -> None:
+        if pixels is None:
+            pixels = 20.0
         self.weave = weave
         self.pathcolor = pathcolor
         self.bg = bg
         self.linewidth = linewidth
         self.inset = inset
+        self.pixels = pixels
 
     def connect(self, first: Position, second: Position) -> None:
         self._grid[first].add_link(second)
@@ -237,7 +242,8 @@ class BaseGrid():
             f.write(self.ps_instructions(path=path, field=field))
             f.write("\n } def\n")
             f.write("%%EndProlog\n")
-        command = ['pstopng'] + self.png_alignment + ['20', filename, maze_name]
+        command = ['pstopng'] + self.png_alignment + [str(self.pixels), filename, maze_name]
+        print(command)
         subprocess.run(command, check=True)
         os.unlink(filename)
 

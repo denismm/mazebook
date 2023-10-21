@@ -24,16 +24,9 @@ def ps_list(iterable: Iterable[Any]) -> str:
 
 GridMask = set[Position]
 class BaseGrid():
-    def __init__(self,
-        weave: Optional[bool] = False,
-        pathcolor: Optional[list[float]] = None,
-        bg: Optional[bool] = None,
-        linewidth: Optional[float] = None,
-        inset: Optional[float] = None,
-        pixels: Optional[float] = None,
-    ) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         self._grid: dict[Position, Cell] = {}
-        self.set_options(weave, pathcolor, bg, linewidth, inset, pixels)
+        self.set_options(**kwargs)
 
     algorithms = {}
     outputs = {}
@@ -243,7 +236,6 @@ class BaseGrid():
             f.write("\n } def\n")
             f.write("%%EndProlog\n")
         command = ['pstopng'] + self.png_alignment + [str(self.pixels), filename, maze_name]
-        print(command)
         subprocess.run(command, check=True)
         os.unlink(filename)
 

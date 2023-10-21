@@ -362,10 +362,51 @@ class BaseGrid():
             else:
                 stack.pop()
 
+    def kruskal(self) -> None:
+        # set of possible connections
+        connection_pool: set[tuple[Position, Position]] = set()
+        for location in self._grid.keys():
+            for neighbor in self.pos_neighbors(location):
+                if neighbor > location:
+                    connection_pool.add((location, neighbor))
+        # sets of connected points
+        point_groups: dict[int, set[Position]] = {}
+        next_group: int = 0
+        # mapping back to groups
+        group_for_point: dict[Position, int] = {}
+
+        while(connection_pool):
+            connection = random.choice(list(connection_pool))
+            connection_pool.remove(connection)
+            groups_for_connection: list[Optional[int]] = [
+                group_for_point.get(p, None) for p in connection]
+            if None in groups_for_connection:
+                if groups_for_connection == [None, None]:
+                    # new group
+                    point_groups[next_group] = set(connection)
+                    self.connect(*connection)
+                    for p in connection:
+                        group_for_point[p] = next_group
+                    next_group += 1
+                else:
+                    target_group = [g for g in groups_for_connection if g is not None][0]
+                    self.connect(*connection)
+                    for p in connection:
+                        point_groups[target_group].add(p)
+                        group_for_point[p] = target_group
+            elif groups_for_connection[0] != groups_for_connection[1]:
+                target_group, source_group = sorted([g for g in groups_for_connection if g is not None])
+                self.connect(*connection)
+                point_groups[target_group] |= point_groups[source_group]
+                for p in point_groups[source_group]:
+                    group_for_point[p] = target_group
+                del point_groups[source_group]
+
     algorithms['aldous_broder'] = aldous_broder
     algorithms['wilson'] = wilson
     algorithms['hunt_kill'] = hunt_kill
     algorithms['backtrack'] = backtrack
+    algorithms['kruskal'] = kruskal
 
     def generate_maze(self, maze_algorithm: str) -> None:
         self.algorithms[maze_algorithm](self)

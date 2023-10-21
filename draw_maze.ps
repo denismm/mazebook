@@ -333,6 +333,14 @@
             center_cell { 0 } { 2 } ifelse
         } { 3 } ifelse def
         /inner_flag position 0 get 0 eq center_cell not and def
+        inner_flag {
+            /innerangle where {
+                pop
+            } {
+                /innerangle 360 widths 0 get div half def
+                /innerpoint inset innerangle sin div def
+            } ifelse
+        } if
         outstart 0 ne {
             position getbox aload pop /out arg /cw arg /in arg /ccw arg
             /nin in inset add def

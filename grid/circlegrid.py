@@ -127,7 +127,7 @@ class CircleGrid(SingleSizeGrid):
 
     def connect(self, first: Position, second: Position) -> None:
         # what if there's a distance between the two cells?
-        if second in self.pos_neighbors_for_walls(first):
+        if second[:2] in self.pos_neighbors_for_walls(first):
             return super().connect(first, second)
         # link square is between both, add third dimension
         # do this the hard way for now

@@ -375,6 +375,47 @@ class BaseGrid():
         # mapping back to groups
         group_for_point: dict[Position, int] = {}
 
+        # add some weaves - how many? for now, as many as possible
+        if self.weave:
+            weaveable_points: set = set(self._grid.keys())
+            while weaveable_points:
+                weave_pos = random.choice(list(weaveable_points))
+                weaveable_points.remove(weave_pos)
+                if weave_pos in group_for_point:
+                    continue
+                neighbors = self.pos_neighbors(weave_pos)
+                if len(neighbors) != 4:
+                    continue
+                if set(neighbors) & set(group_for_point.keys()):
+                    continue
+                weaveable_points -= set(neighbors)
+                link_pos: Position = weave_pos + (1,)
+                link_cell = Cell(link_pos)
+                self._grid[link_pos] = link_cell
+                top_mod = random.randint(0, 1)
+
+                top_group = next_group
+                point_groups[top_group] = { weave_pos }
+                group_for_point[weave_pos] = top_group
+                next_group += 1
+
+                bottom_group = next_group
+                point_groups[bottom_group] = { link_pos }
+                group_for_point[link_pos] = bottom_group
+                next_group += 1
+
+                for i, neighbor in enumerate(neighbors):
+                    if i % 2 == top_mod:
+                        target_pos = weave_pos
+                        target_group = top_group
+                    else:
+                        target_pos = link_pos
+                        target_group = bottom_group
+                    self.connect(neighbor, target_pos)
+                    point_groups[target_group].add(neighbor)
+                    group_for_point[neighbor] = target_group
+                    connection_pool.remove(tuple(sorted((neighbor, weave_pos))))
+
         while(connection_pool):
             connection = random.choice(list(connection_pool))
             connection_pool.remove(connection)

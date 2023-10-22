@@ -375,6 +375,39 @@ class BaseGrid():
         # mapping back to groups
         group_for_point: dict[Position, int] = {}
 
+        # connect two points if they're not in the same group,
+        # creating or merging groups as necessary
+        def k_connect(connection: tuple[Position, Position]) -> None:
+            nonlocal next_group
+            groups_for_connection: list[Optional[int]] = [
+                group_for_point.get(p, None) for p in connection]
+            if None in groups_for_connection:
+                if groups_for_connection == [None, None]:
+                    # neither point is in a group, make a new group
+                    point_groups[next_group] = set(connection)
+                    self.connect(*connection)
+                    for p in connection:
+                        group_for_point[p] = next_group
+                    next_group += 1
+                else:
+                    # one point is in a group, put the other into the same
+                    target_group = [g for g in groups_for_connection if g is not None][0]
+                    self.connect(*connection)
+                    for p in connection:
+                        point_groups[target_group].add(p)
+                        group_for_point[p] = target_group
+            elif groups_for_connection[0] != groups_for_connection[1]:
+                # the points are in different groups, merge them
+                target_group, source_group = sorted([g for g in groups_for_connection if g is not None])
+                self.connect(*connection)
+                point_groups[target_group] |= point_groups[source_group]
+                for p in point_groups[source_group]:
+                    group_for_point[p] = target_group
+                del point_groups[source_group]
+            else:
+                # the points are in the same group, don't connect them
+                pass
+
         # add some weaves - how many? for now, as many as possible
         if self.weave:
             weaveable_points: set = set(self._grid.keys())
@@ -407,41 +440,15 @@ class BaseGrid():
                 for i, neighbor in enumerate(neighbors):
                     if i % 2 == top_mod:
                         target_pos = weave_pos
-                        target_group = top_group
                     else:
                         target_pos = link_pos
-                        target_group = bottom_group
-                    self.connect(neighbor, target_pos)
-                    point_groups[target_group].add(neighbor)
-                    group_for_point[neighbor] = target_group
+                    k_connect((neighbor, target_pos))
                     connection_pool.remove(tuple(sorted((neighbor, weave_pos))))
 
         while(connection_pool):
             connection = random.choice(list(connection_pool))
             connection_pool.remove(connection)
-            groups_for_connection: list[Optional[int]] = [
-                group_for_point.get(p, None) for p in connection]
-            if None in groups_for_connection:
-                if groups_for_connection == [None, None]:
-                    # new group
-                    point_groups[next_group] = set(connection)
-                    self.connect(*connection)
-                    for p in connection:
-                        group_for_point[p] = next_group
-                    next_group += 1
-                else:
-                    target_group = [g for g in groups_for_connection if g is not None][0]
-                    self.connect(*connection)
-                    for p in connection:
-                        point_groups[target_group].add(p)
-                        group_for_point[p] = target_group
-            elif groups_for_connection[0] != groups_for_connection[1]:
-                target_group, source_group = sorted([g for g in groups_for_connection if g is not None])
-                self.connect(*connection)
-                point_groups[target_group] |= point_groups[source_group]
-                for p in point_groups[source_group]:
-                    group_for_point[p] = target_group
-                del point_groups[source_group]
+            k_connect(connection)
 
     algorithms['aldous_broder'] = aldous_broder
     algorithms['wilson'] = wilson

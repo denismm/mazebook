@@ -416,12 +416,15 @@ class BaseGrid():
                 weaveable_points.remove(weave_pos)
                 if weave_pos in group_for_point:
                     continue
-                neighbors = self.pos_neighbors(weave_pos)
+                neighbors = self.pos_neighbors_for_walls(weave_pos)
                 if len(neighbors) != 4:
                     continue
-                if set(neighbors) & set(group_for_point.keys()):
+                neighborset = set(neighbors)
+                if neighborset & set(group_for_point.keys()):
                     continue
-                weaveable_points -= set(neighbors)
+                if not neighborset <= set(self._grid.keys()):
+                    continue
+                weaveable_points -= neighborset
                 link_pos: Position = weave_pos + (1,)
                 link_cell = Cell(link_pos)
                 self._grid[link_pos] = link_cell

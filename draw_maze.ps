@@ -7,6 +7,7 @@
 
 /drawrectmaze { /grid arg
     % 0 0 grid /width get grid /height get box stroke
+    /setup {} def
     /getcenter { /position arg
         [ position 0 2 getinterval { 0.5 add } forall ]
     } def
@@ -53,21 +54,38 @@
 } def
 
 /drawupsilonmaze { /grid arg
-    /octagon_offset 0.5 22.5 tan mul def
-    /diamond_offset 0.5 octagon_offset sub def
+    /full_octagon_offset 0.5 22.5 tan mul def
+    /setup {
+        /octagon_offset 0.5 inset sub 22.5 tan mul def
+        /diamond_offset_short inset 22.5 tan mul 2 sqrt div def
+        /diamond_offset_long 0.5 full_octagon_offset sub diamond_offset_short sub def
+        /diamond_corner diamond_offset_long diamond_offset_short sub def
+    } def
     /getcenter { /position arg
         [ position 0 2 getinterval { 2 div 0.5 add } forall ]
     } def
     /getcellpath { /walls arg /position arg
         position getcenter atranslate
+        /wall_i 0 def
         position 0 get 2 mod 0 eq {
-            4 {
-                0.5 octagon_offset neg goto
-                0.5 octagon_offset goto
+            8 {
+                0.5 inset sub octagon_offset neg goto
+                walls wall_i get not {
+                    0.5 octagon_offset neg goto
+                    0.5 octagon_offset goto
+                } if
+                0.5 inset sub octagon_offset goto
+                /wall_i wall_i 1 add def
             } circrepeat closepath
         } {
             4 {
-                diamond_offset 0 goto
+                diamond_corner 0 goto
+                walls wall_i get not {
+                    diamond_offset_long diamond_offset_short goto
+                    diamond_offset_long diamond_offset_short exch goto
+                } if
+                0 diamond_corner goto
+                /wall_i wall_i 1 add def
             } circrepeat closepath
         } ifelse
     } def
@@ -76,25 +94,43 @@
         position getcenter atranslate
         position 0 get 2 mod 0 eq {
             0 1 7 { /i arg
-                walls i get {
-                    gsave
-                        i 45 mul rotate
+                gsave
+                    i 45 mul rotate
+                    walls i get {
+                        position length 3 ne {
+                            0.5 inset sub octagon_offset neg goto
+                            0.5 inset sub octagon_offset goto
+                            stroke
+                        } if
+                    } {
+                        0.5 inset sub octagon_offset neg goto
                         0.5 octagon_offset neg goto
-                        0.5 octagon_offset goto
                         stroke
-                    grestore
-                } if
+                        0.5 octagon_offset goto
+                        0.5 inset sub octagon_offset goto
+                        stroke
+                    } ifelse
+                grestore
             } for
         } {
             0 1 3 { /i arg
-                walls i get {
-                    gsave
-                        i 90 mul rotate
-                        diamond_offset 0 goto
-                        0 diamond_offset goto
+                gsave
+                    i 90 mul rotate
+                    walls i get {
+                        position length 3 ne {
+                            diamond_corner 0 goto
+                            0 diamond_corner goto
+                            stroke
+                        } if
+                    } {
+                        diamond_corner 0 goto 
+                        diamond_offset_long diamond_offset_short goto
                         stroke
-                    grestore
-                } if
+                        diamond_offset_short diamond_offset_long goto
+                        0 diamond_corner goto 
+                        stroke
+                    } ifelse
+                grestore
             } for
         } ifelse
     } def
@@ -105,6 +141,7 @@
 
 /drawzetamaze { /grid arg
     % 0 0 grid /width get grid /height get box stroke
+    /setup {} def
     /getcenter { /position arg
         [ position 0 2 getinterval { 0.5 add } forall ]
     } def
@@ -142,6 +179,7 @@
 } def
 
 /drawcirclemaze { /grid arg
+    /setup {} def
     /convert_from_polar { polar } def
     /convert_to_polar { ralop } def
     /polar_goto { pgoto } def
@@ -152,6 +190,7 @@
 
 /drawpolygonmaze { /grid arg
     % polygonmaze also has sides as a field
+    /setup {} def
     /sides grid /sides get def
     sides set_polypolar_sides
 
@@ -172,6 +211,7 @@
     % centercell: true if 0,0 is a single cell in the middle
     % cells: list of lists containing coord (ring, cell) then list of boolean walls for ccw, in, cw, outs
 
+    /setup {} def
     /widths grid /widths get def
     /radius widths length def
     /center_cell grid /center_cell get def
@@ -470,6 +510,7 @@
 
 
 /drawhexmaze { /grid arg
+    /setup {} def
     % grid fields:
     % radius: count of cells in a radius, not including center
         % full distance across is 2 * radius + 1
@@ -512,6 +553,7 @@
 } def
 
 /drawtrimaze { /grid arg
+    /setup {} def
     % grid fields:
     % width: count of cells across one side
     % cells: list of lists containing coord (ese, n) then list of boolean walls
@@ -592,6 +634,8 @@
         grid /field known {
             /fieldstep grid /field get length 1 sub recip def
         } if
+
+        setup
 
         grid /cells get {
             gsave

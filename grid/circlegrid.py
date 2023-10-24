@@ -103,8 +103,9 @@ class CircleGrid(SingleSizeGrid):
             if target_pos not in self:
                 continue
             target_r, target_theta = target_pos
+            target_neighbors = self.pos_neighbors_for_walls(target_pos)
             # not tunnelable if not square
-            if target_r + 1 >= len(self.ratios) or self.ratios[target_r + 1] != 1:
+            if len(target_neighbors) != 4:
                 neighbors.append(target_pos)
                 continue
             target_cell = self[target_pos]
@@ -114,11 +115,8 @@ class CircleGrid(SingleSizeGrid):
             if link_count != 2:
                 neighbors.append(target_pos)
                 continue
-            if dir == (-1, 0) and self.ratios[target_r] != 1:
-                other_side = (target_r - 1, target_theta // self.ratios[target_r])
-            else:
-                other_side = add_direction(target_pos, dir) # type: ignore [assignment]
-            other_side = (other_side[0], other_side[1] % self.widths[other_side[0]])
+            back_index = target_neighbors.index(start)
+            other_side = target_neighbors[(back_index + 2) % 4]
             if other_side in self:
                 if not ({start, other_side} & target_cell.flat_links):
                     # tunnel ok!
@@ -130,25 +128,15 @@ class CircleGrid(SingleSizeGrid):
         if second[:2] in self.pos_neighbors_for_walls(first):
             return super().connect(first, second)
         # link square is between both, add third dimension
-        # do this the hard way for now
-        # same ring?
-        link_pos: Position
-        if first[0] == second[0]:
-            ring = first[0]
-            # not across origin?
-            if abs(first[1] - second[1]) == 2:
-                link_pos = (ring, (first[1] + second[1]) // 2, 1)
-            else:
-                # we need to add N to one coord and it doesn't matter which
-                link_pos = (
-                    ring,
-                    ((first[1] + second[1] + self.widths[ring]) // 2) % self.widths[ring],
-                    1
-                )
-        else:
-            # different rings but this is one in from whichever is higher
-            higher = max([first, second])
-            link_pos = (higher[0] - 1, higher[1], 1)
+        # general solution
+        first_neighbors = self.pos_neighbors_for_walls(first)
+        second_neighbors = self.pos_neighbors_for_walls(second)
+        intersection_positions = set(first_neighbors) & set(second_neighbors)
+        if len(intersection_positions) == 0:
+            raise ValueError(f"no common cell between {first} and {second}")
+        if len(intersection_positions) > 1:
+            raise ValueError(f"too many common cells between {first} and {second}")
+        link_pos = intersection_positions.pop() + (1,)
 
         link_cell = Cell(link_pos)
         self._grid[link_pos] = link_cell

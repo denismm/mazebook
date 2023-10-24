@@ -410,7 +410,7 @@ class BaseGrid():
 
         # add some weaves - how many? for now, as many as possible
         if self.weave:
-            weaveable_points: set = set(self._grid.keys())
+            weaveable_points: set[Position] = set(self._grid.keys())
             while weaveable_points:
                 weave_pos = random.choice(list(weaveable_points))
                 weaveable_points.remove(weave_pos)
@@ -446,7 +446,7 @@ class BaseGrid():
                     else:
                         target_pos = link_pos
                     k_connect((neighbor, target_pos))
-                    connection_pool.remove(tuple(sorted((neighbor, weave_pos))))
+                    connection_pool.remove(tuple(sorted((neighbor, weave_pos)))) # type: ignore [arg-type]
 
         while(connection_pool):
             connection = random.choice(list(connection_pool))

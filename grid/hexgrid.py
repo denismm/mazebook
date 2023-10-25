@@ -1,7 +1,7 @@
 # grids that use hexagonal geometry
 
 from positions import Position, Direction, add_direction
-from typing import Optional
+from typing import Optional, Any
 
 from .maze import Cell, BaseGrid, SingleSizeGrid, ps_list
 
@@ -23,8 +23,8 @@ class HexBaseGrid(SingleSizeGrid):
         return neighbors
 
 class HexGrid(HexBaseGrid):
-    def __init__(self, radius: int) -> None:
-        super().__init__(radius)
+    def __init__(self, radius: int, **kwargs: Any) -> None:
+        super().__init__(radius, **kwargs)
         self.radius = radius
         for i in range(-radius, radius + 1):
             for j in range(-radius, radius + 1):
@@ -49,8 +49,8 @@ class HexGrid(HexBaseGrid):
         return f"72 softscale 4.25 5.5 translate 4 {self.radius + 0.5} div dup scale"
 
 class TriGrid(HexBaseGrid):
-    def __init__(self, width: int) -> None:
-        super().__init__(width)
+    def __init__(self, width: int, **kwargs: Any) -> None:
+        super().__init__(width, **kwargs)
         self.width = width
         max_sum = 3 * (width - 1)
         for sum in range( max_sum + 1):

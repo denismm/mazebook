@@ -510,6 +510,6 @@ class BaseGrid():
         self.algorithms[maze_algorithm](self)
 
 class SingleSizeGrid(BaseGrid):
-    def __init__(self, size: int) -> None:
-        super().__init__()
+    def __init__(self, size: int, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
 

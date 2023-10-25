@@ -35,8 +35,8 @@ class CircleGrid(SingleSizeGrid):
             physical_radius += 0.5
         return [str(-1 * (physical_radius + 0.15)), 'd', 'd', 'd']
 
-    def __init__(self, radius: int, firstring: Optional[int] = None, center_cell: bool = True) -> None:
-        super().__init__(radius)
+    def __init__(self, radius: int, firstring: Optional[int] = None, center_cell: bool = True, **kwargs: Any) -> None:
+        super().__init__(radius, **kwargs)
         self.radius = radius
         # width of ring r
         self.widths: list[int] = []
@@ -93,10 +93,10 @@ class CircleGrid(SingleSizeGrid):
 class PolygonGrid(CircleGrid):
     maze_type = "polygonmaze"
 
-    def __init__(self, radius: int, sides: int, firstring: Optional[int] = None, center_cell: bool = True, ) -> None:
+    def __init__(self, radius: int, sides: int, firstring: Optional[int] = None, center_cell: bool = True, **kwargs: Any) -> None:
         if firstring is None:
             firstring = sides
-        super().__init__(radius, firstring=firstring, center_cell=center_cell)
+        super().__init__(radius, firstring=firstring, center_cell=center_cell, **kwargs)
         self.sides = sides
 
     # key and value for size in draw_maze.ps

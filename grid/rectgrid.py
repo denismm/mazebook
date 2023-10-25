@@ -1,7 +1,7 @@
 # grids with cells in a square layout
 
 from positions import Position, Direction, cardinal_directions, add_direction, manhattan
-from typing import Optional
+from typing import Optional, Any
 import random
 
 from .maze import Cell, BaseGrid, ps_list
@@ -16,8 +16,8 @@ PATH = '.'
 GridMask = set[Position]
 
 class RectBaseGrid(BaseGrid):
-    def __init__(self, height: int, width: int) -> None:
-        super().__init__()
+    def __init__(self, height: int, width: int, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
         self.width = width
         self.height = height
 
@@ -49,8 +49,8 @@ class RectGrid(RectBaseGrid):
     outputs = dict(BaseGrid.outputs)
     algorithms = dict(BaseGrid.algorithms)
 
-    def __init__(self, height: int, width: int, mask: Optional[GridMask]=None) -> None:
-        super().__init__(height, width)
+    def __init__(self, height: int, width: int, mask: Optional[GridMask]=None, **kwargs: Any) -> None:
+        super().__init__(height, width, **kwargs)
         for i in range(width):
             for j in range(height):
                 position = (i, j)
@@ -204,8 +204,8 @@ class RectGrid(RectBaseGrid):
 
 
 class ZetaGrid(RectBaseGrid):
-    def __init__(self, height: int, width: int) -> None:
-        super().__init__(height, width)
+    def __init__(self, height: int, width: int, **kwargs: Any) -> None:
+        super().__init__(height, width, **kwargs)
         for i in range(width):
             for j in range(height):
                 position = (i, j)
@@ -217,8 +217,8 @@ class ZetaGrid(RectBaseGrid):
     maze_type = "zetamaze"
 
 class UpsilonGrid(RectBaseGrid):
-    def __init__(self, height: int, width: int) -> None:
-        super().__init__(height, width)
+    def __init__(self, height: int, width: int, **kwargs: Any) -> None:
+        super().__init__(height, width, **kwargs)
         for i in range(width):
             for j in range(height):
                 position = (i * 2, j * 2)

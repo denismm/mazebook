@@ -266,7 +266,7 @@ class BaseGrid():
         return "\n".join(output)
 
     def walls_for_cell(self, cell: Cell) -> list[bool]:
-        raise ValueError("not overridden")
+        return [npos not in cell.flat_links for npos in self.pos_adjacents(cell.position)]
 
     def png_print(self,
             path: list[Position] = [],

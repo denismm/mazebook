@@ -22,14 +22,6 @@ class HexBaseGrid(SingleSizeGrid):
         neighbors = [add_direction(start, dir) for dir in neighbor_directions]
         return neighbors
 
-    def walls_for_cell(self, cell: Cell) -> list[bool]:
-        walls: list[bool] = []
-        position = cell.position
-        neighbor_directions = self.neighbor_directions_for_start(position)
-        for dir in neighbor_directions:
-            walls.append(add_direction(position, dir) not in cell.links)
-        return walls
-
 class HexGrid(HexBaseGrid):
     def __init__(self, radius: int) -> None:
         super().__init__(radius)

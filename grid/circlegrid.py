@@ -84,18 +84,11 @@ class CircleGrid(SingleSizeGrid):
             neighbors.append((r, (theta - 1) % self.widths[r]))
         if r + 1 < len(self.widths):
             next_ratio = self.ratios[r + 1]
-            neighbors += [
-                (r + 1, theta * next_ratio + x) for x in range(next_ratio)]
+        else:
+            next_ratio = 1
+        neighbors += [
+            (r + 1, theta * next_ratio + x) for x in range(next_ratio)]
         return neighbors
-
-    def walls_for_cell(self, cell: Cell) -> list[bool]:
-        walls: list[bool] = []
-        position = cell.position
-        for npos in self.pos_adjacents(position):
-            walls.append(npos not in cell.flat_links)
-        if position[0] == len(self.widths) - 1:
-            walls.append(True)
-        return walls
 
 class PolygonGrid(CircleGrid):
     maze_type = "polygonmaze"

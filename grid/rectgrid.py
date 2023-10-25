@@ -45,15 +45,6 @@ class RectBaseGrid(BaseGrid):
     def size_dict(self) -> dict[str, int | list[int]]:
         return {"width": self.width, "height": self.height}
 
-    def walls_for_cell(self, cell: Cell) -> list[bool]:
-        walls: list[bool] = []
-        position = cell.position
-        flat_links = cell.flat_links
-        neighbor_directions = self.neighbor_directions_for_start(position)
-        for dir in neighbor_directions:
-            walls.append(add_direction(position, dir) not in flat_links)
-        return walls
-
 class RectGrid(RectBaseGrid):
     outputs = dict(BaseGrid.outputs)
     algorithms = dict(BaseGrid.algorithms)

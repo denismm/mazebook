@@ -17,10 +17,13 @@ class HexBaseGrid(SingleSizeGrid):
         directions_index = sum(start) % len(all_nd)
         return all_nd[directions_index]
 
-    def pos_neighbors(self, start: Position) -> list[Position]:
+    def pos_neighbors_for_walls(self, start: Position) -> list[Position]:
         neighbor_directions = self.neighbor_directions_for_start(start)
         neighbors = [add_direction(start, dir) for dir in neighbor_directions]
-        return [neighbor for neighbor in neighbors if neighbor in self]
+        return neighbors
+
+    def pos_neighbors(self, start: Position) -> list[Position]:
+        return [neighbor for neighbor in self.pos_neighbors_for_walls(start) if neighbor in self]
 
     def walls_for_cell(self, cell: Cell) -> list[bool]:
         walls: list[bool] = []

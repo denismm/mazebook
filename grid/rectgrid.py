@@ -24,9 +24,12 @@ class RectBaseGrid(BaseGrid):
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
         raise ValueError("not overridden")
 
-    def pos_neighbors(self, start: Position) -> list[Position]:
+    def pos_neighbors_for_walls(self, start: Position) -> list[Position]:
         neighbors = [add_direction(start, dir) for dir in self.neighbor_directions_for_start(start)]
-        return [neighbor for neighbor in neighbors if neighbor in self]
+        return neighbors
+
+    def pos_neighbors(self, start: Position) -> list[Position]:
+        return [neighbor for neighbor in self.pos_neighbors_for_walls(start) if neighbor in self]
 
     @property
     def png_alignment(self) -> list[str]:
@@ -68,9 +71,6 @@ class RectGrid(RectBaseGrid):
                 self._grid[position] = Cell(position)
 
     maze_type = "rectmaze"
-
-    def pos_neighbors_for_walls(self, start: Position) -> list[Position]:
-        return super().pos_neighbors(start)
 
     def pos_neighbors(self, start: Position) -> list[Position]:
         if not self.weave:

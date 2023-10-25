@@ -64,6 +64,13 @@ class BaseGrid():
             self._grid[second].add_link(first)
             return
         # link square is between both, add third dimension
+        link_pos = self.find_link_pos(first, second) + (1, )
+        link_cell = Cell(link_pos)
+        self._grid[link_pos] = link_cell
+        self.connect(first, link_pos)
+        self.connect(second, link_pos)
+
+    def find_link_pos(self, first: Position, second: Position) -> Position:
         # general solution
         first_neighbors = self.pos_adjacents(first)
         second_neighbors = self.pos_adjacents(second)
@@ -72,12 +79,7 @@ class BaseGrid():
             raise ValueError(f"no common cell between {first} and {second}")
         if len(intersection_positions) > 1:
             raise ValueError(f"too many common cells between {first} and {second} ({first_neighbors}, {second_neighbors}, {intersection_positions}")
-        link_pos = intersection_positions.pop() + (1,)
-
-        link_cell = Cell(link_pos)
-        self._grid[link_pos] = link_cell
-        self.connect(first, link_pos)
-        self.connect(second, link_pos)
+        return intersection_positions.pop()
 
     def random_point(self) -> Position:
         return (random.choice(list(self._grid.keys())))

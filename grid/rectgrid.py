@@ -244,3 +244,7 @@ class UpsilonGrid(RectBaseGrid):
             return ((1, 1), (-1, 1), (-1, -1), (1, -1))
 
     maze_type = "upsilonmaze"
+
+    def find_link_pos(self, first: Position, second: Position) -> Position:
+        # diagonal octagons have 3 common neighbors, use simpler solution
+        return tuple([ (a + b) // 2 for a, b in zip(first, second)])

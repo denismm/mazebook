@@ -71,7 +71,7 @@ class CircleGrid(SingleSizeGrid):
                 self._grid[position] = Cell(position)
 
     @cache
-    def pos_neighbors_for_walls(self, start: Position) -> list[Position]:
+    def pos_adjacents(self, start: Position) -> list[Position]:
         # cw and ccw around ring
         r, theta = start[:2]
         neighbors: list[Position] = []
@@ -86,64 +86,12 @@ class CircleGrid(SingleSizeGrid):
             next_ratio = self.ratios[r + 1]
             neighbors += [
                 (r + 1, theta * next_ratio + x) for x in range(next_ratio)]
-
         return neighbors
-
-    def pos_neighbors(self, start: Position) -> list[Position]:
-        if not self.weave:
-            return [p for p in self.pos_neighbors_for_walls(start) if p in self]
-        # for each direction, check for weave-ability
-        absolute_neighbors = self.pos_neighbors_for_walls(start)
-        neighbors: list[Position] = []
-        for target_pos in absolute_neighbors:
-            if target_pos not in self:
-                continue
-            target_r, target_theta = target_pos
-            target_neighbors = self.pos_neighbors_for_walls(target_pos)
-            # not tunnelable if not square
-            if len(target_neighbors) != 4:
-                neighbors.append(target_pos)
-                continue
-            target_cell = self[target_pos]
-            # is this already connected?
-            link_count = len(target_cell.links)
-            # only tunnelable if straight across
-            if link_count != 2:
-                neighbors.append(target_pos)
-                continue
-            back_index = target_neighbors.index(start)
-            other_side = target_neighbors[(back_index + 2) % 4]
-            if other_side in self:
-                if not ({start, other_side} & target_cell.flat_links):
-                    # tunnel ok!
-                    neighbors.append(other_side)
-        return neighbors
-
-    def connect(self, first: Position, second: Position) -> None:
-        # what if there's a distance between the two cells?
-        if second[:2] in self.pos_neighbors_for_walls(first):
-            return super().connect(first, second)
-        # link square is between both, add third dimension
-        # general solution
-        first_neighbors = self.pos_neighbors_for_walls(first)
-        second_neighbors = self.pos_neighbors_for_walls(second)
-        intersection_positions = set(first_neighbors) & set(second_neighbors)
-        if len(intersection_positions) == 0:
-            raise ValueError(f"no common cell between {first} and {second}")
-        if len(intersection_positions) > 1:
-            raise ValueError(f"too many common cells between {first} and {second}")
-        link_pos = intersection_positions.pop() + (1,)
-
-        link_cell = Cell(link_pos)
-        self._grid[link_pos] = link_cell
-        super().connect(first, link_pos)
-        super().connect(second, link_pos)
-
 
     def walls_for_cell(self, cell: Cell) -> list[bool]:
         walls: list[bool] = []
         position = cell.position
-        for npos in self.pos_neighbors_for_walls(position):
+        for npos in self.pos_adjacents(position):
             walls.append(npos not in cell.flat_links)
         if position[0] == len(self.widths) - 1:
             walls.append(True)

@@ -71,35 +71,31 @@ class CircleGrid(SingleSizeGrid):
                 self._grid[position] = Cell(position)
 
     @cache
-    def pos_neighbors_with_dirs(self, start: Position) -> list[tuple[Position, Direction]]:
+    def pos_neighbors_for_walls(self, start: Position) -> list[Position]:
         # cw and ccw around ring
         r, theta = start[:2]
-        neighbors_and_dirs: list[tuple[Position, Direction]] = []
+        neighbors: list[Position] = []
         # right, down, left
         if self.widths[r] > 1:
-            neighbors_and_dirs.append(((r, (theta + 1) % self.widths[r]), (0, 1)))
+            neighbors.append((r, (theta + 1) % self.widths[r]))
         if r > 0:
-            neighbors_and_dirs.append(((r - 1, theta // self.ratios[r]), (-1, 0)))
+            neighbors.append((r - 1, theta // self.ratios[r]))
         if self.widths[r] > 1:
-            neighbors_and_dirs.append(((r, (theta - 1) % self.widths[r]), (0, -1)))
+            neighbors.append((r, (theta - 1) % self.widths[r]))
         if r + 1 < len(self.widths):
             next_ratio = self.ratios[r + 1]
-            neighbors_and_dirs += [
-                ((r + 1, theta * next_ratio + x), (1, 0)) for x in range(next_ratio)]
+            neighbors += [
+                (r + 1, theta * next_ratio + x) for x in range(next_ratio)]
 
-        return neighbors_and_dirs
-
-    @cache
-    def pos_neighbors_for_walls(self, start: Position) -> list[Position]:
-        return [neighbor for neighbor, _ in self.pos_neighbors_with_dirs(start) if neighbor in self]
+        return neighbors
 
     def pos_neighbors(self, start: Position) -> list[Position]:
         if not self.weave:
-            return self.pos_neighbors_for_walls(start)
+            return [p for p in self.pos_neighbors_for_walls(start) if p in self]
         # for each direction, check for weave-ability
-        neighbors_and_dirs = self.pos_neighbors_with_dirs(start)
+        absolute_neighbors = self.pos_neighbors_for_walls(start)
         neighbors: list[Position] = []
-        for target_pos, dir in neighbors_and_dirs:
+        for target_pos in absolute_neighbors:
             if target_pos not in self:
                 continue
             target_r, target_theta = target_pos

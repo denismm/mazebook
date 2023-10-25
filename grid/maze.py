@@ -93,7 +93,6 @@ class BaseGrid():
         for target_pos in absolute_neighbors:
             if target_pos not in self:
                 continue
-            target_r, target_theta = target_pos
             target_neighbors = self.pos_adjacents(target_pos)
             # not tunnelable if not square
             if len(target_neighbors) != 4:

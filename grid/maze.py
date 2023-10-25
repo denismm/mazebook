@@ -114,7 +114,6 @@ class BaseGrid():
                     neighbors.append(other_side)
         return neighbors
 
-
     def pos_adjacents(self, start: Position) -> list[Position]:
         # must return adjacent cells in order, including those not in grid
         raise ValueError("abstract method not overridden")

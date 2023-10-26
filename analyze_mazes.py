@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import maze
+import grid.maze
+import grid.rectgrid
 import time
 
 SIZE = 50
@@ -8,11 +9,11 @@ SAMPLES = 50
 analysis_per_algorithm: dict[str, dict[int, float]] = {}
 
 print("\t".join([str(x) for x in range(1, 5)] + ['ms', 'algorithm']))
-for algorithm in maze.Grid.algorithms.keys():
+for algorithm in grid.rectgrid.RectGrid.algorithms.keys():
     start = time.time()
     all_data: dict[int, int] = {k: 0 for k in range(5)}
     for _ in range(SAMPLES):
-        g = maze.Grid(SIZE, SIZE)
+        g = grid.rectgrid.RectGrid(SIZE, SIZE)
         g.generate_maze(algorithm)
         analysis = g.node_analysis()
         for k, v in analysis.items():

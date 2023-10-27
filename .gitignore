@@ -1,3 +1,5 @@
 __pycache__
 dmmlib
 .*.swp
+pngs
+.DS_Store

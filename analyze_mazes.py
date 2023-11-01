@@ -8,7 +8,10 @@ SAMPLES = 50
 
 analysis_per_algorithm: dict[str, dict[int, float]] = {}
 
-print("\t".join([str(x) for x in range(1, 5)] + ['ms', 'algorithm']))
+def line_print(data: list[str]) -> None:
+    print("".join(f"{x: >8}" for x in data))
+
+line_print([str(x) for x in range(1, 5)] + ['ms', ' algorithm'])
 for algorithm in grid.rectgrid.RectGrid.algorithms.keys():
     start = time.time()
     all_data: dict[int, int] = {k: 0 for k in range(5)}
@@ -23,10 +26,10 @@ for algorithm in grid.rectgrid.RectGrid.algorithms.keys():
         k: 100 * v / (SAMPLES * SIZE * SIZE) for k, v in all_data.items()
     }
     output = [
-        str(analysis_per_algorithm[algorithm][k]) for k in range(1, 5)
+        f"{analysis_per_algorithm[algorithm][k]:0.2f}" for k in range(1, 5)
     ]
     output.append(str(int(span)))
-    output.append(algorithm)
-    print("\t".join(output))
+    output.append(" " + algorithm)
+    line_print(output)
 
 # print(analysis_per_algorithm)

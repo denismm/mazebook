@@ -2,7 +2,7 @@ from positions import Position, Direction, cardinal_directions, add_direction
 import random
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Any, Optional
+from typing import Any, Optional, Callable
 import json
 
 class Cell():
@@ -28,7 +28,7 @@ class BaseGrid():
         self._grid: dict[Position, Cell] = {}
         self.set_options(**kwargs)
 
-    algorithms = {}
+    algorithms: dict[str, Callable[['BaseGrid'], None]] = {}
     outputs = {}
 
     def __contains__(self, position: Position) -> bool:
@@ -198,6 +198,8 @@ class BaseGrid():
     def size_dict(self) -> dict[str, int | bool | list[int]]:
         raise ValueError("not overridden")
 
+    ### Printing support 
+
     # ps command to align ps output
     @property
     def ps_alignment(self) -> str:
@@ -330,6 +332,8 @@ class BaseGrid():
         **kwargs: str
 ) -> None:
         self.outputs[print_method](self, path, field, **kwargs)
+
+    ### Maze Generation Algorithms
 
     def aldous_broder(self) -> None:
         current: Position = self.random_point()
@@ -500,11 +504,77 @@ class BaseGrid():
             connection_pool.remove(connection)
             k_connect(connection)
 
+    def simple_prim(self) -> None:
+        visited: set[Position] = set()
+        active: list[Position] = []
+        start_point = self.random_point()
+        active.append(start_point)
+        visited.add(start_point)
+        while active:
+            source = random.choice(active)
+            neighbors = [n for n in self.pos_neighbors(source) if n not in visited]
+            if neighbors:
+                target = random.choice(neighbors)
+                self.connect(source, target)
+                active.append(target)
+                visited.add(target)
+            else:
+                active.remove(source)
+
+    def true_prim(self) -> None:
+        visited: set[Position] = set()
+        active: list[Position] = []
+        cost: dict[Position, int] = {k: random.randrange(100) for k in self._grid.keys()}
+        start_point = self.random_point()
+        active.append(start_point)
+        visited.add(start_point)
+        while active:
+            min_source_cost = min([cost[pos] for pos in active])
+            source = random.choice([pos for pos in active if cost[pos] == min_source_cost])
+            neighbors = [n for n in self.pos_neighbors(source) if n not in visited]
+            if neighbors:
+                min_target_cost = min([cost[pos] for pos in neighbors])
+                target = random.choice([n for n in neighbors if cost[n] == min_target_cost])
+                self.connect(source, target)
+                active.append(target)
+                visited.add(target)
+            else:
+                active.remove(source)
+
+    def growing_tree(self, choice_method: Callable[[list[Position]], Position]) -> None:
+        visited: set[Position] = set()
+        active: list[Position] = []
+        start_point = self.random_point()
+        active.append(start_point)
+        visited.add(start_point)
+        while active:
+            source = choice_method(active)
+            neighbors = [n for n in self.pos_neighbors(source) if n not in visited]
+            if neighbors:
+                target = random.choice(neighbors)
+                self.connect(source, target)
+                active.append(target)
+                visited.add(target)
+            else:
+                active.remove(source)
+
+    def random_tree(self) -> None:
+        self.growing_tree( lambda active: random.choice(active))
+    def last_tree(self) -> None:
+        self.growing_tree( lambda active: active[-1])
+    def half_tree(self) -> None:
+        self.growing_tree( lambda active: active[-1] if random.randrange(2) == 0 else random.choice(active))
+
     algorithms['aldous_broder'] = aldous_broder
     algorithms['wilson'] = wilson
     algorithms['hunt_kill'] = hunt_kill
     algorithms['backtrack'] = backtrack
     algorithms['kruskal'] = kruskal
+    algorithms['simple_prim'] = simple_prim
+    algorithms['true_prim'] = true_prim
+    algorithms['random_tree'] = random_tree
+    algorithms['last_tree'] = last_tree
+    algorithms['half_tree'] = half_tree
 
     def generate_maze(self, maze_algorithm: str) -> None:
         self.algorithms[maze_algorithm](self)

@@ -90,6 +90,14 @@ class CircleGrid(SingleSizeGrid):
             (r + 1, theta * next_ratio + x) for x in range(next_ratio)]
         return neighbors
 
+    def find_link_pos(self, first: Position, second: Position) -> Position:
+        # special case for center
+        if first[0] == 1 and second[0] == 1 and self.center_cell:
+            if self.widths[1] == 4:
+                # we're probably going across the middle
+                return (0, 0)
+        return super().find_link_pos(first, second)
+
 class PolygonGrid(CircleGrid):
     maze_type = "polygonmaze"
 

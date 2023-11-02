@@ -566,6 +566,9 @@ class BaseGrid():
         self.growing_tree( lambda active: active[-1] if random.randrange(2) == 0 else random.choice(active))
     def first_tree(self) -> None:
         self.growing_tree( lambda active: active[0])
+    def median_tree(self) -> None:
+        self.growing_tree( lambda active: active[len(active) // 2])
+
 
     algorithms['aldous_broder'] = aldous_broder
     algorithms['wilson'] = wilson
@@ -577,7 +580,8 @@ class BaseGrid():
     algorithms['random_tree'] = random_tree
     algorithms['last_tree'] = last_tree
     algorithms['half_tree'] = half_tree
-    algorithms['first_tree'] = last_tree
+    algorithms['first_tree'] = first_tree
+    algorithms['median_tree'] = median_tree
 
     def generate_maze(self, maze_algorithm: str) -> None:
         self.algorithms[maze_algorithm](self)

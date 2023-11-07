@@ -3,6 +3,7 @@ import random
 from collections import defaultdict
 from collections.abc import Iterable
 from typing import Any, Optional, Callable
+from typing_extensions import Protocol
 import json
 
 class Cell():
@@ -22,20 +23,36 @@ class Cell():
 def ps_list(iterable: Iterable[Any]) -> str:
     return '[' + ' '.join([str(x) for x in iterable]) + ']'
 
+class PrinterFunction(Protocol): 
+    def __call__(self,
+        maze: 'BaseGrid',
+        path: list[Position] = [],
+        field: list[set[Position]] = [],
+        **kwargs: str) -> None: ...
+
+class MazeFunction(Protocol):
+    def __call__(self,
+        maze: 'BaseGrid') -> None: ...
+
 GridMask = set[Position]
 class BaseGrid():
     def __init__(self, **kwargs: Any) -> None:
         self._grid: dict[Position, Cell] = {}
         self.set_options(**kwargs)
 
-    algorithms: dict[str, Callable[['BaseGrid'], None]] = {}
+    algorithms: dict[str, MazeFunction] = {}
 
     @classmethod
-    def algo(cls, mazefunction: Callable[['BaseGrid'], None]) -> Callable[['BaseGrid'], None]:
-        cls.algorithms[mazefunction.__name__] = mazefunction
-        return mazefunction
+    def algo(cls, mf: MazeFunction) -> MazeFunction:
+        cls.algorithms[mf.__name__] = mf        # type: ignore [attr-defined] # fixed in next mypy version
+        return mf
 
-    outputs = {}
+    outputs: dict[str, PrinterFunction] = {}
+
+    @classmethod
+    def printer(cls, pf: PrinterFunction) -> PrinterFunction:
+        cls.outputs[pf.__name__[:-6]] = pf      # type: ignore [attr-defined] # fixed in next mypy version
+        return pf
 
     def __contains__(self, position: Position) -> bool:
         return position in self._grid
@@ -275,61 +292,6 @@ class BaseGrid():
     def walls_for_cell(self, cell: Cell) -> list[bool]:
         return [npos not in cell.flat_links for npos in self.pos_adjacents(cell.position)]
 
-    def png_print(self,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        import subprocess
-        import os
-        filename = '.temp.ps'
-        maze_name = str(kwargs.get('maze_name', 'temp'))
-        with open(filename, 'w') as f:
-            f.write("%!\n(draw_maze.ps) run\n")
-            f.write("/%s {" % (maze_name, ))
-            f.write(self.ps_instructions(path=path, field=field))
-            f.write("\n } def\n")
-            f.write("%%EndProlog\n")
-        command = ['pstopng'] + self.png_alignment + [str(self.pixels), filename, maze_name]
-        subprocess.run(command, check=True)
-        os.unlink(filename)
-
-    def ps_print(self,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        print("%!\n(draw_maze.ps) run")
-        print("%%EndProlog\n")
-        print(self.ps_alignment)
-        print(self.ps_instructions(path=path, field=field))
-        print("showpage")
-
-    def json_print(self,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        output_data: dict[str, Any] = {}
-        # size
-        output_data.update(self.size_dict)
-        if self.weave:
-            output_data['weave'] = True
-        output_cells: list[dict[str, Position | list[Position]]] = []
-        for k, v in self._grid.items():
-            cell_info: dict[str, Position| list[Position]] = {"position": k, "links": list(v.links)}
-            output_cells.append(cell_info)
-        output_data['cells'] = output_cells
-        if path:
-            output_data['path'] = path
-        if field:
-            output_data['field'] = [list(x) for x in field]
-        output_data['maze_type'] = self.maze_type
-        print(json.dumps(output_data))
-
-    outputs['ps'] = ps_print
-    outputs['png'] = png_print
-    outputs['json'] = json_print
 
     def print(self,
         print_method: str,
@@ -598,3 +560,57 @@ def first_tree(maze: BaseGrid) -> None:
 def median_tree(maze: BaseGrid) -> None:
     growing_tree(maze, lambda active: active[len(active) // 2])
 
+@BaseGrid.printer
+def png_print(maze: BaseGrid,
+        path: list[Position] = [],
+        field: list[set[Position]] = [],
+        **kwargs: str
+) -> None:
+    import subprocess
+    import os
+    filename = '.temp.ps'
+    maze_name = str(kwargs.get('maze_name', 'temp'))
+    with open(filename, 'w') as f:
+        f.write("%!\n(draw_maze.ps) run\n")
+        f.write("/%s {" % (maze_name, ))
+        f.write(maze.ps_instructions(path=path, field=field))
+        f.write("\n } def\n")
+        f.write("%%EndProlog\n")
+    command = ['pstopng'] + maze.png_alignment + [str(maze.pixels), filename, maze_name]
+    subprocess.run(command, check=True)
+    os.unlink(filename)
+
+@BaseGrid.printer
+def ps_print(maze: BaseGrid,
+        path: list[Position] = [],
+        field: list[set[Position]] = [],
+        **kwargs: str
+) -> None:
+    print("%!\n(draw_maze.ps) run")
+    print("%%EndProlog\n")
+    print(maze.ps_alignment)
+    print(maze.ps_instructions(path=path, field=field))
+    print("showpage")
+
+@BaseGrid.printer
+def json_print(maze: BaseGrid,
+        path: list[Position] = [],
+        field: list[set[Position]] = [],
+        **kwargs: str
+) -> None:
+    output_data: dict[str, Any] = {}
+    # size
+    output_data.update(maze.size_dict)
+    if maze.weave:
+        output_data['weave'] = True
+    output_cells: list[dict[str, Position | list[Position]]] = []
+    for k, v in maze._grid.items():
+        cell_info: dict[str, Position| list[Position]] = {"position": k, "links": list(v.links)}
+        output_cells.append(cell_info)
+    output_data['cells'] = output_cells
+    if path:
+        output_data['path'] = path
+    if field:
+        output_data['field'] = [list(x) for x in field]
+    output_data['maze_type'] = maze.maze_type
+    print(json.dumps(output_data))

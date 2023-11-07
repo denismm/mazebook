@@ -94,69 +94,69 @@ class RectGrid(RectBaseGrid):
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
         return cardinal_directions
 
-    def ascii_print(self,
-            path: list[Position] = [],
-            field: list[set[Position]] = [],
-            **kwargs: str
-    ) -> None:
-        def door_for_positions(a: Position, b: Position) -> str:
-            if a in self and b in self and b in self[a].links:
-                if a in path and b in path:
-                    return PATH
-                return SPACE
+@RectGrid.printer       # type: ignore [arg-type]
+def ascii_print(maze: RectGrid,
+        path: list[Position] = [],
+        field: list[set[Position]] = [],
+        **kwargs: str
+) -> None:
+    def door_for_positions(a: Position, b: Position) -> str:
+        if a in maze and b in maze and b in maze[a].links:
+            if a in path and b in path:
+                return PATH
+            return SPACE
+        else:
+            return WALL
+    field_for_position: dict[Position, int] = {}
+    for distance, positions in enumerate(field):
+        for position in positions:
+            field_for_position[position] = distance
+    output: list[str] = []
+    output.append(WALL * ((TEXT_CELL_WIDTH + 1) * maze.width + 1))
+    for j in range(maze.height):
+        across_output = WALL
+        down_output = WALL
+        center_output = across_output
+        for i in range(maze.width):
+            position = (i, j)
+            if position not in maze:
+                interior = WALL
+            elif position in path:
+                interior = PATH
             else:
-                return WALL
-        field_for_position: dict[Position, int] = {}
-        for distance, positions in enumerate(field):
-            for position in positions:
-                field_for_position[position] = distance
-        output: list[str] = []
-        output.append(WALL * ((TEXT_CELL_WIDTH + 1) * self.width + 1))
-        for j in range(self.height):
-            across_output = WALL
-            down_output = WALL
-            center_output = across_output
-            for i in range(self.width):
-                position = (i, j)
-                if position not in self:
-                    interior = WALL
-                elif position in path:
-                    interior = PATH
-                else:
-                    interior = SPACE
-                if position in field_for_position:
-                    field_str = str(field_for_position[position])
-                    extra_space = TEXT_CELL_WIDTH - len(field_str)
-                    interior_output = interior * (extra_space // 2)
-                    interior_output += field_str
-                    interior_output += interior * (TEXT_CELL_WIDTH - len(interior_output))
-                    center_output += interior_output
-                else:
-                    center_output += interior * TEXT_CELL_WIDTH
-                across_output += interior * TEXT_CELL_WIDTH
+                interior = SPACE
+            if position in field_for_position:
+                field_str = str(field_for_position[position])
+                extra_space = TEXT_CELL_WIDTH - len(field_str)
+                interior_output = interior * (extra_space // 2)
+                interior_output += field_str
+                interior_output += interior * (TEXT_CELL_WIDTH - len(interior_output))
+                center_output += interior_output
+            else:
+                center_output += interior * TEXT_CELL_WIDTH
+            across_output += interior * TEXT_CELL_WIDTH
 
-                across_position = (i + 1, j)
-                door = door_for_positions(position, across_position)
-                across_output += door
-                center_output += door
+            across_position = (i + 1, j)
+            door = door_for_positions(position, across_position)
+            across_output += door
+            center_output += door
 
-                down_position = (i, j + 1)
-                door = door_for_positions(position, down_position)
-                down_output += door * TEXT_CELL_WIDTH
-                down_output += WALL
+            down_position = (i, j + 1)
+            door = door_for_positions(position, down_position)
+            down_output += door * TEXT_CELL_WIDTH
+            down_output += WALL
 
-            for i in range(TEXT_CELL_HEIGHT):
-                if i == TEXT_CELL_HEIGHT // 2:
-                    output.append(center_output)
-                else:
-                    output.append(across_output)
-            output.append(down_output)
+        for i in range(TEXT_CELL_HEIGHT):
+            if i == TEXT_CELL_HEIGHT // 2:
+                output.append(center_output)
+            else:
+                output.append(across_output)
+        output.append(down_output)
 
-        output.reverse()
-        for line in output:
-            print(line)
+    output.reverse()
+    for line in output:
+        print(line)
 
-    outputs['ascii'] = ascii_print # type: ignore [assignment]
 
 @RectGrid.algo  # type: ignore [arg-type]
 def binary(maze: RectGrid) -> None:

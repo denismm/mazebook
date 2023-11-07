@@ -29,6 +29,12 @@ class BaseGrid():
         self.set_options(**kwargs)
 
     algorithms: dict[str, Callable[['BaseGrid'], None]] = {}
+
+    @classmethod
+    def algo(cls, mazefunction: Callable[['BaseGrid'], None]) -> Callable[['BaseGrid'], None]:
+        cls.algorithms[mazefunction.__name__] = mazefunction
+        return mazefunction
+
     outputs = {}
 
     def __contains__(self, position: Position) -> bool:
@@ -333,260 +339,262 @@ class BaseGrid():
 ) -> None:
         self.outputs[print_method](self, path, field, **kwargs)
 
-    ### Maze Generation Algorithms
-
-    def aldous_broder(self) -> None:
-        current: Position = self.random_point()
-        visited: set[Position] = {current}
-        steps = 0
-        while len(visited) < len(self):
-            steps += 1
-            next: Position = random.choice(self.pos_neighbors(current))
-            if next not in visited:
-                self.connect(current, next)
-                visited.add(next)
-            current = next
-
-    def wilson(self) -> None:
-        start: Position = self.random_point()
-        unvisited: set[Position] = set(self._grid.keys())
-        visited: set[Position] = {start}
-        unvisited -= visited
-        steps: int = 0
-        while len(unvisited):
-            current: Position = random.choice(list(unvisited))
-            path: list[Position] = [current]
-            steps += 1
-            while path[-1] not in visited:
-                steps += 1
-                next: Position = random.choice(self.pos_neighbors(current))
-                if next in path:
-                    # chop out loop
-                    path = path[:(path.index(next))]
-                path.append(next)
-                current = next
-            # connect path
-            for i in range(len(path) - 1):
-                current = path[i]
-                next = path[i + 1]
-                self.connect(current, next)
-                visited.add(current)
-            unvisited -= visited
-
-    def hunt_kill(self) -> None:
-        current: Position = self.random_point()
-        visited: set[Position] = {current}
-        # break when we fill the grid
-        while True:
-            # break when we paint ourselves into a corner
-            while True:
-                next_options = set(self.pos_neighbors(current)) - visited
-                if not next_options:
-                    break
-                next: Position = random.choice(list(next_options))
-                self.connect(current, next)
-                visited.add(next)
-                current = next
-            # choose a new start if possible
-            if len(visited) == len(self):
-                return
-            for start_option in sorted(self._grid.keys()):
-                if start_option not in visited:
-                    connection_options = set(self.pos_neighbors(start_option)) & visited
-                    if connection_options:
-                        connection: Position = random.choice(list(connection_options))
-                        self.connect(connection, start_option)
-                        current = start_option
-                        visited.add(current)
-                        break
-
-    def backtrack(self) -> None:
-        stack: list[Position] = [self.random_point()]
-        visited: set[Position] = {stack[0]}
-        while stack:
-            next_options = set(self.pos_neighbors(stack[-1])) - visited
-            if next_options:
-                next: Position = random.choice(list(next_options))
-                self.connect(stack[-1], next)
-                stack.append(next)
-                visited.add(next)
-            else:
-                stack.pop()
-
-    def kruskal(self) -> None:
-        # set of possible connections
-        connection_pool: set[tuple[Position, Position]] = set()
-        for location in self._grid.keys():
-            for neighbor in self.pos_neighbors(location):
-                if neighbor > location:
-                    connection_pool.add((location, neighbor))
-        # sets of connected points
-        point_groups: dict[int, set[Position]] = {}
-        next_group: int = 0
-        # mapping back to groups
-        group_for_point: dict[Position, int] = {}
-
-        # connect two points if they're not in the same group,
-        # creating or merging groups as necessary
-        def k_connect(connection: tuple[Position, Position]) -> None:
-            nonlocal next_group
-            groups_for_connection: list[Optional[int]] = [
-                group_for_point.get(p, None) for p in connection]
-            if None in groups_for_connection:
-                if groups_for_connection == [None, None]:
-                    # neither point is in a group, make a new group
-                    point_groups[next_group] = set(connection)
-                    self.connect(*connection)
-                    for p in connection:
-                        group_for_point[p] = next_group
-                    next_group += 1
-                else:
-                    # one point is in a group, put the other into the same
-                    target_group = [g for g in groups_for_connection if g is not None][0]
-                    self.connect(*connection)
-                    for p in connection:
-                        point_groups[target_group].add(p)
-                        group_for_point[p] = target_group
-            elif groups_for_connection[0] != groups_for_connection[1]:
-                # the points are in different groups, merge them
-                target_group, source_group = sorted([g for g in groups_for_connection if g is not None])
-                self.connect(*connection)
-                point_groups[target_group] |= point_groups[source_group]
-                for p in point_groups[source_group]:
-                    group_for_point[p] = target_group
-                del point_groups[source_group]
-            else:
-                # the points are in the same group, don't connect them
-                pass
-
-        # add some weaves - how many? for now, as many as possible
-        if self.weave:
-            weaveable_points: set[Position] = set(self._grid.keys())
-            while weaveable_points:
-                weave_pos = random.choice(list(weaveable_points))
-                weaveable_points.remove(weave_pos)
-                if weave_pos in group_for_point:
-                    continue
-                neighbors = self.pos_adjacents(weave_pos)
-                if len(neighbors) != 4:
-                    continue
-                neighborset = set(neighbors)
-                if neighborset & set(group_for_point.keys()):
-                    continue
-                if not neighborset <= set(self._grid.keys()):
-                    continue
-                weaveable_points -= neighborset
-                link_pos: Position = weave_pos + (1,)
-                link_cell = Cell(link_pos)
-                self._grid[link_pos] = link_cell
-                top_mod = random.randint(0, 1)
-
-                top_group = next_group
-                point_groups[top_group] = { weave_pos }
-                group_for_point[weave_pos] = top_group
-                next_group += 1
-
-                bottom_group = next_group
-                point_groups[bottom_group] = { link_pos }
-                group_for_point[link_pos] = bottom_group
-                next_group += 1
-
-                for i, neighbor in enumerate(neighbors):
-                    if i % 2 == top_mod:
-                        target_pos = weave_pos
-                    else:
-                        target_pos = link_pos
-                    k_connect((neighbor, target_pos))
-                    connection_pool.remove(tuple(sorted((neighbor, weave_pos)))) # type: ignore [arg-type]
-
-        while(connection_pool):
-            connection = random.choice(list(connection_pool))
-            connection_pool.remove(connection)
-            k_connect(connection)
-
-    def simple_prim(self) -> None:
-        visited: set[Position] = set()
-        active: list[Position] = []
-        start_point = self.random_point()
-        active.append(start_point)
-        visited.add(start_point)
-        while active:
-            source = random.choice(active)
-            neighbors = [n for n in self.pos_neighbors(source) if n not in visited]
-            if neighbors:
-                target = random.choice(neighbors)
-                self.connect(source, target)
-                active.append(target)
-                visited.add(target)
-            else:
-                active.remove(source)
-
-    def true_prim(self) -> None:
-        visited: set[Position] = set()
-        active: list[Position] = []
-        cost: dict[Position, int] = {k: random.randrange(100) for k in self._grid.keys()}
-        start_point = self.random_point()
-        active.append(start_point)
-        visited.add(start_point)
-        while active:
-            min_source_cost = min([cost[pos] for pos in active])
-            source = random.choice([pos for pos in active if cost[pos] == min_source_cost])
-            neighbors = [n for n in self.pos_neighbors(source) if n not in visited]
-            if neighbors:
-                min_target_cost = min([cost[pos] for pos in neighbors])
-                target = random.choice([n for n in neighbors if cost[n] == min_target_cost])
-                self.connect(source, target)
-                active.append(target)
-                visited.add(target)
-            else:
-                active.remove(source)
-
-    def growing_tree(self, choice_method: Callable[[list[Position]], Position]) -> None:
-        visited: set[Position] = set()
-        active: list[Position] = []
-        start_point = self.random_point()
-        active.append(start_point)
-        visited.add(start_point)
-        while active:
-            source = choice_method(active)
-            neighbors = [n for n in self.pos_neighbors(source) if n not in visited]
-            if neighbors:
-                target = random.choice(neighbors)
-                self.connect(source, target)
-                active.append(target)
-                visited.add(target)
-            else:
-                active.remove(source)
-
-    def random_tree(self) -> None:
-        self.growing_tree( lambda active: random.choice(active))
-    def last_tree(self) -> None:
-        self.growing_tree( lambda active: active[-1])
-    def half_tree(self) -> None:
-        self.growing_tree( lambda active: active[-1] if random.randrange(2) == 0 else random.choice(active))
-    def first_tree(self) -> None:
-        self.growing_tree( lambda active: active[0])
-    def median_tree(self) -> None:
-        self.growing_tree( lambda active: active[len(active) // 2])
-
-
-    algorithms['aldous_broder'] = aldous_broder
-    algorithms['wilson'] = wilson
-    algorithms['hunt_kill'] = hunt_kill
-    algorithms['backtrack'] = backtrack
-    algorithms['kruskal'] = kruskal
-    algorithms['simple_prim'] = simple_prim
-    algorithms['true_prim'] = true_prim
-    algorithms['random_tree'] = random_tree
-    algorithms['last_tree'] = last_tree
-    algorithms['half_tree'] = half_tree
-    algorithms['first_tree'] = first_tree
-    algorithms['median_tree'] = median_tree
-
     def generate_maze(self, maze_algorithm: str) -> None:
         self.algorithms[maze_algorithm](self)
 
 class SingleSizeGrid(BaseGrid):
     def __init__(self, size: int, **kwargs: Any) -> None:
         super().__init__(**kwargs)
+
+### Maze Generation Algorithms
+
+@BaseGrid.algo
+def aldous_broder(maze: BaseGrid) -> None:
+    current: Position = maze.random_point()
+    visited: set[Position] = {current}
+    steps = 0
+    while len(visited) < len(maze):
+        steps += 1
+        next: Position = random.choice(maze.pos_neighbors(current))
+        if next not in visited:
+            maze.connect(current, next)
+            visited.add(next)
+        current = next
+
+@BaseGrid.algo
+def wilson(maze: BaseGrid) -> None:
+    start: Position = maze.random_point()
+    unvisited: set[Position] = set(maze._grid.keys())
+    visited: set[Position] = {start}
+    unvisited -= visited
+    steps: int = 0
+    while len(unvisited):
+        current: Position = random.choice(list(unvisited))
+        path: list[Position] = [current]
+        steps += 1
+        while path[-1] not in visited:
+            steps += 1
+            next: Position = random.choice(maze.pos_neighbors(current))
+            if next in path:
+                # chop out loop
+                path = path[:(path.index(next))]
+            path.append(next)
+            current = next
+        # connect path
+        for i in range(len(path) - 1):
+            current = path[i]
+            next = path[i + 1]
+            maze.connect(current, next)
+            visited.add(current)
+        unvisited -= visited
+
+@BaseGrid.algo
+def hunt_kill(maze: BaseGrid) -> None:
+    current: Position = maze.random_point()
+    visited: set[Position] = {current}
+    # break when we fill the grid
+    while True:
+        # break when we paint ourselves into a corner
+        while True:
+            next_options = set(maze.pos_neighbors(current)) - visited
+            if not next_options:
+                break
+            next: Position = random.choice(list(next_options))
+            maze.connect(current, next)
+            visited.add(next)
+            current = next
+        # choose a new start if possible
+        if len(visited) == len(maze):
+            return
+        for start_option in sorted(maze._grid.keys()):
+            if start_option not in visited:
+                connection_options = set(maze.pos_neighbors(start_option)) & visited
+                if connection_options:
+                    connection: Position = random.choice(list(connection_options))
+                    maze.connect(connection, start_option)
+                    current = start_option
+                    visited.add(current)
+                    break
+
+@BaseGrid.algo
+def backtrack(maze: BaseGrid) -> None:
+    stack: list[Position] = [maze.random_point()]
+    visited: set[Position] = {stack[0]}
+    while stack:
+        next_options = set(maze.pos_neighbors(stack[-1])) - visited
+        if next_options:
+            next: Position = random.choice(list(next_options))
+            maze.connect(stack[-1], next)
+            stack.append(next)
+            visited.add(next)
+        else:
+            stack.pop()
+
+@BaseGrid.algo
+def kruskal(maze: BaseGrid) -> None:
+    # set of possible connections
+    connection_pool: set[tuple[Position, Position]] = set()
+    for location in maze._grid.keys():
+        for neighbor in maze.pos_neighbors(location):
+            if neighbor > location:
+                connection_pool.add((location, neighbor))
+    # sets of connected points
+    point_groups: dict[int, set[Position]] = {}
+    next_group: int = 0
+    # mapping back to groups
+    group_for_point: dict[Position, int] = {}
+
+    # connect two points if they're not in the same group,
+    # creating or merging groups as necessary
+    def k_connect(connection: tuple[Position, Position]) -> None:
+        nonlocal next_group
+        groups_for_connection: list[Optional[int]] = [
+            group_for_point.get(p, None) for p in connection]
+        if None in groups_for_connection:
+            if groups_for_connection == [None, None]:
+                # neither point is in a group, make a new group
+                point_groups[next_group] = set(connection)
+                maze.connect(*connection)
+                for p in connection:
+                    group_for_point[p] = next_group
+                next_group += 1
+            else:
+                # one point is in a group, put the other into the same
+                target_group = [g for g in groups_for_connection if g is not None][0]
+                maze.connect(*connection)
+                for p in connection:
+                    point_groups[target_group].add(p)
+                    group_for_point[p] = target_group
+        elif groups_for_connection[0] != groups_for_connection[1]:
+            # the points are in different groups, merge them
+            target_group, source_group = sorted([g for g in groups_for_connection if g is not None])
+            maze.connect(*connection)
+            point_groups[target_group] |= point_groups[source_group]
+            for p in point_groups[source_group]:
+                group_for_point[p] = target_group
+            del point_groups[source_group]
+        else:
+            # the points are in the same group, don't connect them
+            pass
+
+    # add some weaves - how many? for now, as many as possible
+    if maze.weave:
+        weaveable_points: set[Position] = set(maze._grid.keys())
+        while weaveable_points:
+            weave_pos = random.choice(list(weaveable_points))
+            weaveable_points.remove(weave_pos)
+            if weave_pos in group_for_point:
+                continue
+            neighbors = maze.pos_adjacents(weave_pos)
+            if len(neighbors) != 4:
+                continue
+            neighborset = set(neighbors)
+            if neighborset & set(group_for_point.keys()):
+                continue
+            if not neighborset <= set(maze._grid.keys()):
+                continue
+            weaveable_points -= neighborset
+            link_pos: Position = weave_pos + (1,)
+            link_cell = Cell(link_pos)
+            maze._grid[link_pos] = link_cell
+            top_mod = random.randint(0, 1)
+
+            top_group = next_group
+            point_groups[top_group] = { weave_pos }
+            group_for_point[weave_pos] = top_group
+            next_group += 1
+
+            bottom_group = next_group
+            point_groups[bottom_group] = { link_pos }
+            group_for_point[link_pos] = bottom_group
+            next_group += 1
+
+            for i, neighbor in enumerate(neighbors):
+                if i % 2 == top_mod:
+                    target_pos = weave_pos
+                else:
+                    target_pos = link_pos
+                k_connect((neighbor, target_pos))
+                connection_pool.remove(tuple(sorted((neighbor, weave_pos)))) # type: ignore [arg-type]
+
+    while(connection_pool):
+        connection = random.choice(list(connection_pool))
+        connection_pool.remove(connection)
+        k_connect(connection)
+
+@BaseGrid.algo
+def simple_prim(maze: BaseGrid) -> None:
+    visited: set[Position] = set()
+    active: list[Position] = []
+    start_point = maze.random_point()
+    active.append(start_point)
+    visited.add(start_point)
+    while active:
+        source = random.choice(active)
+        neighbors = [n for n in maze.pos_neighbors(source) if n not in visited]
+        if neighbors:
+            target = random.choice(neighbors)
+            maze.connect(source, target)
+            active.append(target)
+            visited.add(target)
+        else:
+            active.remove(source)
+
+@BaseGrid.algo
+def true_prim(maze: BaseGrid) -> None:
+    visited: set[Position] = set()
+    active: list[Position] = []
+    cost: dict[Position, int] = {k: random.randrange(100) for k in maze._grid.keys()}
+    start_point = maze.random_point()
+    active.append(start_point)
+    visited.add(start_point)
+    while active:
+        min_source_cost = min([cost[pos] for pos in active])
+        source = random.choice([pos for pos in active if cost[pos] == min_source_cost])
+        neighbors = [n for n in maze.pos_neighbors(source) if n not in visited]
+        if neighbors:
+            min_target_cost = min([cost[pos] for pos in neighbors])
+            target = random.choice([n for n in neighbors if cost[n] == min_target_cost])
+            maze.connect(source, target)
+            active.append(target)
+            visited.add(target)
+        else:
+            active.remove(source)
+
+def growing_tree(maze: BaseGrid, choice_method: Callable[[list[Position]], Position]) -> None:
+    visited: set[Position] = set()
+    active: list[Position] = []
+    start_point = maze.random_point()
+    active.append(start_point)
+    visited.add(start_point)
+    while active:
+        source = choice_method(active)
+        neighbors = [n for n in maze.pos_neighbors(source) if n not in visited]
+        if neighbors:
+            target = random.choice(neighbors)
+            maze.connect(source, target)
+            active.append(target)
+            visited.add(target)
+        else:
+            active.remove(source)
+
+@BaseGrid.algo
+def random_tree(maze: BaseGrid) -> None:
+    growing_tree( maze, lambda active: random.choice(active))
+
+@BaseGrid.algo
+def last_tree(maze: BaseGrid) -> None:
+    growing_tree(maze, lambda active: active[-1])
+
+@BaseGrid.algo
+def half_tree(maze: BaseGrid) -> None:
+    growing_tree(maze, lambda active: active[-1] if random.randrange(2) == 0 else random.choice(active))
+
+@BaseGrid.algo
+def first_tree(maze: BaseGrid) -> None:
+    growing_tree(maze, lambda active: active[0])
+
+@BaseGrid.algo
+def median_tree(maze: BaseGrid) -> None:
+    growing_tree(maze, lambda active: active[len(active) // 2])
 

@@ -2,7 +2,7 @@ from positions import Position, Direction, cardinal_directions, add_direction
 import random
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Any, Optional, Callable
+from typing import Any, Optional, Callable, NamedTuple
 from typing_extensions import Protocol
 import json
 
@@ -13,6 +13,9 @@ class Cell():
 
     def add_link(self, link: Position) -> None:
         self.links.add(link)
+
+    def remove_link(self, link: Position) -> None:
+        self.links.discard(link)
 
     @property
     def flat_links(self) -> set[Position]:
@@ -34,7 +37,10 @@ class MazeFunction(Protocol):
     def __call__(self,
         maze: 'BaseGrid') -> None: ...
 
-GridMask = set[Position]
+Division = NamedTuple("Division", [
+    ("regions", tuple[set[Position], set[Position]]),
+    ("border", tuple[tuple[Position, Position], ...])])
+
 class BaseGrid():
     def __init__(self, **kwargs: Any) -> None:
         self._grid: dict[Position, Cell] = {}
@@ -92,6 +98,10 @@ class BaseGrid():
         self._grid[link_pos] = link_cell
         self.connect(first, link_pos)
         self.connect(second, link_pos)
+
+    def disconnect(self, first: Position, second: Position) -> None:
+        self._grid[first].remove_link(second)
+        self._grid[second].remove_link(first)
 
     def find_link_pos(self, first: Position, second: Position) -> Position:
         # general solution
@@ -185,6 +195,9 @@ class BaseGrid():
             if len(cell.links) == 1:
                 ret.append(location)
         return ret
+
+    def region_divisions(self, region: set[Position]) -> list[Division]:
+        raise ValueError("not implemented")
 
     def braid(self, proportion: float) -> None:
         # rule out forced dead-ends, such as the corner of a triangle
@@ -634,6 +647,23 @@ def eller(maze: BaseGrid) -> None:
                 for i, connection in enumerate(next_row_connections):
                     if i == 0 or random.randrange(4) == 0:
                         k_connect(connection)
+
+@BaseGrid.algo
+def fractal(maze: BaseGrid) -> None:
+    def fractal_step(region: set[Position]) -> None:
+        if len(region) > 1:
+            division_options = maze.region_divisions(region)
+            division = random.choice(division_options)
+            # make one border connection
+            door = random.choice(division.border)
+            maze.connect(*door)
+            for subregion in division.regions:
+                fractal_step(subregion)
+
+    # first region is entire grid
+    region = set(maze._grid.keys())
+    fractal_step(region)
+
 
 @BaseGrid.printer
 def png_print(maze: BaseGrid,

@@ -4,7 +4,7 @@ from positions import Position, Direction, cardinal_directions, add_direction, m
 from typing import Optional, Any, Callable
 import random
 
-from .maze import Cell, BaseGrid, ps_list
+from .maze import Cell, BaseGrid, ps_list, Division
 
 TEXT_CELL_WIDTH = 4
 TEXT_CELL_HEIGHT = 3
@@ -93,6 +93,21 @@ class RectGrid(RectBaseGrid):
 
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
         return cardinal_directions
+
+    def region_divisions(self, region: set[Position]) -> list[Division]:
+        result: list[Division] = []
+        # we assert that any region is rectangular
+        border_steps = ( (1, 0), (0, 1))
+        for coordinate in range(2):
+            border_step = border_steps[coordinate]
+            xs = { p[coordinate] for p in region }
+            for x in range(min(xs), max(xs)):
+                left = { p for p in region if p[coordinate] <= x }
+                right = region - left
+                border = tuple( (p, add_direction(p, border_step)) for p in left if p[coordinate] == x)
+                result.append(Division((left, right), border))
+        return result
+
 
 @RectGrid.printer       # type: ignore [arg-type]
 def ascii_print(maze: RectGrid,

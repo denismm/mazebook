@@ -6,7 +6,7 @@ from math import pi
 from functools import cache
 from sys import stderr
 
-from .maze import Cell, SingleSizeGrid, BaseGrid, ps_list
+from .maze import Cell, SingleSizeGrid, BaseGrid, Division
 
 def warn(*args: Any, **kwargs: Any) -> None:
     print(*args, file=stderr, **kwargs)
@@ -97,6 +97,40 @@ class CircleGrid(SingleSizeGrid):
                 # we're probably going across the middle
                 return (0, 0)
         return super().find_link_pos(first, second)
+
+    def region_divisions(self, region: set[Position]) -> list[Division]:
+        result: list[Division] = []
+        # we assert that any region is sectional
+        # in-out divisions
+        rs = { p[0] for p in region }
+        for r in range(min(rs), max(rs)):
+            inner = { p for p in region if p[0] <= r }
+            outer = region - inner
+            border = tuple( (p, q) 
+                for p in inner if p[o] == r
+                for q in self.pos_adjacents(p) if q[0] == r + 1)
+            result.append(Division((inner, outer), border))
+        inner_width = self.widths[min(rs)]
+        if inner_width > 1:
+            inner_thetas = sorted([p[1] for p in region if p[0] == min(rs)])
+            if len(inner_thetas) == inner_width:
+                # for full circle, we need two borders
+                pass
+            else:
+                # get inner_thetas in order
+                while (inner_thetas[0] - inner_thetas[-1] != inner_width - 1:
+                inner_thetas[-1] -= inner_width
+                inner_thetas.sort()
+                if inner_thetas[-1] < 0:
+                    raise ValueError("problem canonicalizing inner_thetas")
+                offset = -inner_thetas[0]
+                for theta in range(inner_thetas[0], inner_thetas[-1]):
+                    right = { p for p in region
+                        if (p[1] // (maze.widths[p[0]] // inner_width) + offset) % inner_width - offset <= theta}
+                    left = region - right
+                    # border???
+        return result
+
 
 class PolygonGrid(CircleGrid):
     maze_type = "polygonmaze"

@@ -459,7 +459,7 @@ def kruskal(maze: BaseGrid) -> None:
             link_pos: Position = weave_pos + (1,)
             link_cell = Cell(link_pos)
             maze._grid[link_pos] = link_cell
-            top_mod = random.randint(0, 1)
+            top_mod = random.randrange(2)
 
             top_group = next_group
             point_groups[top_group] = { weave_pos }
@@ -559,6 +559,81 @@ def first_tree(maze: BaseGrid) -> None:
 @BaseGrid.algo
 def median_tree(maze: BaseGrid) -> None:
     growing_tree(maze, lambda active: active[len(active) // 2])
+
+@BaseGrid.algo
+def eller(maze: BaseGrid) -> None:
+    # group structure from kruskal
+    # sets of connected points
+    point_groups: dict[int, set[Position]] = {}
+    next_group: int = 0
+    # mapping back to groups
+    group_for_point: dict[Position, int] = {}
+
+    # create a new group
+    def start_group(points: tuple[Position, ...]) -> None:
+        nonlocal next_group
+        point_groups[next_group] = set(points)
+        for p in points:
+            group_for_point[p] = next_group
+        next_group += 1
+
+    # connect two points if they're not in the same group,
+    # creating or merging groups as necessary
+    def k_connect(connection: tuple[Position, Position]) -> None:
+        groups_for_connection: list[Optional[int]] = [
+            group_for_point.get(p, None) for p in connection]
+        if None in groups_for_connection:
+            if groups_for_connection == [None, None]:
+                # neither point is in a group, make a new group
+                start_group(connection)
+                maze.connect(*connection)
+            else:
+                # one point is in a group, put the other into the same
+                target_group = [g for g in groups_for_connection if g is not None][0]
+                maze.connect(*connection)
+                for p in connection:
+                    point_groups[target_group].add(p)
+                    group_for_point[p] = target_group
+        elif groups_for_connection[0] != groups_for_connection[1]:
+            # the points are in different groups, merge them
+            target_group, source_group = sorted([g for g in groups_for_connection if g is not None])
+            maze.connect(*connection)
+            point_groups[target_group] |= point_groups[source_group]
+            for p in point_groups[source_group]:
+                group_for_point[p] = target_group
+            del point_groups[source_group]
+        else:
+            # the points are in the same group, don't connect them
+            pass
+
+    # get all possible xes
+    all_xes = sorted(list({ p[0] for p in maze._grid.keys() }))
+    # go row by row
+    last_x = all_xes[-1]
+    for x in all_xes:
+        row_points = sorted([p for p in maze._grid.keys() if p[0] == x])
+        for i in range(len(row_points)):
+            # check against previous for free loop
+            if row_points[i-1] in maze.pos_adjacents(row_points[i]):
+                # half chance to connect if meaningful
+                if x == last_x or random.randrange(2) == 1:
+                    k_connect((row_points[i-1], row_points[i]))
+            if row_points[i] not in group_for_point:
+                start_group((row_points[i],))
+        # carve "east" for each row
+        row_points_set = set(row_points)
+        for group_points in point_groups.values():
+            east_points = [p for p in group_points & row_points_set]
+            # get all connections to next row
+            next_row_connections = [(p, q) for p in east_points for q in maze.pos_adjacents(p) if q[0] > x and q in maze]
+            random.shuffle(next_row_connections)
+            if next_row_connections:
+                # # carve west 1-N times
+                # for i in range(random.randint(1,len(next_row_connections))):
+                    # k_connect(next_row_connections[i])
+                for i, connection in enumerate(next_row_connections):
+                    if i == 0 or random.randrange(4) == 0:
+                        k_connect(connection)
 
 @BaseGrid.printer
 def png_print(maze: BaseGrid,

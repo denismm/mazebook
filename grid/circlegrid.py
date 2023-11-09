@@ -5,6 +5,7 @@ from typing import Optional, Any
 from math import pi
 from functools import cache
 from sys import stderr
+import random
 
 from .maze import Cell, SingleSizeGrid, BaseGrid, Division
 
@@ -110,42 +111,65 @@ class CircleGrid(SingleSizeGrid):
                 for p in inner if p[0] == r
                 for q in self.pos_neighbors(p) if q in outer
             )
-            result.append(Division((inner, outer), border))
+            if not border:
+                raise ValueError("empty border")
+            result.append(Division(f"cut r on {r}", (inner, outer), border))
         inner_width = self.widths[min(rs)]
         def get_other_side(theta: int) -> dict[int, int]:
             return  {
-                r: theta * (self.widths[r] // inner_width) + 1 for r in rs
+                r: (theta + 1) * (self.widths[r] // inner_width) for r in rs
             }
         if inner_width > 1:
             inner_thetas = sorted([p[1] for p in region if p[0] == min(rs)])
             if len(inner_thetas) == inner_width:
                 # for full circle, we need two borders
-                for theta in range(1, inner_width):
-                    other_side_by_r = get_other_side(theta)
-                    right = { p for p in region
-                        if (p[1] < other_side_by_r[p[0]])}
-                    left = region - right
-                    border_list = [ (p, q)
-                        for p in right if (p[1] + 1) == other_side_by_r[p[0]]
-                        for q in self.pos_adjacents(p) if q in left
-                    ]
-                    border_list += [ (p, q)
-                        for p in right if p[1] == 0
-                        for q in self.pos_neighbors(p) if q in left
-                    ]
-                    result.append(Division((left, right), tuple(border_list)))
+                random.shuffle(inner_thetas)
+                for i in range(0, 2, inner_width):
+                    thetas = sorted(inner_thetas[i:i+2])
+                    other_sides_by_r = [get_other_side(theta) for theta in thetas]
+                    first = { p for p in region
+                        if (other_sides_by_r[0][p[0]] <= p[1] < other_sides_by_r[1][p[0]])}
+                    second = region - first
+                    border = tuple((p, q) 
+                        for p in first
+                        for q in self.pos_neighbors(p) if q in second)
+                    if not border:
+                        raise ValueError("empty border")
+                    name = f"cut full circle on {thetas}"
+                    result.append(Division(name, (first, second), border))
 
             # do we cross 0?
             elif (0 in inner_thetas) and (inner_width - 1 in inner_thetas):
-                # wraparound
-                pass
                 # get inner_thetas in order
-                # while (inner_thetas[0] - inner_thetas[-1] != inner_width - 1:
-                    # inner_thetas[-1] -= inner_width
-                    # inner_thetas.sort()
-                    # if inner_thetas[-1] < 0:
-                        # raise ValueError("problem canonicalizing inner_thetas")
-                # offset = -inner_thetas[0]
+                while inner_thetas[-1] - inner_thetas[0] != len(inner_thetas) - 1:
+                    inner_thetas[-1] -= inner_width
+                    inner_thetas.sort()
+                    if inner_thetas[-1] < 0:
+                        raise ValueError("problem canonicalizing inner_thetas")
+                far_side_by_r = get_other_side(inner_thetas[-1])
+                near_side_by_r = get_other_side(inner_thetas[0] % inner_width - 1)
+                for theta in range(inner_thetas[0], inner_thetas[-1]):
+                    if theta >= 0:
+                        other_side_by_r = get_other_side(theta)
+                        left = { p for p in region
+                            if (other_side_by_r[p[0]] <= p[1] < far_side_by_r[p[0]])
+                        }
+                        right = region - left
+                    else:
+                        effective_theta = theta % inner_width
+                        other_side_by_r = get_other_side(effective_theta)
+                        right = { p for p in region
+                            if (near_side_by_r[p[0]] <= p[1] < other_side_by_r[p[0]])
+                        }
+                        left = region - right
+                    border = tuple( (p, q)
+                        for p in left 
+                        for q in self.pos_neighbors(p) if q in right
+                    )
+                    name = f"cutting broken theta on {theta}"
+                    if not border:
+                        raise ValueError("empty border")
+                    result.append(Division(name, (left, right), border))
             else:
                 for theta in range(inner_thetas[0], inner_thetas[-1]):
                     other_side_by_r = get_other_side(theta)
@@ -156,7 +180,10 @@ class CircleGrid(SingleSizeGrid):
                         for p in right if (p[1] + 1) == other_side_by_r[p[0]]
                         for q in self.pos_neighbors(p) if q in left
                     )
-                    result.append(Division((left, right), border))
+                    name = f"cutting simple theta on {theta}"
+                    if not border:
+                        raise ValueError("empty border")
+                    result.append(Division(name, (left, right), border))
         return result
 
 

@@ -105,7 +105,7 @@ class RectGrid(RectBaseGrid):
                 left = { p for p in region if p[coordinate] <= x }
                 right = region - left
                 border = tuple( (p, add_direction(p, border_step)) for p in left if p[coordinate] == x)
-                result.append(Division((left, right), border))
+                result.append(Division(f"cut {coordinate} on {x}", (left, right), border))
         return result
 
 

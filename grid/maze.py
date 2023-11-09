@@ -38,8 +38,10 @@ class MazeFunction(Protocol):
         maze: 'BaseGrid') -> None: ...
 
 Division = NamedTuple("Division", [
+    ("name", str),
     ("regions", tuple[set[Position], set[Position]]),
-    ("border", tuple[tuple[Position, Position], ...])])
+    ("border", tuple[tuple[Position, Position], ...]),
+])
 
 class BaseGrid():
     def __init__(self, **kwargs: Any) -> None:

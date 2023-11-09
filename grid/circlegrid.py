@@ -107,28 +107,56 @@ class CircleGrid(SingleSizeGrid):
             inner = { p for p in region if p[0] <= r }
             outer = region - inner
             border = tuple( (p, q) 
-                for p in inner if p[o] == r
-                for q in self.pos_adjacents(p) if q[0] == r + 1)
+                for p in inner if p[0] == r
+                for q in self.pos_neighbors(p) if q in outer
+            )
             result.append(Division((inner, outer), border))
         inner_width = self.widths[min(rs)]
+        def get_other_side(theta: int) -> dict[int, int]:
+            return  {
+                r: theta * (self.widths[r] // inner_width) + 1 for r in rs
+            }
         if inner_width > 1:
             inner_thetas = sorted([p[1] for p in region if p[0] == min(rs)])
             if len(inner_thetas) == inner_width:
                 # for full circle, we need two borders
-                pass
-            else:
-                # get inner_thetas in order
-                while (inner_thetas[0] - inner_thetas[-1] != inner_width - 1:
-                inner_thetas[-1] -= inner_width
-                inner_thetas.sort()
-                if inner_thetas[-1] < 0:
-                    raise ValueError("problem canonicalizing inner_thetas")
-                offset = -inner_thetas[0]
-                for theta in range(inner_thetas[0], inner_thetas[-1]):
+                for theta in range(1, inner_width):
+                    other_side_by_r = get_other_side(theta)
                     right = { p for p in region
-                        if (p[1] // (maze.widths[p[0]] // inner_width) + offset) % inner_width - offset <= theta}
+                        if (p[1] < other_side_by_r[p[0]])}
                     left = region - right
-                    # border???
+                    border_list = [ (p, q)
+                        for p in right if (p[1] + 1) == other_side_by_r[p[0]]
+                        for q in self.pos_adjacents(p) if q in left
+                    ]
+                    border_list += [ (p, q)
+                        for p in right if p[1] == 0
+                        for q in self.pos_neighbors(p) if q in left
+                    ]
+                    result.append(Division((left, right), tuple(border_list)))
+
+            # do we cross 0?
+            elif (0 in inner_thetas) and (inner_width - 1 in inner_thetas):
+                # wraparound
+                pass
+                # get inner_thetas in order
+                # while (inner_thetas[0] - inner_thetas[-1] != inner_width - 1:
+                    # inner_thetas[-1] -= inner_width
+                    # inner_thetas.sort()
+                    # if inner_thetas[-1] < 0:
+                        # raise ValueError("problem canonicalizing inner_thetas")
+                # offset = -inner_thetas[0]
+            else:
+                for theta in range(inner_thetas[0], inner_thetas[-1]):
+                    other_side_by_r = get_other_side(theta)
+                    right = { p for p in region
+                        if (p[1] < other_side_by_r[p[0]])}
+                    left = region - right
+                    border = tuple( (p, q)
+                        for p in right if (p[1] + 1) == other_side_by_r[p[0]]
+                        for q in self.pos_neighbors(p) if q in left
+                    )
+                    result.append(Division((left, right), border))
         return result
 
 

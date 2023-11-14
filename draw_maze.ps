@@ -5,6 +5,8 @@
 
 /atranslate { aload pop translate } def
 
+/islink { length 3 eq } def
+
 /drawrectmaze { /grid arg
     % 0 0 grid /width get grid /height get box stroke
     /setup {} def
@@ -32,18 +34,20 @@
                 i 0 sub 90 mul rotate
                 walls i get {
                     % don't draw walls for link cells
-                    position length 3 ne {
+                    position islink not {
                         0.5 inset sub dup neg goto
                         0.5 inset sub dup goto
                         stroke
                     } if
                 } {
-                    0.5 inset sub dup neg goto
-                    0.5 dup inset sub neg goto
-                    stroke
-                    0.5 inset sub dup goto
-                    0.5 dup inset sub goto
-                    stroke
+                    inset 0 gt {
+                        0.5 inset sub dup neg goto
+                        0.5 dup inset sub neg goto
+                        stroke
+                        0.5 inset sub dup goto
+                        0.5 dup inset sub goto
+                        stroke
+                    } if
                 } ifelse
             grestore
         } for
@@ -97,7 +101,7 @@
                 gsave
                     i 45 mul rotate
                     walls i get {
-                        position length 3 ne {
+                        position islink not {
                             0.5 inset sub octagon_offset neg goto
                             0.5 inset sub octagon_offset goto
                             stroke
@@ -117,7 +121,7 @@
                 gsave
                     i 90 mul rotate
                     walls i get {
-                        position length 3 ne {
+                        position islink not {
                             diamond_corner 0 goto
                             0 diamond_corner goto
                             stroke
@@ -404,17 +408,19 @@
                     stroke
                 } if
             } {
-                nout cw -1 ao_point polar_goto
-                nout cw polar_goto
-                stroke
-                inner_flag {
-                    innerpoint cw convert_from_polar goto
-                    innerpoint ccw innerangle add polar_goto
-                } {
-                    nin cw convert_from_polar goto
-                    nin cw -1 ao_point polar_goto
-                } ifelse
-                stroke
+                inset 0 gt {
+                    nout cw -1 ao_point polar_goto
+                    nout cw polar_goto
+                    stroke
+                    inner_flag {
+                        innerpoint cw convert_from_polar goto
+                        innerpoint ccw innerangle add polar_goto
+                    } {
+                        nin cw convert_from_polar goto
+                        nin cw -1 ao_point polar_goto
+                    } ifelse
+                    stroke
+                }
             } ifelse
             position 0 get 0 ne {
                 walls 1 get {
@@ -424,12 +430,14 @@
                         stroke
                     } if
                 } {
-                    nin cw -1 ao_point polar_goto
-                    in cw -1 ao_point convert_from_polar goto
-                    stroke
-                    in ccw 1 ao_point polar_goto
-                    nin ccw 1 ao_point convert_from_polar goto
-                    stroke
+                    inset 0 gt {
+                        nin cw -1 ao_point polar_goto
+                        in cw -1 ao_point convert_from_polar goto
+                        stroke
+                        in ccw 1 ao_point polar_goto
+                        nin ccw 1 ao_point convert_from_polar goto
+                        stroke
+                    } if
                 } ifelse
             } if
             walls outstart 1 sub get {
@@ -443,17 +451,19 @@
                     stroke
                 } if
             } {
-                inner_flag {
-                    innerpoint ccw innerangle add polar_goto
-                    innerpoint ccw polar_goto
-                } {
-                    nin ccw 1 ao_point convert_from_polar goto
-                    nin ccw polar_goto
-                } ifelse
-                stroke
-                nout ccw convert_from_polar goto
-                nout ccw 1 ao_point polar_goto
-                stroke
+                inset 0 gt {
+                    inner_flag {
+                        innerpoint ccw innerangle add polar_goto
+                        innerpoint ccw polar_goto
+                    } {
+                        nin ccw 1 ao_point convert_from_polar goto
+                        nin ccw polar_goto
+                    } ifelse
+                    stroke
+                    nout ccw convert_from_polar goto
+                    nout ccw 1 ao_point polar_goto
+                    stroke
+                } if
              } ifelse
         } if
         /outwall_n walls length outstart sub def
@@ -476,14 +486,16 @@
                         stroke
                     } if
                 } {
-                    door_i 0 ne full_circle or { nout door_ccw polar_goto } if
-                    nout door_ccw 1 ao_point polar_goto
-                    out door_ccw 1 ao_point convert_from_polar goto
-                    stroke
-                    out door_cw -1 ao_point polar_goto
-                    nout door_cw -1 ao_point convert_from_polar goto
-                    door_i outwall_n 1 sub ne full_circle or { nout door_cw polar_goto } if
-                    stroke
+                    inset 0 gt {
+                        door_i 0 ne full_circle or { nout door_ccw polar_goto } if
+                        nout door_ccw 1 ao_point polar_goto
+                        out door_ccw 1 ao_point convert_from_polar goto
+                        stroke
+                        out door_cw -1 ao_point polar_goto
+                        nout door_cw -1 ao_point convert_from_polar goto
+                        door_i outwall_n 1 sub ne full_circle or { nout door_cw polar_goto } if
+                        stroke
+                    } if
                 } ifelse
             } for
         } ifelse
@@ -654,7 +666,7 @@
                         } ifelse
                         setrgbcolor
                     } ifelse
-                    position length 3 eq {
+                    position islink {
                         1.5 darken
                     } if
                     position walls getcellpath fill

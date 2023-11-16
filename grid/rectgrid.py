@@ -97,15 +97,12 @@ class RectGrid(RectBaseGrid):
     def region_divisions(self, region: set[Position]) -> list[Division]:
         result: list[Division] = []
         # we assert that any region is rectangular
-        border_steps = ( (1, 0), (0, 1))
         for coordinate in range(2):
-            border_step = border_steps[coordinate]
             xs = { p.coordinates[coordinate] for p in region }
             for x in range(min(xs), max(xs)):
                 left = { p for p in region if p.coordinates[coordinate] <= x }
                 right = region - left
-                border = tuple( (p, add_direction(p, border_step)) for p in left if p.coordinates[coordinate] == x)
-                result.append(Division(f"cut {coordinate} on {x}", (left, right), border))
+                result.append(Division(f"cut {coordinate} on {x}", (left, right)))
         return result
 
 

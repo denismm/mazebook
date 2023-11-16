@@ -40,7 +40,6 @@ class MazeFunction(Protocol):
 Division = NamedTuple("Division", [
     ("name", str),
     ("regions", tuple[set[Position], set[Position]]),
-    ("border", tuple[tuple[Position, Position], ...]),
 ])
 
 class BaseGrid():
@@ -668,8 +667,10 @@ def fractal(maze: BaseGrid) -> None:
         elif len(region) > 1:
             division_options = maze.region_divisions(region)
             division = random.choice(division_options)
+            border = [ (p, q) for p in division.regions[0]
+                              for q in maze.pos_neighbors(p) if q in division.regions[1]]
             # make one border connection
-            door = random.choice(division.border)
+            door = random.choice(border)
             maze.connect(*door)
             for subregion in division.regions:
                 fractal_step(subregion)

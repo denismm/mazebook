@@ -108,13 +108,7 @@ class CircleGrid(SingleSizeGrid):
         for r in range(min(rs), max(rs)):
             inner = { p for p in region if p.coordinates[0] <= r }
             outer = region - inner
-            border = tuple( (p, q) 
-                for p in inner if p.coordinates[0] == r
-                for q in self.pos_neighbors(p) if q in outer
-            )
-            if not border:
-                raise ValueError("empty border")
-            result.append(Division(f"cut r on {r}", (inner, outer), border))
+            result.append(Division(f"cut r on {r}", (inner, outer)))
         inner_width = self.widths[min(rs)]
         def get_other_side(theta: int) -> dict[int, int]:
             return  {
@@ -131,13 +125,8 @@ class CircleGrid(SingleSizeGrid):
                     first = { p for p in region
                         if (other_sides_by_r[0][p.coordinates[0]] <= p.coordinates[1] < other_sides_by_r[1][p.coordinates[0]])}
                     second = region - first
-                    border = tuple((p, q) 
-                        for p in first
-                        for q in self.pos_neighbors(p) if q in second)
-                    if not border:
-                        raise ValueError("empty border")
                     name = f"cut full circle on {thetas}"
-                    result.append(Division(name, (first, second), border))
+                    result.append(Division(name, (first, second)))
 
             # do we cross 0?
             elif (0 in inner_thetas) and (inner_width - 1 in inner_thetas):
@@ -163,28 +152,16 @@ class CircleGrid(SingleSizeGrid):
                             if (near_side_by_r[p.coordinates[0]] <= p.coordinates[1] < other_side_by_r[p.coordinates[0]])
                         }
                         left = region - right
-                    border = tuple( (p, q)
-                        for p in left 
-                        for q in self.pos_neighbors(p) if q in right
-                    )
                     name = f"cutting broken theta on {theta}"
-                    if not border:
-                        raise ValueError("empty border")
-                    result.append(Division(name, (left, right), border))
+                    result.append(Division(name, (left, right)))
             else:
                 for theta in range(inner_thetas[0], inner_thetas[-1]):
                     other_side_by_r = get_other_side(theta)
                     right = { p for p in region
                         if (p.coordinates[1] < other_side_by_r[p.coordinates[0]])}
                     left = region - right
-                    border = tuple( (p, q)
-                        for p in right if (p.coordinates[1] + 1) == other_side_by_r[p.coordinates[0]]
-                        for q in self.pos_neighbors(p) if q in left
-                    )
                     name = f"cutting simple theta on {theta}"
-                    if not border:
-                        raise ValueError("empty border")
-                    result.append(Division(name, (left, right), border))
+                    result.append(Division(name, (left, right)))
         return result
 
 

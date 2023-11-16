@@ -47,6 +47,13 @@ class BaseGrid():
         self._grid: dict[Position, Cell] = {}
         self.set_options(**kwargs)
 
+    def _add_cell(self, p_or_c: Position|Coordinates) -> None:
+        if isinstance(p_or_c, Position):
+            position = p_or_c
+        else:
+            position = IntPosition(p_or_c)
+        self._grid[position] = Cell(position)
+
     algorithms: dict[str, MazeFunction] = {}
 
     @classmethod
@@ -99,8 +106,7 @@ class BaseGrid():
             return
         # link square is between both, add link entry
         link_pos = LinkPosition(self.find_link_pos(first, second).coordinates)
-        link_cell = Cell(link_pos)
-        self._grid[link_pos] = link_cell
+        self._add_cell(link_pos)
         self.connect(first, link_pos)
         self.connect(second, link_pos)
 

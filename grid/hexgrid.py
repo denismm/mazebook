@@ -3,7 +3,7 @@
 from positions import Position, IntPosition, Direction, add_direction
 from typing import Optional, Any, Sequence
 
-from .maze import Cell, BaseGrid, SingleSizeGrid, ps_list
+from .maze import BaseGrid, SingleSizeGrid, ps_list
 
 hex_directions: tuple[Direction, ...] = ( 
     (1, 1), (0, 1), (-1, 0), (-1, -1), (0, -1), (1, 0)
@@ -29,8 +29,7 @@ class HexGrid(HexBaseGrid):
         for i in range(-radius, radius + 1):
             for j in range(-radius, radius + 1):
                 if abs(i - j) <= radius:
-                    position = IntPosition((i, j))
-                    self._grid[position] = Cell(position)
+                    self._add_cell((i, j))
 
     neighbor_directions: tuple[tuple[Direction, ...], ...] = (hex_directions,)
 
@@ -58,8 +57,7 @@ class TriGrid(HexBaseGrid):
                 start_i = (sum + 1) // 3
                 for i in range(start_i, sum - start_i + 1):
                     j = sum - i
-                    position = IntPosition((i, j))
-                    self._grid[position] = Cell(position)
+                    self._add_cell((i, j))
 
     neighbor_directions: tuple[tuple[Direction, ...], ...] = (
             ((1, 1), (-1, 0), (0, -1),),

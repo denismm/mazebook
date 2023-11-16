@@ -1,10 +1,10 @@
 # grids with cells in a square layout
 
-from positions import Position, IntPosition, Direction, cardinal_directions, add_direction, manhattan
+from positions import Position, IntPosition, Direction, cardinal_directions, add_direction, manhattan, Coordinates
 from typing import Optional, Any, Callable, Sequence
 import random
 
-from .maze import Cell, BaseGrid, ps_list, Division
+from .maze import BaseGrid, ps_list, Division
 
 TEXT_CELL_WIDTH = 4
 TEXT_CELL_HEIGHT = 3
@@ -13,7 +13,7 @@ WALL = '#'
 SPACE = ' '
 PATH = '.'
 
-GridMask = set[Position]
+GridMask = set[Coordinates]
 
 class RectBaseGrid(BaseGrid):
     def __init__(self, height: int, width: int, **kwargs: Any) -> None:
@@ -52,10 +52,9 @@ class RectGrid(RectBaseGrid):
         super().__init__(height, width, **kwargs)
         for i in range(width):
             for j in range(height):
-                position = IntPosition((i, j))
-                if mask and position not in mask:
+                if mask and (i, j) not in mask:
                     continue
-                self._grid[position] = Cell(position)
+                self._add_cell((i, j))
 
     algorithms = dict(BaseGrid.algorithms)
 
@@ -74,7 +73,7 @@ class RectGrid(RectBaseGrid):
         for row, line in enumerate(lines):
             for column, cell in enumerate(line):
                 if cell in space_characters:
-                    grid_mask.add(IntPosition((column, row)))
+                    grid_mask.add((column, row))
             width = max(width, len(line))
         return cls(height, width, mask=grid_mask)
 
@@ -88,7 +87,7 @@ class RectGrid(RectBaseGrid):
             for column, cell in enumerate(zip(*[iter(line)]*4)):
                 (r, g, b, a) = cell
                 if a == 0 or (r == 255 and g == 255 and b == 255):
-                    grid_mask.add(IntPosition((column, height - row - 1)))
+                    grid_mask.add((column, height - row - 1))
         return cls(height, width, mask=grid_mask)
 
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
@@ -221,8 +220,7 @@ class ZetaGrid(RectBaseGrid):
         super().__init__(height, width, **kwargs)
         for i in range(width):
             for j in range(height):
-                position = IntPosition((i, j))
-                self._grid[position] = Cell(position)
+                self._add_cell((i, j))
 
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
         return ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1))
@@ -234,12 +232,10 @@ class UpsilonGrid(RectBaseGrid):
         super().__init__(height, width, **kwargs)
         for i in range(width):
             for j in range(height):
-                position = IntPosition((i * 2, j * 2))
-                self._grid[position] = Cell(position)
+                self._add_cell((i * 2, j * 2))
         for i in range(width - 1):
             for j in range(height - 1):
-                position = IntPosition((1 + i * 2, 1 + j * 2))
-                self._grid[position] = Cell(position)
+                self._add_cell((1 + i * 2, 1 + j * 2))
 
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
         if start.coordinates[0] % 2 == 0:

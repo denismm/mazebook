@@ -7,7 +7,7 @@ from functools import cache
 from sys import stderr
 import random
 
-from .maze import Cell, SingleSizeGrid, BaseGrid, Division
+from .maze import SingleSizeGrid, BaseGrid, Division
 
 def warn(*args: Any, **kwargs: Any) -> None:
     print(*args, file=stderr, **kwargs)
@@ -47,8 +47,7 @@ class CircleGrid(SingleSizeGrid):
         self.center_cell = center_cell
         if center_cell:
             physical_radius_offset = 0.0
-            origin = IntPosition((0, 0))
-            self._grid[origin] = Cell(origin)
+            self._add_cell((0, 0))
             starting_r = 1
             self.widths.append(1)
             self.ratios.append(0)
@@ -69,8 +68,7 @@ class CircleGrid(SingleSizeGrid):
             self.widths.append(width)
             self.ratios.append(ratio)
             for theta in range(width):
-                position = IntPosition((r, theta))
-                self._grid[position] = Cell(position)
+                self._add_cell((r, theta))
 
     @cache
     def pos_adjacents(self, start: Position) -> Sequence[Position]:

@@ -291,18 +291,18 @@ class BaseGrid():
             walls_text = ps_list([str(w).lower() for w in walls])
             field_text = str(field_for_position.get(k, 0))
             links_text = ps_list(v.links)
-            output.append(ps_list([ ps_list(k.coordinates), walls_text, field_text ]) + f" % {links_text}")
+            output.append(ps_list([ k.ps_rep, walls_text, field_text ]) + f" % {links_text}")
         output.append("]")
         if path:
             output.append("/path ")
             output.append(ps_list([
-                ps_list(position.coordinates) for position in path
+                position.ps_rep for position in path
             ]))
         if field:
             output.append("/field ")
             output.append(ps_list([
                 ps_list([
-                    ps_list(position.coordinates) for position in frontier
+                    position.ps_rep for position in frontier
                 ]) for frontier in field
             ]))
         output.append(f">> draw{self.maze_type}")

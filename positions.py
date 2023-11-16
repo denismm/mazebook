@@ -32,6 +32,10 @@ class Position(Hashable):
         return f"<{class_name} {self.position_type} {self.coordinates}>"
 
     @property
+    def ps_rep(self) -> str:
+        raise ValueError ("not implemented")
+
+    @property
     def coordinates(self) -> Coordinates:
         return self.__coordinates
 
@@ -43,9 +47,17 @@ class IntPosition(Position):
     def __init__(self, coordinates: Coordinates) -> None:
         super().__init__("int", coordinates)
 
+    @property
+    def ps_rep(self) -> str:
+        return '[' + ' '.join([str(x) for x in self.coordinates]) + ']'
+
 class LinkPosition(Position):
     def __init__(self, coordinates: Coordinates) -> None:
         super().__init__("link", coordinates)
+
+    @property
+    def ps_rep(self) -> str:
+        return '[' + ' '.join([str(x) for x in self.coordinates]) + ' /link]'
 
 Direction = Coordinates
 

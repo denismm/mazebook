@@ -1,7 +1,7 @@
 # grids with or without a central node surrounded by rings of cells
 
-from positions import Position, Direction, add_direction
-from typing import Optional, Any
+from positions import Position, IntPosition, Direction, add_direction
+from typing import Optional, Any, Sequence
 from math import pi
 from functools import cache
 from sys import stderr
@@ -47,7 +47,8 @@ class CircleGrid(SingleSizeGrid):
         self.center_cell = center_cell
         if center_cell:
             physical_radius_offset = 0.0
-            self._grid[(0,0)] = Cell((0,0))
+            origin = IntPosition((0, 0))
+            self._grid[origin] = Cell(origin)
             starting_r = 1
             self.widths.append(1)
             self.ratios.append(0)
@@ -68,47 +69,47 @@ class CircleGrid(SingleSizeGrid):
             self.widths.append(width)
             self.ratios.append(ratio)
             for theta in range(width):
-                position = (r, theta)
+                position = IntPosition((r, theta))
                 self._grid[position] = Cell(position)
 
     @cache
-    def pos_adjacents(self, start: Position) -> list[Position]:
+    def pos_adjacents(self, start: Position) -> Sequence[Position]:
         # cw and ccw around ring
-        r, theta = start[:2]
+        r, theta = start.coordinates
         neighbors: list[Position] = []
         # right, down, left
         if self.widths[r] > 1:
-            neighbors.append((r, (theta + 1) % self.widths[r]))
+            neighbors.append(IntPosition((r, (theta + 1) % self.widths[r])))
         if r > 0:
-            neighbors.append((r - 1, theta // self.ratios[r]))
+            neighbors.append(IntPosition((r - 1, theta // self.ratios[r])))
         if self.widths[r] > 1:
-            neighbors.append((r, (theta - 1) % self.widths[r]))
+            neighbors.append(IntPosition((r, (theta - 1) % self.widths[r])))
         if r + 1 < len(self.widths):
             next_ratio = self.ratios[r + 1]
         else:
             next_ratio = 1
         neighbors += [
-            (r + 1, theta * next_ratio + x) for x in range(next_ratio)]
+            IntPosition((r + 1, theta * next_ratio + x)) for x in range(next_ratio)]
         return neighbors
 
     def find_link_pos(self, first: Position, second: Position) -> Position:
         # special case for center
-        if first[0] == 1 and second[0] == 1 and self.center_cell:
+        if first.coordinates[0] == 1 and second.coordinates[0] == 1 and self.center_cell:
             if self.widths[1] == 4:
                 # we're probably going across the middle
-                return (0, 0)
+                return IntPosition((0, 0))
         return super().find_link_pos(first, second)
 
     def region_divisions(self, region: set[Position]) -> list[Division]:
         result: list[Division] = []
         # we assert that any region is sectional
         # in-out divisions
-        rs = { p[0] for p in region }
+        rs = { p.coordinates[0] for p in region }
         for r in range(min(rs), max(rs)):
-            inner = { p for p in region if p[0] <= r }
+            inner = { p for p in region if p.coordinates[0] <= r }
             outer = region - inner
             border = tuple( (p, q) 
-                for p in inner if p[0] == r
+                for p in inner if p.coordinates[0] == r
                 for q in self.pos_neighbors(p) if q in outer
             )
             if not border:
@@ -120,7 +121,7 @@ class CircleGrid(SingleSizeGrid):
                 r: (theta + 1) * (self.widths[r] // inner_width) for r in rs
             }
         if inner_width > 1:
-            inner_thetas = sorted([p[1] for p in region if p[0] == min(rs)])
+            inner_thetas = sorted([p.coordinates[1] for p in region if p.coordinates[0] == min(rs)])
             if len(inner_thetas) == inner_width:
                 # for full circle, we need two borders
                 random.shuffle(inner_thetas)
@@ -128,7 +129,7 @@ class CircleGrid(SingleSizeGrid):
                     thetas = sorted(inner_thetas[i:i+2])
                     other_sides_by_r = [get_other_side(theta) for theta in thetas]
                     first = { p for p in region
-                        if (other_sides_by_r[0][p[0]] <= p[1] < other_sides_by_r[1][p[0]])}
+                        if (other_sides_by_r[0][p.coordinates[0]] <= p.coordinates[1] < other_sides_by_r[1][p.coordinates[0]])}
                     second = region - first
                     border = tuple((p, q) 
                         for p in first
@@ -152,14 +153,14 @@ class CircleGrid(SingleSizeGrid):
                     if theta >= 0:
                         other_side_by_r = get_other_side(theta)
                         left = { p for p in region
-                            if (other_side_by_r[p[0]] <= p[1] < far_side_by_r[p[0]])
+                            if (other_side_by_r[p.coordinates[0]] <= p.coordinates[1] < far_side_by_r[p.coordinates[0]])
                         }
                         right = region - left
                     else:
                         effective_theta = theta % inner_width
                         other_side_by_r = get_other_side(effective_theta)
                         right = { p for p in region
-                            if (near_side_by_r[p[0]] <= p[1] < other_side_by_r[p[0]])
+                            if (near_side_by_r[p.coordinates[0]] <= p.coordinates[1] < other_side_by_r[p.coordinates[0]])
                         }
                         left = region - right
                     border = tuple( (p, q)
@@ -174,10 +175,10 @@ class CircleGrid(SingleSizeGrid):
                 for theta in range(inner_thetas[0], inner_thetas[-1]):
                     other_side_by_r = get_other_side(theta)
                     right = { p for p in region
-                        if (p[1] < other_side_by_r[p[0]])}
+                        if (p.coordinates[1] < other_side_by_r[p.coordinates[0]])}
                     left = region - right
                     border = tuple( (p, q)
-                        for p in right if (p[1] + 1) == other_side_by_r[p[0]]
+                        for p in right if (p.coordinates[1] + 1) == other_side_by_r[p.coordinates[0]]
                         for q in self.pos_neighbors(p) if q in left
                     )
                     name = f"cutting simple theta on {theta}"

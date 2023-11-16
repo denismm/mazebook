@@ -1,8 +1,8 @@
-from positions import Position, Direction, cardinal_directions, add_direction
+from positions import Position, LinkPosition, IntPosition, Direction, cardinal_directions, add_direction, Coordinates
 import random
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Any, Optional, Callable, NamedTuple
+from typing import Any, Optional, Callable, NamedTuple, Sequence
 from typing_extensions import Protocol
 import json
 
@@ -18,9 +18,9 @@ class Cell():
         self.links.discard(link)
 
     @property
-    def flat_links(self) -> set[Position]:
-        # for weaving it can be useful to ignore the 3rd coord of a link
-        return set([p[:2] for p in self.links])
+    def flat_links(self) -> set[Coordinates]:
+        # for weaving it can be useful to ignore the linkiness
+        return set([p.coordinates for p in self.links])
 
 # convenience for ps printing
 def ps_list(iterable: Iterable[Any]) -> str:
@@ -78,6 +78,7 @@ class BaseGrid():
         linewidth: Optional[float] = None,
         inset: Optional[float] = None,
         pixels: Optional[float] = None,
+        room_size: Optional[int] = None,
     ) -> None:
         if pixels is None:
             pixels = 20.0
@@ -87,15 +88,18 @@ class BaseGrid():
         self.linewidth = linewidth
         self.inset = inset
         self.pixels = pixels
+        if room_size is None:
+            room_size = 1
+        self.room_size = room_size
 
     def connect(self, first: Position, second: Position) -> None:
         # what if there's a distance between the two cells?
-        if second[:2] in self.pos_adjacents(first):
+        if IntPosition(second.coordinates) in self.pos_adjacents(first):
             self._grid[first].add_link(second)
             self._grid[second].add_link(first)
             return
-        # link square is between both, add third dimension
-        link_pos = self.find_link_pos(first, second) + (1, )
+        # link square is between both, add link entry
+        link_pos = LinkPosition(self.find_link_pos(first, second).coordinates)
         link_cell = Cell(link_pos)
         self._grid[link_pos] = link_cell
         self.connect(first, link_pos)
@@ -111,7 +115,7 @@ class BaseGrid():
         second_neighbors = self.pos_adjacents(second)
         intersection_positions = set(first_neighbors) & set(second_neighbors)
         if len(intersection_positions) == 0:
-            raise ValueError(f"no common cell between {first} and {second}")
+            raise ValueError(f"no common cell between {first} and {second} ({first_neighbors}, {second_neighbors}")
         if len(intersection_positions) > 1:
             raise ValueError(f"too many common cells between {first} and {second} ({first_neighbors}, {second_neighbors}, {intersection_positions}")
         return intersection_positions.pop()
@@ -143,12 +147,12 @@ class BaseGrid():
             back_index = target_neighbors.index(start)
             other_side = target_neighbors[(back_index + 2) % 4]
             if other_side in self:
-                if not ({start, other_side} & target_cell.flat_links):
+                if not ({start.coordinates, other_side.coordinates} & target_cell.flat_links):
                     # tunnel ok!
                     neighbors.append(other_side)
         return neighbors
 
-    def pos_adjacents(self, start: Position) -> list[Position]:
+    def pos_adjacents(self, start: Position) -> Sequence[Position]:
         # must return adjacent cells in order, including those not in grid
         raise ValueError("abstract method not overridden")
 
@@ -281,31 +285,31 @@ class BaseGrid():
         # cells
         output.append("/cells [")
         # draw link cells first
-        for k in sorted(self._grid.keys(), key=lambda p: -(len(p))):
+        for k in sorted(self._grid.keys()):
             v = self._grid[k]
             walls = self.walls_for_cell(v)
             walls_text = ps_list([str(w).lower() for w in walls])
             field_text = str(field_for_position.get(k, 0))
             links_text = ps_list(v.links)
-            output.append(ps_list([ ps_list(k), walls_text, field_text ]) + f" % {links_text}")
+            output.append(ps_list([ ps_list(k.coordinates), walls_text, field_text ]) + f" % {links_text}")
         output.append("]")
         if path:
             output.append("/path ")
             output.append(ps_list([
-                ps_list(position) for position in path
+                ps_list(position.coordinates) for position in path
             ]))
         if field:
             output.append("/field ")
             output.append(ps_list([
                 ps_list([
-                    ps_list(position) for position in frontier
+                    ps_list(position.coordinates) for position in frontier
                 ]) for frontier in field
             ]))
         output.append(f">> draw{self.maze_type}")
         return "\n".join(output)
 
     def walls_for_cell(self, cell: Cell) -> list[bool]:
-        return [npos not in cell.flat_links for npos in self.pos_adjacents(cell.position)]
+        return [npos.coordinates not in cell.flat_links for npos in self.pos_adjacents(cell.position)]
 
 
     def print(self,
@@ -327,6 +331,7 @@ class SingleSizeGrid(BaseGrid):
 
 @BaseGrid.algo
 def aldous_broder(maze: BaseGrid) -> None:
+    "wander, extending maze when you leave visited area"
     current: Position = maze.random_point()
     visited: set[Position] = {current}
     steps = 0
@@ -340,6 +345,7 @@ def aldous_broder(maze: BaseGrid) -> None:
 
 @BaseGrid.algo
 def wilson(maze: BaseGrid) -> None:
+    "wander from random points, chopping off loops, until visited is found"
     start: Position = maze.random_point()
     unvisited: set[Position] = set(maze._grid.keys())
     visited: set[Position] = {start}
@@ -471,7 +477,7 @@ def kruskal(maze: BaseGrid) -> None:
             if not neighborset <= set(maze._grid.keys()):
                 continue
             weaveable_points -= neighborset
-            link_pos: Position = weave_pos + (1,)
+            link_pos: Position = LinkPosition(weave_pos.coordinates)
             link_cell = Cell(link_pos)
             maze._grid[link_pos] = link_cell
             top_mod = random.randrange(2)
@@ -622,11 +628,11 @@ def eller(maze: BaseGrid) -> None:
             pass
 
     # get all possible xes
-    all_xes = sorted(list({ p[0] for p in maze._grid.keys() }))
+    all_xes = sorted(list({ p.coordinates[0] for p in maze._grid.keys() }))
     # go row by row
     last_x = all_xes[-1]
     for x in all_xes:
-        row_points = sorted([p for p in maze._grid.keys() if p[0] == x])
+        row_points = sorted([p for p in maze._grid.keys() if p.coordinates[0] == x])
         for i in range(len(row_points)):
             # check against previous for free loop
             if row_points[i-1] in maze.pos_adjacents(row_points[i]):
@@ -640,7 +646,7 @@ def eller(maze: BaseGrid) -> None:
         for group_points in point_groups.values():
             east_points = [p for p in group_points & row_points_set]
             # get all connections to next row
-            next_row_connections = [(p, q) for p in east_points for q in maze.pos_adjacents(p) if q[0] > x and q in maze]
+            next_row_connections = [(p, q) for p in east_points for q in maze.pos_adjacents(p) if q.coordinates[0] > x and q in maze]
             random.shuffle(next_row_connections)
             if next_row_connections:
                 # # carve west 1-N times
@@ -653,7 +659,13 @@ def eller(maze: BaseGrid) -> None:
 @BaseGrid.algo
 def fractal(maze: BaseGrid) -> None:
     def fractal_step(region: set[Position]) -> None:
-        if len(region) > 1:
+        if len(region) <= maze.room_size:
+            # make big room
+            for p in region:
+                for q in maze.pos_adjacents(p):
+                    if q in region:
+                        maze.connect(p, q)
+        elif len(region) > 1:
             division_options = maze.region_divisions(region)
             division = random.choice(division_options)
             # make one border connection

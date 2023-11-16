@@ -1,7 +1,7 @@
 # grids with cells in a square layout
 
-from positions import Position, Direction, cardinal_directions, add_direction, manhattan
-from typing import Optional, Any, Callable
+from positions import Position, IntPosition, Direction, cardinal_directions, add_direction, manhattan
+from typing import Optional, Any, Callable, Sequence
 import random
 
 from .maze import Cell, BaseGrid, ps_list, Division
@@ -24,7 +24,7 @@ class RectBaseGrid(BaseGrid):
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
         raise ValueError("not overridden")
 
-    def pos_adjacents(self, start: Position) -> list[Position]:
+    def pos_adjacents(self, start: Position) -> Sequence[Position]:
         neighbors = [add_direction(start, dir) for dir in self.neighbor_directions_for_start(start)]
         return neighbors
 
@@ -52,7 +52,7 @@ class RectGrid(RectBaseGrid):
         super().__init__(height, width, **kwargs)
         for i in range(width):
             for j in range(height):
-                position = (i, j)
+                position = IntPosition((i, j))
                 if mask and position not in mask:
                     continue
                 self._grid[position] = Cell(position)
@@ -74,7 +74,7 @@ class RectGrid(RectBaseGrid):
         for row, line in enumerate(lines):
             for column, cell in enumerate(line):
                 if cell in space_characters:
-                    grid_mask.add((column, row))
+                    grid_mask.add(IntPosition((column, row)))
             width = max(width, len(line))
         return cls(height, width, mask=grid_mask)
 
@@ -88,7 +88,7 @@ class RectGrid(RectBaseGrid):
             for column, cell in enumerate(zip(*[iter(line)]*4)):
                 (r, g, b, a) = cell
                 if a == 0 or (r == 255 and g == 255 and b == 255):
-                    grid_mask.add((column, height - row - 1))
+                    grid_mask.add(IntPosition((column, height - row - 1)))
         return cls(height, width, mask=grid_mask)
 
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
@@ -100,11 +100,11 @@ class RectGrid(RectBaseGrid):
         border_steps = ( (1, 0), (0, 1))
         for coordinate in range(2):
             border_step = border_steps[coordinate]
-            xs = { p[coordinate] for p in region }
+            xs = { p.coordinates[coordinate] for p in region }
             for x in range(min(xs), max(xs)):
-                left = { p for p in region if p[coordinate] <= x }
+                left = { p for p in region if p.coordinates[coordinate] <= x }
                 right = region - left
-                border = tuple( (p, add_direction(p, border_step)) for p in left if p[coordinate] == x)
+                border = tuple( (p, add_direction(p, border_step)) for p in left if p.coordinates[coordinate] == x)
                 result.append(Division(f"cut {coordinate} on {x}", (left, right), border))
         return result
 
@@ -133,7 +133,7 @@ def ascii_print(maze: RectGrid,
         down_output = WALL
         center_output = across_output
         for i in range(maze.width):
-            position = (i, j)
+            position = IntPosition((i, j))
             if position not in maze:
                 interior = WALL
             elif position in path:
@@ -151,12 +151,12 @@ def ascii_print(maze: RectGrid,
                 center_output += interior * TEXT_CELL_WIDTH
             across_output += interior * TEXT_CELL_WIDTH
 
-            across_position = (i + 1, j)
+            across_position = IntPosition((i + 1, j))
             door = door_for_positions(position, across_position)
             across_output += door
             center_output += door
 
-            down_position = (i, j + 1)
+            down_position = IntPosition((i, j + 1))
             door = door_for_positions(position, down_position)
             down_output += door * TEXT_CELL_WIDTH
             down_output += WALL
@@ -179,10 +179,11 @@ def binary(maze: RectGrid) -> None:
     # nw = cardinal_directions[1:3]
     for j in range(maze.height):
         for i in range(maze.width):
-            position = (i, j) 
+            position = IntPosition((i, j))
             possible_next: list[Position] = []
             # possible_dirs = ne if j % 2 == 0 else nw
             possible_dirs = ne
+            next_position: Position
             for direction in possible_dirs:
                 next_position = add_direction(position, direction)
                 if next_position in maze:
@@ -197,7 +198,7 @@ def sidewinder(maze: RectGrid) -> None:
     for j in range(maze.height):
         run: list[Position] = []
         for i in range(maze.width):
-            position = (i, j)
+            position = IntPosition((i, j))
             run.append(position)
             options: list[Direction] = []
             for direction in ne:
@@ -223,7 +224,7 @@ class ZetaGrid(RectBaseGrid):
         super().__init__(height, width, **kwargs)
         for i in range(width):
             for j in range(height):
-                position = (i, j)
+                position = IntPosition((i, j))
                 self._grid[position] = Cell(position)
 
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
@@ -236,15 +237,15 @@ class UpsilonGrid(RectBaseGrid):
         super().__init__(height, width, **kwargs)
         for i in range(width):
             for j in range(height):
-                position = (i * 2, j * 2)
+                position = IntPosition((i * 2, j * 2))
                 self._grid[position] = Cell(position)
         for i in range(width - 1):
             for j in range(height - 1):
-                position = (1 + i * 2, 1 + j * 2)
+                position = IntPosition((1 + i * 2, 1 + j * 2))
                 self._grid[position] = Cell(position)
 
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
-        if start[0] % 2 == 0:
+        if start.coordinates[0] % 2 == 0:
             return ((2, 0), (1, 1), (0, 2), (-1, 1), (-2, 0), (-1, -1), (0, -2), (1, -1))
         else:
             return ((1, 1), (-1, 1), (-1, -1), (1, -1))
@@ -253,4 +254,4 @@ class UpsilonGrid(RectBaseGrid):
 
     def find_link_pos(self, first: Position, second: Position) -> Position:
         # diagonal octagons have 3 common neighbors, use simpler solution
-        return tuple([ (a + b) // 2 for a, b in zip(first, second)])
+        return IntPosition(tuple([ (a + b) // 2 for a, b in zip(first.coordinates, second.coordinates)]))

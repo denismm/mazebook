@@ -24,6 +24,7 @@ parser.add_argument('-p', '--path', action='store_true', help="whether to includ
 parser.add_argument('-w', '--weave', action='store_true', help="whether to weave links above and below other links")
 parser.add_argument('-s', '--seed', help="if provided, the seed for the rng")
 parser.add_argument('-b', '--braid', type=float, help="the proportion of dead ends to braid")
+parser.add_argument('--room_size', type=int, help="the size of rooms in fractal mazes")
 parser.add_argument('--bg', action='store_true', help="whether to draw a black background")
 parser.add_argument('--pathcolor', help="string of rgb float values for path, if no field")
 parser.add_argument('--linewidth', type=float, help="thickness of line, where 1 is the cell width")
@@ -92,6 +93,8 @@ if args.linewidth:
     option_kwargs['linewidth'] = args.linewidth
 if args.pixels:
     option_kwargs['pixels'] = args.pixels
+if args.room_size:
+    option_kwargs['room_size'] = args.room_size
 
 grid.set_options(**option_kwargs)
 

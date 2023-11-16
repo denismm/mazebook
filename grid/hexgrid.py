@@ -1,7 +1,7 @@
 # grids that use hexagonal geometry
 
-from positions import Position, Direction, add_direction
-from typing import Optional, Any
+from positions import Position, IntPosition, Direction, add_direction
+from typing import Optional, Any, Sequence
 
 from .maze import Cell, BaseGrid, SingleSizeGrid, ps_list
 
@@ -14,10 +14,10 @@ class HexBaseGrid(SingleSizeGrid):
 
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
         all_nd = self.neighbor_directions
-        directions_index = sum(start) % len(all_nd)
+        directions_index = sum(start.coordinates) % len(all_nd)
         return all_nd[directions_index]
 
-    def pos_adjacents(self, start: Position) -> list[Position]:
+    def pos_adjacents(self, start: Position) -> Sequence[Position]:
         neighbor_directions = self.neighbor_directions_for_start(start)
         neighbors = [add_direction(start, dir) for dir in neighbor_directions]
         return neighbors
@@ -29,7 +29,7 @@ class HexGrid(HexBaseGrid):
         for i in range(-radius, radius + 1):
             for j in range(-radius, radius + 1):
                 if abs(i - j) <= radius:
-                    position = (i, j)
+                    position = IntPosition((i, j))
                     self._grid[position] = Cell(position)
 
     neighbor_directions: tuple[tuple[Direction, ...], ...] = (hex_directions,)
@@ -58,7 +58,7 @@ class TriGrid(HexBaseGrid):
                 start_i = (sum + 1) // 3
                 for i in range(start_i, sum - start_i + 1):
                     j = sum - i
-                    position = (i, j)
+                    position = IntPosition((i, j))
                     self._grid[position] = Cell(position)
 
     neighbor_directions: tuple[tuple[Direction, ...], ...] = (

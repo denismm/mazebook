@@ -10,7 +10,7 @@
 /drawrectmaze { /grid arg
     % 0 0 grid /width get grid /height get box stroke
     /setup {} def
-    /getcenter { /position arg
+    /flatcenter { /position arg
         [ position 0 2 getinterval { 0.5 add } forall ]
     } def
     /getcellpath { /walls arg /position arg
@@ -65,7 +65,7 @@
         /diamond_offset_long 0.5 full_octagon_offset sub diamond_offset_short sub def
         /diamond_corner diamond_offset_long diamond_offset_short sub def
     } def
-    /getcenter { /position arg
+    /flatcenter { /position arg
         [ position 0 2 getinterval { 2 div 0.5 add } forall ]
     } def
     /getcellpath { /walls arg /position arg
@@ -146,7 +146,7 @@
 /drawzetamaze { /grid arg
     % 0 0 grid /width get grid /height get box stroke
     /setup {} def
-    /getcenter { /position arg
+    /flatcenter { /position arg
         [ position 0 2 getinterval { 0.5 add } forall ]
     } def
     /getcellpath { /walls arg /position arg
@@ -222,7 +222,7 @@
 
     (L) set_polar_corner_mode
 
-    /getcenter {
+    /flatcenter {
         2 dict begin
             /coord arg
             % given a (ring, cell) coordinate, return (r, theta) of center
@@ -533,7 +533,7 @@
 
     /radius grid /radius get def
 
-    /getcenter { h2c } def
+    /flatcenter { h2c } def
 
     /getcellpath { /walls arg /position arg
         % one cell, centered on position
@@ -576,7 +576,7 @@
 
     /width grid /width get def
 
-    /getcenter { /hexcoord arg
+    /flatcenter { /hexcoord arg
         % convert hex coordinate to x,y
         hexcoord aload pop /n arg /ese arg
         [
@@ -624,6 +624,53 @@
 } def
 
 /mazeengine {
+    grid /hyperstep known {
+        /hyperstep grid /hyperstep get def
+    } {
+        /hyperstep [] def
+    } ifelse
+    /hyper_n hyperstep length def
+
+    /getcenter {
+        /baseposition arg
+        baseposition flatcenter /result arg
+        0 1 hyper_n 1 sub { /h arg
+            baseposition dup length hyper_n sub h add get /z arg
+            0 1 1 { /c arg
+                hyperstep h get c get z mul
+                result c get add
+                result exch
+                c exch put
+            } for
+        } for
+        result
+    } def
+
+    /hyperwalls { /walls arg /position arg
+        /hyper_doors walls dup length hyper_n 2 mul sub hyper_n 2 mul getinterval def
+        gsave
+            position getcenter atranslate
+            0 1 hyper_n 2 mul 1 sub {
+                /hi arg
+                hyper_doors hi get not {
+                    /hyperdir hyperstep hi 2 idiv get def
+                    % use unit vector for door distance
+                    /doordir hyperdir aload pop exch atan def
+                    % turn around if necessary
+                    hi 2 mod 0 eq {
+                        /doordir doordir 180 add def
+                    } if
+                    gsave
+                        doordir rotate
+                        % improve this
+                        0.375 0 translate
+                        9 recip softscale
+                        -1 1 goto 0 0 goto -1 -1 goto stroke
+                    grestore
+                } if
+            } for
+        grestore
+    } def
     gsave
         grid /linewidth known {
             grid /linewidth get
@@ -671,7 +718,12 @@
                     } if
                     position walls getcellpath fill
                 grestore
-                position walls drawwalls
+                gsave
+                    position walls drawwalls
+                grestore
+                gsave
+                    position walls hyperwalls
+                grestore
             grestore
         } forall
 

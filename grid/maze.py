@@ -731,12 +731,17 @@ def json_print(maze: BaseGrid,
         output_data['weave'] = True
     output_cells: list[dict[str, Position | list[Position]]] = []
     for k, v in maze._grid.items():
-        cell_info: dict[str, Position| list[Position]] = {"position": k, "links": list(v.links)}
+        cell_info: dict[str, Position| list[Position]] = {
+            "position": k.json_rep,
+            "links": [p.json_rep for p in v.links]
+        }
         output_cells.append(cell_info)
     output_data['cells'] = output_cells
     if path:
-        output_data['path'] = path
+        output_data['path'] = [p.json_rep for p in path]
     if field:
-        output_data['field'] = [list(x) for x in field]
+        output_data['field'] = [
+            [p.json_rep for p in frontier]
+        for frontier in field]
     output_data['maze_type'] = maze.maze_type
     print(json.dumps(output_data))

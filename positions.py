@@ -1,5 +1,6 @@
 from collections.abc import Hashable
 from functools import total_ordering
+from typing import Any
 
 Coordinates = tuple[int, ...]
 
@@ -36,6 +37,10 @@ class Position(Hashable):
         raise ValueError ("not implemented")
 
     @property
+    def json_rep(self) -> Any:
+        raise ValueError ("not implemented")
+
+    @property
     def coordinates(self) -> Coordinates:
         return self.__coordinates
 
@@ -51,6 +56,10 @@ class IntPosition(Position):
     def ps_rep(self) -> str:
         return '[' + ' '.join([str(x) for x in self.coordinates]) + ']'
 
+    @property
+    def json_rep(self) -> Any:
+        return list(self.coordinates)
+
 class LinkPosition(Position):
     def __init__(self, coordinates: Coordinates) -> None:
         super().__init__("link", coordinates)
@@ -58,6 +67,10 @@ class LinkPosition(Position):
     @property
     def ps_rep(self) -> str:
         return '[' + ' '.join([str(x) for x in self.coordinates]) + ' /link]'
+
+    @property
+    def json_rep(self) -> Any:
+        return {"type": "link", "coordinates": list(self.coordinates)}
 
 Direction = Coordinates
 

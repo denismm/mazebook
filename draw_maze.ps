@@ -266,6 +266,8 @@
     } def
 
     /getcellpath { /walls arg /position arg
+        position getcenter atranslate
+        -1 dup scale position flatcenter atranslate -1 dup scale
         % sometimes we need a special lowest point
         center_cell not inset 0 ne and {
             /innerangle where {
@@ -372,7 +374,9 @@
     /mgoto { convert_to_polar polar_goto } def
 
     /drawwalls { /walls arg /position arg
-        /all_walls position length 2 eq def
+        position getcenter atranslate
+        -1 dup scale position flatcenter atranslate -1 dup scale
+        /all_walls position islink not def
         /outstart position 0 get 0 eq {
             center_cell { 0 } { 2 } ifelse
         } { 3 } ifelse def
@@ -720,7 +724,9 @@
                     position walls getcellpath fill
                 grestore
                 gsave
-                    position walls drawwalls
+                    position
+                    walls dup length hyper_n 2 mul sub 0 exch getinterval
+                    drawwalls
                 grestore
                 gsave
                     position walls hyperwalls

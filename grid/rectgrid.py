@@ -29,17 +29,8 @@ class RectBaseGrid(BaseGrid):
         return neighbors
 
     @property
-    def png_alignment(self) -> list[str]:
-        return ['-0.05', 'd', str(self.width + 0.05), str(self.height + 0.05)]
-
-    @property
-    def ps_alignment(self) -> str:
-        output = "72 softscale 0.25 0.25 translate "
-        if self.width / 8 > self.height / 10.5:
-            output += f"8 {self.width} div dup scale"
-        else:
-            output += f"10.5 {self.height} div dup scale"
-        return output
+    def bounding_box(self) -> tuple[float, ...]:
+        return (-0.5, -0.5, self.width + 0.5, self.height + 0.5)
 
     @property
     def size_dict(self) -> dict[str, int | list[int]]:

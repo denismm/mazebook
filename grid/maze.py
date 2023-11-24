@@ -247,15 +247,35 @@ class BaseGrid():
 
     ### Printing support 
 
+    # corners of bounding box: lower left, top right
+    @property
+    def bounding_box(self) -> tuple[float, ...]:
+        raise ValueError("not overridden")
+
     # ps command to align ps output
     @property
     def ps_alignment(self) -> str:
-        raise ValueError("not overridden")
+        bbox = self.bounding_box
+        corners = ( (bbox[0], bbox[1]), (bbox[2], bbox[3]) )
+        target_sizes = (8, 10.5)
+        box_sizes = (corners[1][c] - corners[0][c] for c in range(2))
+        scale = min([t / b for t, b in zip(target_sizes, box_sizes)])
+        box_centers = ( (corners[0][c] + corners[1][c]) / 2 for c in range(2))
+        translate = ' '. join([str(-f) for f in box_centers])
+        return "72 softscale 4.25 5.5 translate " \
+        f"{scale} dup scale " \
+        f"{translate} translate "
 
-    # command subset for pstopng
+    # position args for pstopng
     @property
     def png_alignment(self) -> list[str]:
-        raise ValueError("not overridden")
+        bbox = self.bounding_box
+        margin = 0.15
+        borders = [
+            bbox[0]- margin, bbox[1] - margin,
+            bbox[2] + margin, bbox[3] + margin
+        ]
+        return [str(border) for border in borders]
 
     def ps_instructions(self,
             path: list[Position] = [],

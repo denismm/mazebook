@@ -40,12 +40,10 @@ class HexGrid(HexBaseGrid):
     maze_type = "hexmaze"
 
     @property
-    def png_alignment(self) -> list[str]:
-        return [str(-1 * (self.radius + 0.65)), 'd', 'd', 'd']
-
-    @property
-    def ps_alignment(self) -> str:
-        return f"72 softscale 4.25 5.5 translate 4 {self.radius + 0.5} div dup scale"
+    def bounding_box(self) -> tuple[float, ...]:
+        # "physical" radius
+        p_radius: float = self.radius + 0.5
+        return ( -p_radius, -p_radius, p_radius, p_radius)
 
 class TriGrid(HexBaseGrid):
     def __init__(self, width: int, **kwargs: Any) -> None:
@@ -72,10 +70,9 @@ class TriGrid(HexBaseGrid):
     maze_type = "trimaze"
 
     @property
-    def png_alignment(self) -> list[str]:
+    def bounding_box(self) -> tuple[float, ...]:
         from math import sqrt
-        return [str(-1.3), 'd', str((self.width - 1) * sqrt(3) + 1.3), str(self.width * 1.5 + 0.5)]
-
-    @property
-    def ps_alignment(self) -> str:
-        return f"72 softscale 0.25 dup translate 8 {self.width} 3 sqrt mul div dup scale 3 sqrt half dup translate"
+        return (
+            -0.5 * sqrt(3), -0.5,
+            (self.width - 0.5) * sqrt(3), self.width * 1.5 - 0.5
+        )

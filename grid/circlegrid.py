@@ -15,26 +15,18 @@ def warn(*args: Any, **kwargs: Any) -> None:
 class CircleGrid(SingleSizeGrid):
     maze_type = "circlemaze"
 
+    @property
+    def bounding_box(self) -> tuple[float, ...]:
+        # "physical" radius
+        p_radius: float = self.radius
+        if self.center_cell:
+            p_radius += 0.5
+        return (-p_radius, -p_radius, p_radius, p_radius)
+
     # key and value for size in draw_maze.ps
     @property
     def size_dict(self) -> dict[str, int | bool | list[int]]:
         return {'radius': self.radius, 'widths':  self.widths, 'center_cell': self.center_cell}
-
-    # ps command to size and align ps output
-    @property
-    def ps_alignment(self) -> str:
-        physical_radius: float = self.radius
-        if self.center_cell:
-            physical_radius += 0.5
-        return f"72 softscale 4.25 5.5 translate 4 {physical_radius} div dup scale"
-
-    # command subset for pstopng
-    @property
-    def png_alignment(self) -> list[str]:
-        physical_radius: float = self.radius
-        if self.center_cell:
-            physical_radius += 0.5
-        return [str(-1 * (physical_radius + 0.15)), 'd', 'd', 'd']
 
     def __init__(self, radius: int, firstring: Optional[int] = None, center_cell: bool = True, **kwargs: Any) -> None:
         super().__init__(radius, **kwargs)

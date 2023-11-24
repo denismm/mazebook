@@ -30,6 +30,7 @@ parser.add_argument('--pathcolor', help="string of rgb float values for path, if
 parser.add_argument('--linewidth', type=float, help="thickness of line, where 1 is the cell width")
 parser.add_argument('--inset', type=float, help="depth of inset when weave is true, where 1 is the cell width")
 parser.add_argument('--firstring', type=int, help="cells in the first non-trivial ring of a circular maze")
+parser.add_argument('-y', '--hyper', type=int, action='append', help="number of planes in each hyper dimension, repeat for more dimensions")
 parser.add_argument('--pixels', type=float, help="how many pixels to map one maze height to, when printing to png")
 
 args = parser.parse_args()
@@ -55,31 +56,6 @@ rg_for_char: dict[str, type[RectBaseGrid]] = {
     'u': UpsilonGrid,
 }
 
-if m := re.match(r'(\d+)x(\d+)([guz]?)$', args.size):
-    height, width = [int(x) for x in m.groups()[:2]]
-    rect_grid_type = rg_for_char[m.group(3)]
-    grid = rect_grid_type(height, width)
-elif m := re.match(r'(\d+)([sd])$', args.size):
-    size = int(m.group(1))
-    single_size_grid_type = ssg_for_char[m.group(2)]
-    grid = single_size_grid_type(size)
-elif m := re.match(r'(\d+)([\@o])(\d*)$', args.size):
-    size = int(m.group(1))
-    center_cell = (m.group(2) == '@')
-    if len(m.group(3)):
-        sides = int(m.group(3))
-        grid = PolygonGrid(size, sides, firstring=args.firstring, center_cell=center_cell)
-    else:
-        grid = CircleGrid(size, firstring=args.firstring, center_cell=center_cell)
-elif os.access(args.size, os.R_OK):
-    mask_filename = args.size
-    if mask_filename[-4:] == '.png':
-        grid = RectGrid.from_mask_png(mask_filename)
-    else:
-        grid = RectGrid.from_mask_txt(mask_filename)
-else:
-    raise ValueError(f"invalid size {args.size}")
-
 option_kwargs: dict[str, Any] = {}
 if args.weave:
     option_kwargs['weave'] = True
@@ -95,8 +71,33 @@ if args.pixels:
     option_kwargs['pixels'] = args.pixels
 if args.room_size:
     option_kwargs['room_size'] = args.room_size
+if args.hyper:
+    option_kwargs['hyper'] = args.hyper
 
-grid.set_options(**option_kwargs)
+if m := re.match(r'(\d+)x(\d+)([guz]?)$', args.size):
+    height, width = [int(x) for x in m.groups()[:2]]
+    rect_grid_type = rg_for_char[m.group(3)]
+    grid = rect_grid_type(height, width, **option_kwargs)
+elif m := re.match(r'(\d+)([sd])$', args.size):
+    size = int(m.group(1))
+    single_size_grid_type = ssg_for_char[m.group(2)]
+    grid = single_size_grid_type(size, **option_kwargs)
+elif m := re.match(r'(\d+)([\@o])(\d*)$', args.size):
+    size = int(m.group(1))
+    center_cell = (m.group(2) == '@')
+    if len(m.group(3)):
+        sides = int(m.group(3))
+        grid = PolygonGrid(size, sides, firstring=args.firstring, center_cell=center_cell, **option_kwargs)
+    else:
+        grid = CircleGrid(size, firstring=args.firstring, center_cell=center_cell, **option_kwargs)
+elif os.access(args.size, os.R_OK):
+    mask_filename = args.size
+    if mask_filename[-4:] == '.png':
+        grid = RectGrid.from_mask_png(mask_filename, **option_kwargs)
+    else:
+        grid = RectGrid.from_mask_txt(mask_filename, **option_kwargs)
+else:
+    raise ValueError(f"invalid size {args.size}")
 
 grid.generate_maze(args.algorithm)
 if args.braid:

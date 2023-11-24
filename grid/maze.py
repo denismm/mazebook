@@ -4,6 +4,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from typing import Any, Optional, Callable, NamedTuple, Sequence
 from typing_extensions import Protocol
+from itertools import product
 import json
 
 class Cell():
@@ -47,6 +48,14 @@ class BaseGrid():
         self._grid: dict[Position, Cell] = {}
         self.set_options(**kwargs)
 
+    def _add_column(self, coordinates: Coordinates) -> None:
+        'Add a cell to the grid on every hyper plane'
+        ranges: list[range] = []
+        for width in self.hyper:
+            ranges.append(range(width))
+        for addend in product(*ranges):
+            self._add_cell(coordinates + addend)
+
     def _add_cell(self, p_or_c: Position|Coordinates) -> None:
         if isinstance(p_or_c, Position):
             position = p_or_c
@@ -78,6 +87,7 @@ class BaseGrid():
         return len(self._grid)
 
     def set_options(self,
+        hyper: Optional[list[int]] = None,
         weave: Optional[bool] = False,
         pathcolor: Optional[list[float]] = None,
         bg: Optional[bool] = None,
@@ -86,17 +96,14 @@ class BaseGrid():
         pixels: Optional[float] = None,
         room_size: Optional[int] = None,
     ) -> None:
-        if pixels is None:
-            pixels = 20.0
         self.weave = weave
+        self.hyper = hyper or []
         self.pathcolor = pathcolor
         self.bg = bg
         self.linewidth = linewidth
         self.inset = inset
-        self.pixels = pixels
-        if room_size is None:
-            room_size = 1
-        self.room_size = room_size
+        self.pixels = pixels or 20.0
+        self.room_size = room_size or 1
 
     def connect(self, first: Position, second: Position) -> None:
         # what if there's a distance between the two cells?
@@ -159,7 +166,14 @@ class BaseGrid():
 
     def pos_adjacents(self, start: Position) -> Sequence[Position]:
         # must return adjacent cells in order, including those not in grid
-        raise ValueError("abstract method not overridden")
+        # this returns hyper directions, should be appended to subclass results
+        hyper_length = len(self.hyper)
+        results: list[Position] = []
+        for i in range(hyper_length):
+            for updown in (-1, 1):
+                direction: Direction = ((0, ) * (2 + i)) + (updown, )
+                results.append(add_direction(start, direction))
+        return results
 
     def dijkstra(self, start: Position) -> list[set[Position]]:
         seen: set[Position] = {start}
@@ -252,24 +266,47 @@ class BaseGrid():
     def bounding_box(self) -> tuple[float, ...]:
         raise ValueError("not overridden")
 
+    @property
+    def hypersteps(self) -> list[tuple[float, ...]]:
+        result: list[tuple[float, ...]] = []
+        bbox = self.bounding_box
+        if len(self.hyper) >= 1:
+            result.append((1 + bbox[2] - bbox[0], 0.0))
+        if len(self.hyper) >= 2:
+            result.append((0.0, 1 + bbox[3] - bbox[1]))
+        if len(self.hyper) > 2:
+            raise ValueError("can't draw more than 2 hyper dimensions")
+        return result
+
+    @property
+    def true_bounding_box(self) -> tuple[float, ...]:
+        bbox = list(self.bounding_box)
+        hypersteps = self.hypersteps
+        for i in range(len(self.hyper)):
+            for c in range(2):
+                bbox[2+c] += hypersteps[i][c] * (self.hyper[i] - 1)
+        return tuple(bbox)
+
     # ps command to align ps output
     @property
     def ps_alignment(self) -> str:
-        bbox = self.bounding_box
+        bbox = self.true_bounding_box
         corners = ( (bbox[0], bbox[1]), (bbox[2], bbox[3]) )
         target_sizes = (8, 10.5)
         box_sizes = (corners[1][c] - corners[0][c] for c in range(2))
         scale = min([t / b for t, b in zip(target_sizes, box_sizes)])
         box_centers = ( (corners[0][c] + corners[1][c]) / 2 for c in range(2))
         translate = ' '. join([str(-f) for f in box_centers])
-        return "72 softscale 4.25 5.5 translate " \
-        f"{scale} dup scale " \
-        f"{translate} translate "
+        return " ".join([
+            "72 softscale 4.25 5.5 translate", 
+            f"{scale} dup scale",
+            f"{translate} translate", 
+        ])
 
     # position args for pstopng
     @property
     def png_alignment(self) -> list[str]:
-        bbox = self.bounding_box
+        bbox = self.true_bounding_box
         margin = 0.15
         borders = [
             bbox[0]- margin, bbox[1] - margin,
@@ -297,6 +334,10 @@ class BaseGrid():
             for i, frontier in enumerate(field):
                 for position in frontier:
                     field_for_position[position] = i
+        if self.hyper:
+            output.append("/hyperstep " + ps_list([
+                ps_list(step) for step in self.hypersteps
+            ]) )
         if self.weave:
             output.append("/weave true")
         if self.pathcolor:

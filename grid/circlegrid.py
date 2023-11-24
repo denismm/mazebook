@@ -39,7 +39,7 @@ class CircleGrid(SingleSizeGrid):
         self.center_cell = center_cell
         if center_cell:
             physical_radius_offset = 0.0
-            self._add_cell((0, 0))
+            self._add_column((0, 0))
             starting_r = 1
             self.widths.append(1)
             self.ratios.append(0)
@@ -60,26 +60,27 @@ class CircleGrid(SingleSizeGrid):
             self.widths.append(width)
             self.ratios.append(ratio)
             for theta in range(width):
-                self._add_cell((r, theta))
+                self._add_column((r, theta))
 
     @cache
     def pos_adjacents(self, start: Position) -> Sequence[Position]:
         # cw and ccw around ring
-        r, theta = start.coordinates
+        r, theta, *remainder = start.coordinates
         neighbors: list[Position] = []
         # right, down, left
         if self.widths[r] > 1:
-            neighbors.append(IntPosition((r, (theta + 1) % self.widths[r])))
+            neighbors.append(IntPosition((r, (theta + 1) % self.widths[r], *remainder)))
         if r > 0:
-            neighbors.append(IntPosition((r - 1, theta // self.ratios[r])))
+            neighbors.append(IntPosition((r - 1, theta // self.ratios[r], *remainder)))
         if self.widths[r] > 1:
-            neighbors.append(IntPosition((r, (theta - 1) % self.widths[r])))
+            neighbors.append(IntPosition((r, (theta - 1) % self.widths[r], *remainder)))
         if r + 1 < len(self.widths):
             next_ratio = self.ratios[r + 1]
         else:
             next_ratio = 1
         neighbors += [
-            IntPosition((r + 1, theta * next_ratio + x)) for x in range(next_ratio)]
+            IntPosition((r + 1, theta * next_ratio + x, *remainder)) for x in range(next_ratio)]
+        neighbors.extend(super().pos_adjacents(start))
         return neighbors
 
     def find_link_pos(self, first: Position, second: Position) -> Position:

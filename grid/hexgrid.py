@@ -14,12 +14,15 @@ class HexBaseGrid(SingleSizeGrid):
 
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
         all_nd = self.neighbor_directions
-        directions_index = sum(start.coordinates) % len(all_nd)
+        directions_index = sum(start.coordinates[:2]) % len(all_nd)
         return all_nd[directions_index]
 
     def pos_adjacents(self, start: Position) -> Sequence[Position]:
         neighbor_directions = self.neighbor_directions_for_start(start)
-        neighbors = [add_direction(start, dir) for dir in neighbor_directions]
+        neighbors: list[Position] = [add_direction(start, dir) for dir in neighbor_directions]
+        if len(neighbors) == 0:
+            raise ValueError(f"why no neighbors of {start}?")
+        neighbors.extend(super().pos_adjacents(start))
         return neighbors
 
 class HexGrid(HexBaseGrid):
@@ -29,7 +32,7 @@ class HexGrid(HexBaseGrid):
         for i in range(-radius, radius + 1):
             for j in range(-radius, radius + 1):
                 if abs(i - j) <= radius:
-                    self._add_cell((i, j))
+                    self._add_column((i, j))
 
     neighbor_directions: tuple[tuple[Direction, ...], ...] = (hex_directions,)
 
@@ -55,7 +58,7 @@ class TriGrid(HexBaseGrid):
                 start_i = (sum + 1) // 3
                 for i in range(start_i, sum - start_i + 1):
                     j = sum - i
-                    self._add_cell((i, j))
+                    self._add_column((i, j))
 
     neighbor_directions: tuple[tuple[Direction, ...], ...] = (
             ((1, 1), (-1, 0), (0, -1),),

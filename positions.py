@@ -1,5 +1,6 @@
 from collections.abc import Hashable
 from functools import total_ordering
+from itertools import zip_longest
 from typing import Any
 
 Coordinates = tuple[int, ...]
@@ -77,7 +78,7 @@ Direction = Coordinates
 cardinal_directions: tuple[Direction, ...] = ((1, 0), (0, 1), (-1, 0), (0, -1))
 
 def add_direction(position: Position, dir: Direction) -> IntPosition:
-    return IntPosition(tuple([p + d for p, d in zip(position.coordinates, dir)]))
+    return IntPosition(tuple([p + d for p, d in zip_longest(position.coordinates, dir, fillvalue=0)]))
 
 def manhattan(start: Position, end: Position) -> int:
     return sum([abs(a - b) for a, b in zip(start.coordinates, end.coordinates)])

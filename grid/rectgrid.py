@@ -25,12 +25,16 @@ class RectBaseGrid(BaseGrid):
         raise ValueError("not overridden")
 
     def pos_adjacents(self, start: Position) -> Sequence[Position]:
-        neighbors = [add_direction(start, dir) for dir in self.neighbor_directions_for_start(start)]
+        neighbors: list[Position] = [
+            add_direction(start, dir)
+            for dir in self.neighbor_directions_for_start(start)
+        ]
+        neighbors.extend(super().pos_adjacents(start))
         return neighbors
 
     @property
     def bounding_box(self) -> tuple[float, ...]:
-        return (-0.5, -0.5, self.width + 0.5, self.height + 0.5)
+        return (0, 0, self.width, self.height)
 
     @property
     def size_dict(self) -> dict[str, int | list[int]]:
@@ -45,7 +49,7 @@ class RectGrid(RectBaseGrid):
             for j in range(height):
                 if mask and (i, j) not in mask:
                     continue
-                self._add_cell((i, j))
+                self._add_column((i, j))
 
     algorithms = dict(BaseGrid.algorithms)
 
@@ -211,7 +215,7 @@ class ZetaGrid(RectBaseGrid):
         super().__init__(height, width, **kwargs)
         for i in range(width):
             for j in range(height):
-                self._add_cell((i, j))
+                self._add_column((i, j))
 
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
         return ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1))
@@ -223,10 +227,10 @@ class UpsilonGrid(RectBaseGrid):
         super().__init__(height, width, **kwargs)
         for i in range(width):
             for j in range(height):
-                self._add_cell((i * 2, j * 2))
+                self._add_column((i * 2, j * 2))
         for i in range(width - 1):
             for j in range(height - 1):
-                self._add_cell((1 + i * 2, 1 + j * 2))
+                self._add_column((1 + i * 2, 1 + j * 2))
 
     def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
         if start.coordinates[0] % 2 == 0:

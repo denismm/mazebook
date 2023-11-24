@@ -513,7 +513,7 @@
 
 /h2c { /hexcoord arg
     % convert hex coordinate to x,y
-    hexcoord aload pop /n arg /ese arg
+    hexcoord 0 2 getinterval aload pop /n arg /ese arg
     [
         ese s3h mul
         ese neg half n add
@@ -578,7 +578,7 @@
 
     /flatcenter { /hexcoord arg
         % convert hex coordinate to x,y
-        hexcoord aload pop /n arg /ese arg
+        hexcoord 0 2 getinterval aload pop /n arg /ese arg
         [
             ese s3h mul
             ese neg half n add
@@ -588,7 +588,7 @@
     /getcellpath { /walls arg /tripos arg
         % one cell, centered on tripos, oriented appropriately
         tripos getcenter atranslate
-        tripos aload pop add 3 mod 2 eq {
+        tripos 0 2 getinterval aload pop add 3 mod 2 eq {
             180 rotate
         } if
         3 {

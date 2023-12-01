@@ -113,6 +113,8 @@ if args.path or args.field:
         print_args['field'] = grid.dijkstra(path[0])
 
 if args.name:
+    if '.' in args.name:
+        args.name = args.name[:args.name.index('.')]
     print_args['maze_name'] = args.name
 
 grid.print(args.output, **print_args)

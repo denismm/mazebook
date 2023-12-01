@@ -651,8 +651,8 @@
         result
     } def
 
-    /hyperwalls { /walls arg /position arg
-        /hyper_doors walls dup length hyper_n 2 mul sub hyper_n 2 mul getinterval def
+    /hyperwalls { /true_walls arg /position arg
+        /hyper_doors true_walls dup length hyper_n 2 mul sub hyper_n 2 mul getinterval def
         gsave
             position getcenter atranslate
             0 1 hyper_n 2 mul 1 sub {
@@ -705,7 +705,7 @@
             gsave
                 /cell arg
                 cell 0 get /position arg
-                cell 1 get /walls arg
+                cell 1 get /true_walls arg
                 cell 2 get /field arg
                 gsave
                     grid /field known {
@@ -721,15 +721,15 @@
                     position islink {
                         1.5 darken
                     } if
-                    position walls getcellpath fill
+                    position true_walls getcellpath fill
                 grestore
                 gsave
                     position
-                    walls dup length hyper_n 2 mul sub 0 exch getinterval
+                    true_walls dup length hyper_n 2 mul sub 0 exch getinterval
                     drawwalls
                 grestore
                 gsave
-                    position walls hyperwalls
+                    position true_walls hyperwalls
                 grestore
             grestore
         } forall

@@ -37,9 +37,10 @@ args = parser.parse_args()
 
 if args.seed:
     if args.seed.isnumeric():
-        random.seed(int(args.seed))
+        seed = int(args.seed)
     else:
-        random.seed(args.seed)
+        seed = args.seed
+    random.seed(seed)
 
 grid: BaseGrid
 

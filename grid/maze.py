@@ -418,7 +418,7 @@ def wilson(maze: BaseGrid) -> None:
     unvisited -= visited
     steps: int = 0
     while len(unvisited):
-        current: Position = random.choice(list(unvisited))
+        current: Position = random.choice(sorted(unvisited))
         path: list[Position] = [current]
         steps += 1
         while path[-1] not in visited:
@@ -448,7 +448,7 @@ def hunt_kill(maze: BaseGrid) -> None:
             next_options = set(maze.pos_neighbors(current)) - visited
             if not next_options:
                 break
-            next: Position = random.choice(list(next_options))
+            next: Position = random.choice(sorted(next_options))
             maze.connect(current, next)
             visited.add(next)
             current = next
@@ -459,7 +459,7 @@ def hunt_kill(maze: BaseGrid) -> None:
             if start_option not in visited:
                 connection_options = set(maze.pos_neighbors(start_option)) & visited
                 if connection_options:
-                    connection: Position = random.choice(list(connection_options))
+                    connection: Position = random.choice(sorted(connection_options))
                     maze.connect(connection, start_option)
                     current = start_option
                     visited.add(current)
@@ -472,7 +472,7 @@ def backtrack(maze: BaseGrid) -> None:
     while stack:
         next_options = set(maze.pos_neighbors(stack[-1])) - visited
         if next_options:
-            next: Position = random.choice(list(next_options))
+            next: Position = random.choice(sorted(next_options))
             maze.connect(stack[-1], next)
             stack.append(next)
             visited.add(next)
@@ -530,7 +530,7 @@ def kruskal(maze: BaseGrid) -> None:
     if maze.weave:
         weaveable_points: set[Position] = set(maze._grid.keys())
         while weaveable_points:
-            weave_pos = random.choice(list(weaveable_points))
+            weave_pos = random.choice(sorted(weaveable_points))
             weaveable_points.remove(weave_pos)
             if weave_pos in group_for_point:
                 continue
@@ -567,7 +567,7 @@ def kruskal(maze: BaseGrid) -> None:
                 connection_pool.remove(tuple(sorted((neighbor, weave_pos)))) # type: ignore [arg-type]
 
     while(connection_pool):
-        connection = random.choice(list(connection_pool))
+        connection = random.choice(sorted(connection_pool))
         connection_pool.remove(connection)
         k_connect(connection)
 

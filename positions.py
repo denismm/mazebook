@@ -6,9 +6,11 @@ from typing import Any
 Coordinates = tuple[int, ...]
 
 position_type_order_keys = {
-    'link': -1,
-    'int': 0,
-} 
+    "link": -1,
+    "int": 0,
+}
+
+
 @total_ordering
 class Position(Hashable):
     __position_type: str
@@ -21,10 +23,16 @@ class Position(Hashable):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Position):
             return False
-        return self.position_type == other.position_type and self.coordinates == other.coordinates
+        return (
+            self.position_type == other.position_type
+            and self.coordinates == other.coordinates
+        )
 
-    def __lt__(self, other: 'Position') -> bool:
-        return (position_type_order_keys[self.position_type], self.coordinates) < (position_type_order_keys[other.position_type], other.coordinates) 
+    def __lt__(self, other: "Position") -> bool:
+        return (position_type_order_keys[self.position_type], self.coordinates) < (
+            position_type_order_keys[other.position_type],
+            other.coordinates,
+        )
 
     def __hash__(self) -> int:
         return hash(self.position_type) ^ hash(self.coordinates)
@@ -35,11 +43,11 @@ class Position(Hashable):
 
     @property
     def ps_rep(self) -> str:
-        raise ValueError ("not implemented")
+        raise ValueError("not implemented")
 
     @property
     def json_rep(self) -> Any:
-        raise ValueError ("not implemented")
+        raise ValueError("not implemented")
 
     @property
     def coordinates(self) -> Coordinates:
@@ -49,17 +57,19 @@ class Position(Hashable):
     def position_type(self) -> str:
         return self.__position_type
 
+
 class IntPosition(Position):
     def __init__(self, coordinates: Coordinates) -> None:
         super().__init__("int", coordinates)
 
     @property
     def ps_rep(self) -> str:
-        return '[' + ' '.join([str(x) for x in self.coordinates]) + ']'
+        return "[" + " ".join([str(x) for x in self.coordinates]) + "]"
 
     @property
     def json_rep(self) -> Any:
         return list(self.coordinates)
+
 
 class LinkPosition(Position):
     def __init__(self, coordinates: Coordinates) -> None:
@@ -67,11 +77,12 @@ class LinkPosition(Position):
 
     @property
     def ps_rep(self) -> str:
-        return '[' + ' '.join([str(x) for x in self.coordinates]) + ' /link]'
+        return "[" + " ".join([str(x) for x in self.coordinates]) + " /link]"
 
     @property
     def json_rep(self) -> Any:
         return {"type": "link", "coordinates": list(self.coordinates)}
+
 
 class SubPosition(Position):
     def __init__(self, coordinates: Coordinates, submaze: str) -> None:
@@ -79,15 +90,29 @@ class SubPosition(Position):
         self.submaze = submaze
 
     @property
+    def ps_rep(self) -> str:
+        # no different from normal position but will get different set
+        return "[" + " ".join([str(x) for x in self.coordinates]) + "]"
+
+    @property
     def json_rep(self) -> Any:
-        return {"type": "submaze", "submaze": self.submaze, "coordinates": list(self.coordinates)}
+        return {
+            "type": "submaze",
+            "submaze": self.submaze,
+            "coordinates": list(self.coordinates),
+        }
+
 
 Direction = Coordinates
 
 cardinal_directions: tuple[Direction, ...] = ((1, 0), (0, 1), (-1, 0), (0, -1))
 
+
 def add_direction(position: Position, dir: Direction) -> IntPosition:
-    return IntPosition(tuple([p + d for p, d in zip_longest(position.coordinates, dir, fillvalue=0)]))
+    return IntPosition(
+        tuple([p + d for p, d in zip_longest(position.coordinates, dir, fillvalue=0)])
+    )
+
 
 def manhattan(start: Position, end: Position) -> int:
     return sum([abs(a - b) for a, b in zip(start.coordinates, end.coordinates)])

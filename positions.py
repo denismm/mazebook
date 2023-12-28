@@ -73,6 +73,15 @@ class LinkPosition(Position):
     def json_rep(self) -> Any:
         return {"type": "link", "coordinates": list(self.coordinates)}
 
+class SubPosition(Position):
+    def __init__(self, coordinates: Coordinates, submaze: str) -> None:
+        super().__init__("submaze", coordinates)
+        self.submaze = submaze
+
+    @property
+    def json_rep(self) -> Any:
+        return {"type": "submaze", "submaze": self.submaze, "coordinates": list(self.coordinates)}
+
 Direction = Coordinates
 
 cardinal_directions: tuple[Direction, ...] = ((1, 0), (0, 1), (-1, 0), (0, -1))

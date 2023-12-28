@@ -42,7 +42,9 @@ def test_rect() -> None:
         IntPosition((1, 0)),
         IntPosition((0, 0)),
     ]
-    assert path in (expected_path, list(reversed(expected_path)))
+    if path[0] < path[-1]:
+        path = list(reversed(path))
+    assert path == expected_path
 
     field = small_grid.dijkstra(IntPosition((0, 0)))
     assert field == [

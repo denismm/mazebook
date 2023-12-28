@@ -1,8 +1,8 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from grid.rectgrid import RectGrid
+from positions import IntPosition
 import random
 
 def test_rect() -> None:
@@ -29,3 +29,17 @@ def test_rect() -> None:
         {'position': [3, 1], 'links': [[2, 1], [3, 0], [3, 2]]},
         {'position': [3, 2], 'links': [[2, 2], [3, 1]]}
     ]
+
+    path = small_grid.longest_path()
+    expected_path = [
+        IntPosition((0, 2)),
+        IntPosition((1, 2)),
+        IntPosition((2, 2)),
+        IntPosition((3, 2)),
+        IntPosition((3, 1)),
+        IntPosition((2, 1)),
+        IntPosition((1, 1)),
+        IntPosition((1, 0)),
+        IntPosition((0, 0)),
+    ]
+    assert path in (expected_path, list(reversed(expected_path)))

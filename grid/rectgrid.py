@@ -180,7 +180,7 @@ def binary(maze: RectGrid) -> None:
                 if next_position in maze:
                     possible_next.append(next_position)
             if possible_next:
-                next_position = random.choice(possible_next)
+                next_position = random.choice(list(possible_next))
                 maze.connect(position, next_position)
             
 @RectGrid.algo  # type: ignore [arg-type]

@@ -43,3 +43,16 @@ def test_rect() -> None:
         IntPosition((0, 0)),
     ]
     assert path in (expected_path, list(reversed(expected_path)))
+
+    field = small_grid.dijkstra(IntPosition((0, 0)))
+    assert field == [
+        {IntPosition ((0, 0))},
+        {IntPosition ((1, 0))},
+        {IntPosition ((1, 1))},
+        {IntPosition ((0, 1)), IntPosition ((2, 1))},
+        {IntPosition ((2, 0)), IntPosition ((3, 1))},
+        {IntPosition ((3, 0)), IntPosition ((3, 2))},
+        {IntPosition ((2, 2))},
+        {IntPosition ((1, 2))},
+        {IntPosition ((0, 2))},
+    ]

@@ -56,3 +56,6 @@ def test_rect() -> None:
         {IntPosition ((1, 2))},
         {IntPosition ((0, 2))},
     ]
+
+    bbox = small_grid.bounding_box
+    assert bbox == (0, 0, 4, 3)

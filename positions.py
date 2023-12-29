@@ -1,7 +1,7 @@
 from collections.abc import Hashable
 from functools import total_ordering
 from itertools import zip_longest
-from typing import Any
+from typing import Any, Optional
 
 Coordinates = tuple[int, ...]
 
@@ -15,10 +15,12 @@ position_type_order_keys = {
 class Position(Hashable):
     __position_type: str
     __coordinates: Coordinates
+    __gridname: Optional[str]
 
-    def __init__(self, position_type: str, coordinates: Coordinates) -> None:
+    def __init__(self, position_type: str, coordinates: Coordinates, gridname: Optional[str] = None) -> None:
         self.__position_type = position_type
         self.__coordinates = coordinates
+        self.__gridname = gridname
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Position):
@@ -39,7 +41,10 @@ class Position(Hashable):
 
     def __repr__(self) -> str:
         class_name = type(self).__name__
-        return f"<{class_name} {self.position_type} {self.coordinates}>"
+        if self.__gridname:
+            return f"<{class_name} {self.position_type} {self.coordinates} ({self.__gridname})>"
+        else:
+            return f"<{class_name} {self.position_type} {self.coordinates}>"
 
     @property
     def ps_rep(self) -> str:
@@ -57,10 +62,13 @@ class Position(Hashable):
     def position_type(self) -> str:
         return self.__position_type
 
+    @property
+    def gridname(self) -> Optional[str]:
+        return self.__gridname
 
 class IntPosition(Position):
-    def __init__(self, coordinates: Coordinates) -> None:
-        super().__init__("int", coordinates)
+    def __init__(self, coordinates: Coordinates, gridname: Optional[str] = None) -> None:
+        super().__init__("int", coordinates, gridname)
 
     @property
     def ps_rep(self) -> str:
@@ -72,8 +80,8 @@ class IntPosition(Position):
 
 
 class LinkPosition(Position):
-    def __init__(self, coordinates: Coordinates) -> None:
-        super().__init__("link", coordinates)
+    def __init__(self, coordinates: Coordinates, gridname: Optional[str] = None) -> None:
+        super().__init__("link", coordinates, gridname)
 
     @property
     def ps_rep(self) -> str:
@@ -82,25 +90,6 @@ class LinkPosition(Position):
     @property
     def json_rep(self) -> Any:
         return {"type": "link", "coordinates": list(self.coordinates)}
-
-
-class SubPosition(Position):
-    def __init__(self, coordinates: Coordinates, submaze: str) -> None:
-        super().__init__("submaze", coordinates)
-        self.submaze = submaze
-
-    @property
-    def ps_rep(self) -> str:
-        # no different from normal position but will get different set
-        return "[" + " ".join([str(x) for x in self.coordinates]) + "]"
-
-    @property
-    def json_rep(self) -> Any:
-        return {
-            "type": "submaze",
-            "submaze": self.submaze,
-            "coordinates": list(self.coordinates),
-        }
 
 
 Direction = Coordinates

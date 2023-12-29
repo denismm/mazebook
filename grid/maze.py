@@ -44,8 +44,16 @@ Division = NamedTuple("Division", [
 ])
 
 class BaseGrid():
+    _grid: dict[Position, Cell]
+    _gridname: Optional[str]
+
     def __init__(self, **kwargs: Any) -> None:
-        self._grid: dict[Position, Cell] = {}
+        if 'grid' in kwargs:
+            self._grid = kwargs.pop('grid')
+            self._gridname = kwargs.pop('gridname')
+        else:
+            self._grid = {}
+            self._gridname = None
         self.set_options(**kwargs)
 
     def _add_column(self, coordinates: Coordinates) -> None:
@@ -60,7 +68,7 @@ class BaseGrid():
         if isinstance(p_or_c, Position):
             position = p_or_c
         else:
-            position = IntPosition(p_or_c)
+            position = IntPosition(p_or_c, gridname=self._gridname)
         self._grid[position] = Cell(position)
 
     algorithms: dict[str, MazeFunction] = {}

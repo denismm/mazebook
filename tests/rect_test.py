@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from grid.rectgrid import RectGrid
-from positions import IntPosition
+from positions import IntPosition as IntPos
 from grid.maze import Edge
 import random
 
@@ -14,24 +14,24 @@ def test_rect() -> None:
     edges = small_grid.edges
     assert edges == (
         Edge((
-                IntPosition((3, 0)), IntPosition((3, 1)), IntPosition((3, 2))
+                IntPos((3, 0)), IntPos((3, 1)), IntPos((3, 2))
             ), (
-                IntPosition((4, 0)), IntPosition((4, 1)), IntPosition((4, 2))
+                IntPos((4, 0)), IntPos((4, 1)), IntPos((4, 2))
         )),
         Edge((
-                IntPosition((3, 2)), IntPosition((2, 2)), IntPosition((1, 2)), IntPosition((0, 2))
+                IntPos((3, 2)), IntPos((2, 2)), IntPos((1, 2)), IntPos((0, 2))
             ), (
-                IntPosition((3, 3)), IntPosition((2, 3)), IntPosition((1, 3)), IntPosition((0, 3))
+                IntPos((3, 3)), IntPos((2, 3)), IntPos((1, 3)), IntPos((0, 3))
         )),
         Edge((
-                IntPosition((0, 2)), IntPosition((0, 1)), IntPosition((0, 0)),
+                IntPos((0, 2)), IntPos((0, 1)), IntPos((0, 0)),
             ), (
-                IntPosition((-1, 2)), IntPosition((-1, 1)), IntPosition((-1, 0)),
+                IntPos((-1, 2)), IntPos((-1, 1)), IntPos((-1, 0)),
         )),
         Edge((
-                IntPosition((0, 0)), IntPosition((1, 0)), IntPosition((2, 0)), IntPosition((3, 0))
+                IntPos((0, 0)), IntPos((1, 0)), IntPos((2, 0)), IntPos((3, 0))
             ), (
-                IntPosition((0, -1)), IntPosition((1, -1)), IntPosition((2, -1)), IntPosition((3, -1))
+                IntPos((0, -1)), IntPos((1, -1)), IntPos((2, -1)), IntPos((3, -1))
         )),
     )
 
@@ -58,31 +58,31 @@ def test_rect() -> None:
 
     path = small_grid.longest_path()
     expected_path = [
-        IntPosition((0, 2)),
-        IntPosition((1, 2)),
-        IntPosition((2, 2)),
-        IntPosition((3, 2)),
-        IntPosition((3, 1)),
-        IntPosition((2, 1)),
-        IntPosition((1, 1)),
-        IntPosition((1, 0)),
-        IntPosition((0, 0)),
+        IntPos((0, 2)),
+        IntPos((1, 2)),
+        IntPos((2, 2)),
+        IntPos((3, 2)),
+        IntPos((3, 1)),
+        IntPos((2, 1)),
+        IntPos((1, 1)),
+        IntPos((1, 0)),
+        IntPos((0, 0)),
     ]
     if path[0] < path[-1]:
         path = list(reversed(path))
     assert path == expected_path
 
-    field = small_grid.dijkstra(IntPosition((0, 0)))
+    field = small_grid.dijkstra(IntPos((0, 0)))
     assert field == [
-        {IntPosition ((0, 0))},
-        {IntPosition ((1, 0))},
-        {IntPosition ((1, 1))},
-        {IntPosition ((0, 1)), IntPosition ((2, 1))},
-        {IntPosition ((2, 0)), IntPosition ((3, 1))},
-        {IntPosition ((3, 0)), IntPosition ((3, 2))},
-        {IntPosition ((2, 2))},
-        {IntPosition ((1, 2))},
-        {IntPosition ((0, 2))},
+        {IntPos ((0, 0))},
+        {IntPos ((1, 0))},
+        {IntPos ((1, 1))},
+        {IntPos ((0, 1)), IntPos ((2, 1))},
+        {IntPos ((2, 0)), IntPos ((3, 1))},
+        {IntPos ((3, 0)), IntPos ((3, 2))},
+        {IntPos ((2, 2))},
+        {IntPos ((1, 2))},
+        {IntPos ((0, 2))},
     ]
 
     bbox = small_grid.bounding_box

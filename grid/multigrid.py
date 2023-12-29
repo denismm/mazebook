@@ -23,11 +23,19 @@ class MultiGrid(BaseGrid):
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
-        self.subgrids: dict[BaseGrid] = {}
+        self._subgrids: dict[BaseGrid] = {}
         for grid_name, grid_spec in subgrids.items():
             grid_class, grid_args, edges = grid_spec
-            self.subgrids[grid_name] = grid_spec[0](*grid_spec[1], grid=self._grid, gridname=grid_name)
+            self._subgrids[grid_name] = grid_class(
+                *grid_args,
+                grid=self._grid,
+                gridname=grid_name
+            )
 
-    def neighbor_directions_for_start(self, start:Position) -> tuple[Direction, ...]:
-        raise ValueError("not overridden")
+    def pos_adjacents(self, start: Position) -> Sequence[Position]:
+        gridname = start.gridname
+        subgrid = self._subgrids[gridname]
+        neighbors: list[Position] = list(subgrid.pos_adjacents(start))
+        neighbors.extend(super().pos_adjacents(start))
+        return neighbors
 

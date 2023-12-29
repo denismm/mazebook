@@ -4,7 +4,7 @@ from positions import Position, IntPosition, Direction, cardinal_directions, add
 from typing import Optional, Any, Callable, Sequence
 import random
 
-from .maze import BaseGrid, ps_list, Division
+from .maze import BaseGrid, ps_list, Division, Edge
 
 TEXT_CELL_WIDTH = 4
 TEXT_CELL_HEIGHT = 3
@@ -98,6 +98,21 @@ class RectGrid(RectBaseGrid):
                 right = region - left
                 result.append(Division(f"cut {coordinate} on {x}", (left, right)))
         return result
+
+    @property
+    def edges(self) -> tuple[Edge, ...]:
+        result: list[Edge] = []
+        inner_borders: list[tuple[Position, ...]] = [
+            tuple(IntPosition((self.width - 1, x), self._gridname) for x in range(self.height)),
+            tuple(IntPosition((x, self.height - 1), self._gridname) for x in reversed(range(self.width))),
+            tuple(IntPosition((0, x), self._gridname) for x in reversed(range(self.height))),
+            tuple(IntPosition((x, 0), self._gridname) for x in range(self.width)),
+        ]
+        directions = [(1,0), (0, 1), (-1, 0), (0, -1)]
+        outer_borders: list[tuple[Position, ...]] = []
+        for border, d in zip(inner_borders, directions):
+            outer_borders.append( tuple(add_direction(b, d) for b in border))
+        return tuple(Edge(inner, outer) for inner, outer in zip(inner_borders, outer_borders))
 
 
 @RectGrid.printer       # type: ignore [arg-type]

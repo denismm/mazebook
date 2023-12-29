@@ -43,6 +43,12 @@ Division = NamedTuple("Division", [
     ("regions", tuple[set[Position], set[Position]]),
 ])
 
+# an edge of a grid is the positions inside and the positions outside
+Edge = NamedTuple('Edge', [
+    ('inner', tuple[Position, ...]),
+    ('outer', tuple[Position, ...]),
+])
+
 class BaseGrid():
     _grid: dict[Position, Cell]
     _gridname: Optional[str]
@@ -182,6 +188,10 @@ class BaseGrid():
                 direction: Direction = ((0, ) * (2 + i)) + (updown, )
                 results.append(add_direction(start, direction))
         return results
+
+    @property
+    def edges(self) -> tuple[Edge, ...]:
+        raise ValueError("not implemented")
 
     def dijkstra(self, start: Position) -> list[set[Position]]:
         seen: set[Position] = {start}

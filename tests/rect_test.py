@@ -3,12 +3,38 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from grid.rectgrid import RectGrid
 from positions import IntPosition
+from grid.maze import Edge
 import random
 
 def test_rect() -> None:
     random.seed(97)
     small_grid = RectGrid(3, 4)
     assert len(small_grid) == 12
+
+    edges = small_grid.edges
+    assert edges == (
+        Edge((
+                IntPosition((3, 0)), IntPosition((3, 1)), IntPosition((3, 2))
+            ), (
+                IntPosition((4, 0)), IntPosition((4, 1)), IntPosition((4, 2))
+        )),
+        Edge((
+                IntPosition((3, 2)), IntPosition((2, 2)), IntPosition((1, 2)), IntPosition((0, 2))
+            ), (
+                IntPosition((3, 3)), IntPosition((2, 3)), IntPosition((1, 3)), IntPosition((0, 3))
+        )),
+        Edge((
+                IntPosition((0, 2)), IntPosition((0, 1)), IntPosition((0, 0)),
+            ), (
+                IntPosition((-1, 2)), IntPosition((-1, 1)), IntPosition((-1, 0)),
+        )),
+        Edge((
+                IntPosition((0, 0)), IntPosition((1, 0)), IntPosition((2, 0)), IntPosition((3, 0))
+            ), (
+                IntPosition((0, -1)), IntPosition((1, -1)), IntPosition((2, -1)), IntPosition((3, -1))
+        )),
+    )
+
     small_grid.generate_maze('binary')
     structure = small_grid.structured_data()
     assert structure['self'] == 'rectmaze'

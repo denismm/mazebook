@@ -31,13 +31,18 @@ class Position(Hashable):
         )
 
     def __lt__(self, other: "Position") -> bool:
-        return (position_type_order_keys[self.position_type], self.coordinates) < (
+        return (
+            self.gridname,
+            position_type_order_keys[self.position_type],
+            self.coordinates,
+        ) < (
+            self.gridname,
             position_type_order_keys[other.position_type],
             other.coordinates,
         )
 
     def __hash__(self) -> int:
-        return hash(self.position_type) ^ hash(self.coordinates)
+        return hash(self.position_type) ^ hash(self.coordinates) ^ hash(self.gridname)
 
     def __repr__(self) -> str:
         class_name = type(self).__name__
@@ -99,7 +104,8 @@ cardinal_directions: tuple[Direction, ...] = ((1, 0), (0, 1), (-1, 0), (0, -1))
 
 def add_direction(position: Position, dir: Direction) -> IntPosition:
     return IntPosition(
-        tuple([p + d for p, d in zip_longest(position.coordinates, dir, fillvalue=0)])
+        tuple([p + d for p, d in zip_longest(position.coordinates, dir, fillvalue=0)]),
+        gridname=position.gridname
     )
 
 

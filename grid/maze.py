@@ -597,7 +597,7 @@ def kruskal(maze: BaseGrid) -> None:
             if not neighborset <= set(maze._grid.keys()):
                 continue
             weaveable_points -= neighborset
-            link_pos: Position = LinkPosition(weave_pos.coordinates, weave_pos.gridname)
+            link_pos = LinkPosition.from_position(weave_pos)
             link_cell = Cell(link_pos)
             maze._grid[link_pos] = link_cell
             top_mod = random.randrange(2)

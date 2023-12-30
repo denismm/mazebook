@@ -29,8 +29,7 @@ class RectBaseGrid(BaseGrid):
             add_direction(start, dir)
             for dir in self.neighbor_directions_for_start(start)
         ]
-        neighbors.extend(super().pos_adjacents(start))
-        return neighbors
+        return self.adjust_adjacents(start, neighbors)
 
     @property
     def bounding_box(self) -> tuple[float, ...]:

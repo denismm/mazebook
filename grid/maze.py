@@ -19,9 +19,9 @@ class Cell():
         self.links.discard(link)
 
     @property
-    def flat_links(self) -> set[Coordinates]:
-        # for weaving it can be useful to ignore the linkiness
-        return set([p.coordinates for p in self.links])
+    def flat_links(self) -> set[tuple[Optional[str], Coordinates]]:
+        # for weaving it can be useful to ignore the position type
+        return set([p.flattened for p in self.links])
 
 # convenience for ps printing
 def ps_list(iterable: Iterable[Any]) -> str:
@@ -52,6 +52,7 @@ Edge = NamedTuple('Edge', [
 class BaseGrid():
     _grid: dict[Position, Cell]
     _gridname: Optional[str]
+    _edge_map: dict[Position, Position]
 
     def __init__(self, **kwargs: Any) -> None:
         if 'grid' in kwargs:
@@ -60,6 +61,8 @@ class BaseGrid():
         else:
             self._grid = {}
             self._gridname = None
+
+        self._edge_map = kwargs.pop('edge_map', {})
         self.set_options(**kwargs)
 
     def _add_column(self, coordinates: Coordinates) -> None:
@@ -180,9 +183,13 @@ class BaseGrid():
 
     def pos_adjacents(self, start: Position) -> Sequence[Position]:
         # must return adjacent cells in order, including those not in grid
-        # this returns hyper directions, should be appended to subclass results
+        raise ValueError("not implemented")
+
+    def adjust_adjacents(self, start: Position, adjacents: Sequence[Position]) -> Sequence[Position]:
+        # this appends hyper directions to subclass results
+        # and also adjusts grid-crossing links
+        results = [self._edge_map.get(a, a) for a in adjacents]
         hyper_length = len(self.hyper)
-        results: list[Position] = []
         for i in range(hyper_length):
             for updown in (-1, 1):
                 direction: Direction = ((0, ) * (2 + i)) + (updown, )
@@ -351,7 +358,7 @@ class BaseGrid():
         if field:
             for i, frontier in enumerate(field):
                 for position in frontier:
-                    if position.gridname == self.gridname:
+                    if position.gridname == self._gridname:
                         field_for_position[position] = i
         if self.hyper:
             output.append("/hyperstep " + ps_list([
@@ -371,13 +378,13 @@ class BaseGrid():
         output.append("/cells [")
         # draw link cells first
         for k in sorted(self._grid.keys()):
-            if k.gridname != self.gridname:
+            if k.gridname != self._gridname:
                 continue
             v = self._grid[k]
             walls = self.walls_for_cell(v)
             walls_text = ps_list([str(w).lower() for w in walls])
             field_text = str(field_for_position.get(k, 0))
-            links_text = ps_list(v.links)
+            links_text = ps_list(sorted(v.links))
             output.append(ps_list([ k.ps_rep, walls_text, field_text ]) + f" % {links_text}")
         output.append("]")
         if path:
@@ -396,7 +403,7 @@ class BaseGrid():
         return "\n".join(output)
 
     def walls_for_cell(self, cell: Cell) -> list[bool]:
-        return [npos.coordinates not in cell.flat_links for npos in self.pos_adjacents(cell.position)]
+        return [npos.flattened not in cell.flat_links for npos in self.pos_adjacents(cell.position)]
 
     def structured_data(self,
         path: list[Position] = [],

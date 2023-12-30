@@ -71,6 +71,10 @@ class Position(Hashable):
     def gridname(self) -> Optional[str]:
         return self.__gridname
 
+    @property
+    def flattened(self) -> tuple[Optional[str], Coordinates]:
+        return (self.__gridname, self.__coordinates)
+
 class IntPosition(Position):
     def __init__(self, coordinates: Coordinates, gridname: Optional[str] = None) -> None:
         super().__init__("int", coordinates, gridname)

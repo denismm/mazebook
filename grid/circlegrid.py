@@ -80,8 +80,7 @@ class CircleGrid(SingleSizeGrid):
             next_ratio = 1
         neighbors += [
             IntPosition((r + 1, theta * next_ratio + x, *remainder)) for x in range(next_ratio)]
-        neighbors.extend(super().pos_adjacents(start))
-        return neighbors
+        return self.adjust_adjacents(start, neighbors)
 
     def find_link_pos(self, first: Position, second: Position) -> Position:
         # special case for center

@@ -22,8 +22,7 @@ class HexBaseGrid(SingleSizeGrid):
         neighbors: list[Position] = [add_direction(start, dir) for dir in neighbor_directions]
         if len(neighbors) == 0:
             raise ValueError(f"why no neighbors of {start}?")
-        neighbors.extend(super().pos_adjacents(start))
-        return neighbors
+        return self.adjust_adjacents(start, neighbors)
 
 class HexGrid(HexBaseGrid):
     def __init__(self, radius: int, **kwargs: Any) -> None:

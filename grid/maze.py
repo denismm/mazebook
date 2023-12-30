@@ -124,7 +124,7 @@ class BaseGrid():
 
     def connect(self, first: Position, second: Position) -> None:
         # what if there's a distance between the two cells?
-        if IntPosition(second.coordinates) in self.pos_adjacents(first):
+        if IntPosition(second.coordinates, second.gridname) in self.pos_adjacents(first):
             self._grid[first].add_link(second)
             self._grid[second].add_link(first)
             return
@@ -176,7 +176,7 @@ class BaseGrid():
             back_index = target_neighbors.index(start)
             other_side = target_neighbors[(back_index + 2) % 4]
             if other_side in self:
-                if not ({start.coordinates, other_side.coordinates} & target_cell.flat_links):
+                if not ({start.flattened, other_side.flattened} & target_cell.flat_links):
                     # tunnel ok!
                     neighbors.append(other_side)
         return neighbors

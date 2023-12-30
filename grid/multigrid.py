@@ -33,6 +33,7 @@ class MultiGrid(BaseGrid):
                 grid=self._grid,
                 gridname=gridname,
                 edge_map=self._edge_map,
+                **kwargs
             )
             self.offsets[gridname] = grid_spec.location
         # now that all grids exist, go through it again to deal with edges

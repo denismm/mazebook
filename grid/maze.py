@@ -351,7 +351,8 @@ class BaseGrid():
         if field:
             for i, frontier in enumerate(field):
                 for position in frontier:
-                    field_for_position[position] = i
+                    if position.gridname == self.gridname:
+                        field_for_position[position] = i
         if self.hyper:
             output.append("/hyperstep " + ps_list([
                 ps_list(step) for step in self.hypersteps
@@ -370,6 +371,8 @@ class BaseGrid():
         output.append("/cells [")
         # draw link cells first
         for k in sorted(self._grid.keys()):
+            if k.gridname != self.gridname:
+                continue
             v = self._grid[k]
             walls = self.walls_for_cell(v)
             walls_text = ps_list([str(w).lower() for w in walls])

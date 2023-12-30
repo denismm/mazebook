@@ -129,7 +129,7 @@ class BaseGrid():
             self._grid[second].add_link(first)
             return
         # link square is between both, add link entry
-        link_pos = LinkPosition(self.find_link_pos(first, second).coordinates)
+        link_pos = self.find_link_pos(first, second)
         self._add_cell(link_pos)
         self.connect(first, link_pos)
         self.connect(second, link_pos)
@@ -147,7 +147,7 @@ class BaseGrid():
             raise ValueError(f"no common cell between {first} and {second} ({first_neighbors}, {second_neighbors}")
         if len(intersection_positions) > 1:
             raise ValueError(f"too many common cells between {first} and {second} ({first_neighbors}, {second_neighbors}, {intersection_positions}")
-        return intersection_positions.pop()
+        return LinkPosition.from_position(intersection_positions.pop())
 
     def random_point(self) -> Position:
         return (random.choice(list(self._grid.keys())))
@@ -597,7 +597,7 @@ def kruskal(maze: BaseGrid) -> None:
             if not neighborset <= set(maze._grid.keys()):
                 continue
             weaveable_points -= neighborset
-            link_pos: Position = LinkPosition(weave_pos.coordinates)
+            link_pos: Position = LinkPosition(weave_pos.coordinates, weave_pos.gridname)
             link_cell = Cell(link_pos)
             maze._grid[link_pos] = link_cell
             top_mod = random.randrange(2)

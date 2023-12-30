@@ -100,6 +100,10 @@ class LinkPosition(Position):
     def json_rep(self) -> Any:
         return {"type": "link", "coordinates": list(self.coordinates)}
 
+    @classmethod
+    def from_position(cls, p: Position) -> 'LinkPosition':
+        return LinkPosition(p.coordinates, gridname=p.gridname)
+
 
 Direction = Coordinates
 

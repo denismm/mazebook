@@ -58,7 +58,7 @@ class MultiGrid(BaseGrid):
 
     @property
     def bounding_box(self) -> tuple[float, ...]:
-        bbox: list[float, ...] = [0.0] * 4
+        bbox: list[float] = [0.0] * 4
         for gridname in self._subgrids.keys():
             grid_bbox = self._subgrids[gridname].bounding_box
             grid_offset = self.offsets[gridname] * 2
@@ -66,7 +66,7 @@ class MultiGrid(BaseGrid):
             for i in range(2):
                 bbox[i] = min(adjusted_bbox[i], bbox[i])
                 bbox[i+2] = max(adjusted_bbox[i+2], bbox[i+2])
-        return bbox
+        return tuple(bbox)
 
     def ps_instructions(self,
             path: list[Position] = [],

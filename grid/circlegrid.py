@@ -67,19 +67,20 @@ class CircleGrid(SingleSizeGrid):
         # cw and ccw around ring
         r, theta, *remainder = start.coordinates
         neighbors: list[Position] = []
+        gridname = self._gridname
         # right, down, left
         if self.widths[r] > 1:
-            neighbors.append(IntPosition((r, (theta + 1) % self.widths[r], *remainder)))
+            neighbors.append(IntPosition((r, (theta + 1) % self.widths[r], *remainder), gridname))
         if r > 0:
-            neighbors.append(IntPosition((r - 1, theta // self.ratios[r], *remainder)))
+            neighbors.append(IntPosition((r - 1, theta // self.ratios[r], *remainder), gridname))
         if self.widths[r] > 1:
-            neighbors.append(IntPosition((r, (theta - 1) % self.widths[r], *remainder)))
+            neighbors.append(IntPosition((r, (theta - 1) % self.widths[r], *remainder), gridname))
         if r + 1 < len(self.widths):
             next_ratio = self.ratios[r + 1]
         else:
             next_ratio = 1
         neighbors += [
-            IntPosition((r + 1, theta * next_ratio + x, *remainder)) for x in range(next_ratio)]
+            IntPosition((r + 1, theta * next_ratio + x, *remainder), gridname) for x in range(next_ratio)]
         return self.adjust_adjacents(start, neighbors)
 
     def find_link_pos(self, first: Position, second: Position) -> Position:

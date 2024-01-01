@@ -286,10 +286,19 @@ class BaseGrid():
 
     ### Printing support 
 
+    @property
+    def external_points(self) -> list[tuple[float, ...]]:
+        raise ValueError("not overridden")
+
     # corners of bounding box: lower left, top right
     @property
     def bounding_box(self) -> tuple[float, ...]:
-        raise ValueError("not overridden")
+        bounding_box: list[float] = [0.0] * 4
+        for point in self.external_points:
+            for i in range(2):
+                bounding_box[i] = min(point[i], bounding_box[i])
+                bounding_box[i+2] = max(point[i], bounding_box[i+2])
+        return tuple(bounding_box)
 
     @property
     def hypersteps(self) -> list[tuple[float, ...]]:

@@ -32,8 +32,8 @@ class RectBaseGrid(BaseGrid):
         return self.adjust_adjacents(start, neighbors)
 
     @property
-    def bounding_box(self) -> tuple[float, ...]:
-        return (0, 0, self.width, self.height)
+    def external_points(self) -> list[tuple[float, ...]]:
+        return [(i, j) for i in (0, self.width) for j in (0, self.height)]
 
     @property
     def size_dict(self) -> dict[str, int | list[int]]:

@@ -16,12 +16,13 @@ class CircleGrid(SingleSizeGrid):
     maze_type = "circlemaze"
 
     @property
-    def bounding_box(self) -> tuple[float, ...]:
+    def external_points(self) -> list[tuple[float, ...]]:
+        # fake it as a box
         # "physical" radius
         p_radius: float = self.radius
         if self.center_cell:
             p_radius += 0.5
-        return (-p_radius, -p_radius, p_radius, p_radius)
+        return [(-p_radius, -p_radius), (p_radius, p_radius)]
 
     # key and value for size in draw_maze.ps
     @property
@@ -171,6 +172,19 @@ class PolygonGrid(CircleGrid):
         return {'radius': self.radius, 'sides': self.sides, 'widths':  self.widths, 'center_cell': self.center_cell}
 
     @property
+    def external_points(self) -> list[tuple[float, ...]]:
+        from math import cos, sin, tau
+        # "physical" radius
+        side_angle = tau / self.sides
+        p_radius: float = self.radius
+        if self.center_cell:
+            p_radius += 0.5
+        return [
+            (cos(side_angle * i) * p_radius, sin(side_angle * i) * p_radius)
+            for i in range(self.sides)
+        ]
+
+    @property
     def edges(self) -> tuple[Edge, ...]:
         result: list[Edge] = []
         inner_borders: list[tuple[Position, ...]] = []
@@ -185,5 +199,3 @@ class PolygonGrid(CircleGrid):
         for border in inner_borders:
             outer_borders.append( tuple(add_direction(b, out) for b in border))
         return tuple(Edge(inner, outer) for inner, outer in zip(inner_borders, outer_borders))
-
-

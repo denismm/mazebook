@@ -66,16 +66,24 @@ class MultiGrid(BaseGrid):
         return subgrid.pos_adjacents(start)
 
     @property
-    def bounding_box(self) -> tuple[float, ...]:
-        bbox: list[float] = [0.0] * 4
+    def external_points(self) -> list[tuple[float, ...]]:
+        from math import cos, sin, radians
+        points: list[tuple[float, ...]] = []
         for gridname in self._subgrids.keys():
-            grid_bbox = self._subgrids[gridname].bounding_box
-            grid_offset = self.grid_positions[gridname].location * 2
-            adjusted_bbox = [ b + o for b, o in zip(grid_bbox, grid_offset)]
-            for i in range(2):
-                bbox[i] = min(adjusted_bbox[i], bbox[i])
-                bbox[i+2] = max(adjusted_bbox[i+2], bbox[i+2])
-        return tuple(bbox)
+            grid_pos = self.grid_positions[gridname]
+            for point in self._subgrids[gridname].external_points:
+                if grid_pos.scale:
+                    point = tuple( x * grid_pos.scale for x in point)
+                if grid_pos.location:
+                    point = tuple( x + y for x, y in zip(point, grid_pos.location))
+                if grid_pos.rotation:
+                    cos_t = cos(radians(grid_pos.rotation))
+                    sin_t = sin(radians(grid_pos.rotation))
+                    x: float = point[0] * cos_t - point[1] * sin_t
+                    y: float = point[0] * sin_t + point[1] * cos_t
+                    point = (x, y)
+                points.append(point)
+        return points
 
     def ps_instructions(self,
             path: list[Position] = [],

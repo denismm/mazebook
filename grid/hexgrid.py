@@ -42,10 +42,11 @@ class HexGrid(HexBaseGrid):
     maze_type = "hexmaze"
 
     @property
-    def bounding_box(self) -> tuple[float, ...]:
+    def external_points(self) -> list[tuple[float, ...]]:
         # "physical" radius
+        # fake it for now
         p_radius: float = self.radius + 0.5
-        return ( -p_radius, -p_radius, p_radius, p_radius)
+        return [ (-p_radius, -p_radius), (p_radius, p_radius)]
 
 class TriGrid(HexBaseGrid):
     def __init__(self, width: int, **kwargs: Any) -> None:
@@ -72,9 +73,9 @@ class TriGrid(HexBaseGrid):
     maze_type = "trimaze"
 
     @property
-    def bounding_box(self) -> tuple[float, ...]:
+    def external_points(self) -> list[tuple[float, ...]]:
         from math import sqrt
-        return ( 0, 0, self.width, self.width * sqrt(3) / 2)
+        return [ (0.0, 0.0), (self.width, 0.0), (self.width /2, self.width * sqrt(3) / 2)]
 
     @property
     def edges(self) -> tuple[Edge, ...]:

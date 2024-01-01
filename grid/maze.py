@@ -147,6 +147,8 @@ class BaseGrid():
         if len(intersection_positions) == 0:
             raise ValueError(f"no common cell between {first} and {second} ({first_neighbors}, {second_neighbors}")
         if len(intersection_positions) > 1:
+            intersection_positions = { p for p in intersection_positions if len(self.pos_adjacents(p)) == 4 }
+        if len(intersection_positions) > 1:
             raise ValueError(f"too many common cells between {first} and {second} ({first_neighbors}, {second_neighbors}, {intersection_positions}")
         return LinkPosition.from_position(intersection_positions.pop())
 

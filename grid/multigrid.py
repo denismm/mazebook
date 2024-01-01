@@ -56,7 +56,7 @@ class MultiGrid(BaseGrid):
                     if edge.flip:
                         target_edge = tuple(reversed(target_edge))
                     if len(source_edge) != len(target_edge):
-                        raise ValueError(f"edge len between {gridname}:{i} and {edge.target}:{edge.side}")
+                        raise ValueError(f"edge len mismatch between {gridname}:{i} ({len(source_edge)}) and {edge.target}:{edge.side} ({len(target_edge)})")
                     for s_pos, t_pos in zip(source_edge, target_edge):
                         self._edge_map[s_pos] = t_pos
 

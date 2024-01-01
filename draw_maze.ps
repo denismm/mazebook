@@ -569,7 +569,10 @@
 } def
 
 /drawtrimaze { /grid arg
-    /setup {} def
+    /setup {
+        s3h recip half softscale
+        s3h 0.5 translate
+    } def
     % grid fields:
     % width: count of cells across one side
     % cells: list of lists containing coord (ese, n) then list of boolean walls

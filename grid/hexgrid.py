@@ -74,10 +74,7 @@ class TriGrid(HexBaseGrid):
     @property
     def bounding_box(self) -> tuple[float, ...]:
         from math import sqrt
-        return (
-            -0.5 * sqrt(3), -0.5,
-            (self.width - 0.5) * sqrt(3), self.width * 1.5 - 0.5
-        )
+        return ( 0, 0, self.width, self.width * sqrt(3) / 2)
 
     @property
     def edges(self) -> tuple[Edge, ...]:

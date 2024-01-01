@@ -7,7 +7,7 @@ from functools import cache
 from sys import stderr
 import random
 
-from .maze import SingleSizeGrid, BaseGrid, Division
+from .maze import SingleSizeGrid, BaseGrid, Division, Edge
 
 def warn(*args: Any, **kwargs: Any) -> None:
     print(*args, file=stderr, **kwargs)
@@ -168,4 +168,21 @@ class PolygonGrid(CircleGrid):
     @property
     def size_dict(self) -> dict[str, int | bool | list[int]]:
         return {'radius': self.radius, 'sides': self.sides, 'widths':  self.widths, 'center_cell': self.center_cell}
+
+    @property
+    def edges(self) -> tuple[Edge, ...]:
+        result: list[Edge] = []
+        inner_borders: list[tuple[Position, ...]] = []
+        outer_r = len(self.widths) - 1
+        side_len = self.widths[-1] // self.sides
+        for i in range(self.sides):
+            inner_borders.append(
+                tuple(IntPosition((outer_r, (i * side_len) + j), self._gridname) for j in range(side_len))
+            )
+        outer_borders: list[tuple[Position, ...]] = []
+        out = (1, 0)
+        for border in inner_borders:
+            outer_borders.append( tuple(add_direction(b, out) for b in border))
+        return tuple(Edge(inner, outer) for inner, outer in zip(inner_borders, outer_borders))
+
 

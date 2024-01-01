@@ -219,17 +219,17 @@ class BaseGrid():
         # start at random point
         start: Position = self.random_point()
         # get farthest point
-        first_point = self.dijkstra(start)[-1].pop()
+        first_point = sorted(self.dijkstra(start)[-1])[0]
         # get farthest point from there
         distance_points = self.dijkstra(first_point)
-        second_point = distance_points[-1].pop()
+        second_point = sorted(distance_points[-1])[0]
         # get path
         path: list[Position] = [second_point]
         distance = len(distance_points) - 1
         while distance > 0:
             distance -= 1
             possibles = self[path[-1]].links & distance_points[distance]
-            path.append(possibles.pop())
+            path.append(sorted(possibles)[0])
         return path
 
     def node_analysis(self) -> dict[int, int]:

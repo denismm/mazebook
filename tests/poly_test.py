@@ -40,3 +40,9 @@ def test_poly() -> None:
 
     bbox = small_grid.bounding_box
     assert bbox == (-3.5, -3.5, 3.5, 3.5)
+
+    edges = small_grid.edges
+    assert len(edges) == 5
+    assert len(edges[0].inner) == 3
+    assert edges[0].inner[0] in small_grid
+    assert edges[0].outer[0] not in small_grid

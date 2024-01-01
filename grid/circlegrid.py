@@ -15,20 +15,6 @@ def warn(*args: Any, **kwargs: Any) -> None:
 class CircleGrid(SingleSizeGrid):
     maze_type = "circlemaze"
 
-    @property
-    def external_points(self) -> Sequence[tuple[float, ...]]:
-        # fake it as a box
-        # "physical" radius
-        p_radius: float = self.radius
-        if self.center_cell:
-            p_radius += 0.5
-        return [(-p_radius, -p_radius), (p_radius, p_radius)]
-
-    # key and value for size in draw_maze.ps
-    @property
-    def size_dict(self) -> dict[str, int | bool | list[int]]:
-        return {'radius': self.radius, 'widths':  self.widths, 'center_cell': self.center_cell}
-
     def __init__(self, radius: int, firstring: Optional[int] = None, center_cell: bool = True, degrees: float = 360.0, **kwargs: Any) -> None:
         super().__init__(radius, **kwargs)
         self.radius = radius
@@ -64,6 +50,24 @@ class CircleGrid(SingleSizeGrid):
                 if (theta + 0.5) * 360 / width >= degrees:
                     break
                 self._add_column((r, theta))
+
+    @property
+    def external_points(self) -> Sequence[tuple[float, ...]]:
+        # fake it as a box
+        # "physical" radius
+        p_radius: float = self.radius
+        if self.center_cell:
+            p_radius += 0.5
+        return [(-p_radius, -p_radius), (p_radius, p_radius)]
+
+    # key and value for size in draw_maze.ps
+    @property
+    def size_dict(self) -> dict[str, int | bool | list[int]]:
+        return {'radius': self.radius, 'widths':  self.widths, 'center_cell': self.center_cell}
+
+    @property
+    def edges(self) -> tuple[Edge, ...]:
+        return ()
 
     @cache
     def pos_adjacents(self, start: Position) -> Sequence[Position]:
@@ -192,7 +196,7 @@ class PolygonGrid(CircleGrid):
 
     @property
     def edges(self) -> tuple[Edge, ...]:
-        result: list[Edge] = []
+        result: list[Edge] = [super().edges]
         inner_borders: list[tuple[Position, ...]] = []
         outer_r = len(self.widths) - 1
         side_len = self.widths[-1] // self.sides

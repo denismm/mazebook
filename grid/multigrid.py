@@ -37,9 +37,13 @@ class MultiGrid(BaseGrid):
         self._subgrids: dict[str, BaseGrid] = {}
         self._edge_map: dict[Position, Position] = {}
         self.grid_positions: dict[str, GridPosition] = {}
+        linewidth = kwargs.get('linewidth', 0.1)
+        inset = kwargs.get('inset', 0.1)
         for gridname, grid_spec in subgrids.items():
             grid_kwargs = grid_spec.kwargs or {}
             grid_kwargs.update(kwargs)
+            grid_kwargs['linewidth'] = linewidth / grid_spec.scale
+            grid_kwargs['inset'] = inset / grid_spec.scale
             self._subgrids[gridname] = grid_spec.grid_class(
                 *grid_spec.args,
                 grid=self._grid,

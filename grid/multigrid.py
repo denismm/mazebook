@@ -99,7 +99,7 @@ class MultiGrid(BaseGrid):
             if grid_pos.rotation:
                 output.append(f"{grid_pos.rotation} rotate")
             output.append(f"{translation} translate")
-            if grid_pos.scale:
+            if grid_pos.scale and grid_pos.scale != 1.0:
                 output.append(f"{grid_pos.scale} softscale")
             output.append(self._subgrids[gridname].ps_instructions(path=path, field=field))
             output.append('grestore')

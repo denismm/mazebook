@@ -572,6 +572,7 @@
     /setup {
         s3h recip half softscale
         s3h 0.5 translate
+        /inset_mul 1 inset 2 mul sub def
     } def
     % grid fields:
     % width: count of cells across one side
@@ -596,11 +597,17 @@
         % one cell, centered on tripos, oriented appropriately
         tripos getcenter atranslate
         tripos 0 2 getinterval aload pop add 3 mod 2 eq {
-            180 rotate
-        } if
-        3 {
-            0 1 goto
-        } circrepeat
+            90 rotate } {30 rotate
+        } ifelse
+        0 1 2 { /i arg
+            0.5 inset_mul mul s3h neg inset_mul mul goto
+            walls i get not {
+                0.5 s3h neg inset_mul mul goto
+                0.5 s3h inset_mul mul goto
+            } if
+            0.5 inset_mul mul s3h inset_mul mul goto
+            120 rotate
+        } for
         closepath
     } def
 
@@ -614,14 +621,17 @@
         } {
             tritype 0 eq { 30 rotate } { 90 rotate } ifelse
             0 1 2 { /i arg
-                walls i get {
-                    gsave
-                        i 120 mul rotate
-                        0.5 s3h neg goto
-                        0.5 s3h goto
+                gsave
+                    i 120 mul rotate
+                    0.5 inset_mul mul s3h neg inset_mul mul goto
+                    walls i get not {
+                        0.5 s3h neg inset_mul mul goto
                         stroke
-                    grestore
-                } if
+                        0.5 s3h inset_mul mul goto
+                    } if
+                    0.5 inset_mul mul s3h inset_mul mul goto
+                    stroke
+                grestore
             } for
         } ifelse
     } def

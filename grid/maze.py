@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from typing import Any, Optional, Callable, NamedTuple, Sequence
 from typing_extensions import Protocol
 from itertools import product
+from numbers import Real
 import json
 
 class Cell():
@@ -281,7 +282,7 @@ class BaseGrid():
 
     # key and value for size in draw_maze.ps
     @property
-    def size_dict(self) -> dict[str, int | bool | list[int]]:
+    def size_dict(self) -> dict[str, int | float | bool | list[int]]:
         raise ValueError("not overridden")
 
     ### Printing support 
@@ -360,8 +361,10 @@ class BaseGrid():
                 output.append(f"/{size_key} {ps_list(size_value)}")
             elif isinstance(size_value, bool):
                 output.append(f"/{size_key} {str(size_value).lower()}")
-            elif isinstance(size_value, int):
+            elif isinstance(size_value, Real):
                 output.append(f"/{size_key} {size_value}")
+            else:
+                raise ValueError(f"strange type in size_dict: {size_key} ({type(size_value)}")
         # make field lookup
         field_for_position: dict[Position, int] = {}
         if field:

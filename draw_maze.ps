@@ -127,11 +127,11 @@
                             stroke
                         } if
                     } {
-                        diamond_corner 0 goto 
+                        diamond_corner 0 goto
                         diamond_offset_long diamond_offset_short goto
                         stroke
                         diamond_offset_short diamond_offset_long goto
-                        0 diamond_corner goto 
+                        0 diamond_corner goto
                         stroke
                     } ifelse
                 grestore
@@ -201,7 +201,21 @@
     /convert_from_polar { polypolar } def
     /convert_to_polar { polyralop } def
     /polar_goto { ppgoto } def
-    /center_cell_path { sides {0.5 0 goto} circrepeat closepath } def
+    /center_cell_path {
+        /slices grid /slices get def
+        /i 0 def
+        sides {
+            i slices le {
+                0.5 0 goto
+            } if
+            /i i 1 add def
+        }
+        slices sides lt {
+            0 0 goto
+        } if
+        circrepeat
+        closepath
+    } def
 
     grid /bg known {
         0 0 radius 2 mul circle fill
@@ -297,6 +311,8 @@
             } { 3 } ifelse def
             % flag for innerpoint handling
             /inner_flag position 0 get 0 eq center_cell not and def
+            % also flag for center cell
+            /center_flag position 0 get 0 eq center_cell and def
 
             % figure out angle offsets as we go
             outstart 0 ne {
@@ -351,11 +367,17 @@
                  } ifelse
             } if
             /outwall_n walls length outstart sub def
+            center_flag grid /slices known and {
+                /slices grid /slices get def
+            } {
+                % big enough to never be relevant
+                /slices 360 def
+            } ifelse
             outwall_n 0 eq {
                 nout ccw 1 ao_point polar_goto
             } {
                 /outwall_len cw ccw sub outwall_n div def
-                0 1 outwall_n 1 sub { /i arg
+                0 1 outwall_n slices min 1 sub { /i arg
                     /door_ccw i       outwall_len mul ccw add def
                     /door_cw  i 1 add outwall_len mul ccw add def
                     nout door_ccw 1 ao_point polar_goto
@@ -367,6 +389,9 @@
                         nout door_cw -1 ao_point convert_from_polar goto
                     } ifelse
                 } for
+                slices outwall_n lt {
+                    0 0 goto
+                } if
             } ifelse
         } ifelse
     } def
@@ -475,8 +500,14 @@
             nout ccw 1 ao_point polar_goto
         } {
             /full_circle position 0 get 0 eq center_cell and def
+            full_circle grid /slices known and {
+                /slices grid /slices get def
+            } {
+                % big enough to never be relevant
+                /slices 360 def
+            } ifelse
             /outwall_len cw ccw sub outwall_n div def
-            0 1 outwall_n 1 sub { /door_i arg
+            0 1 outwall_n slices min 1 sub { /door_i arg
                 /door_ccw door_i       outwall_len mul ccw add def
                 /door_cw  door_i 1 add outwall_len mul ccw add def
                 walls outstart door_i add get {
@@ -502,8 +533,18 @@
                     } if
                 } ifelse
             } for
+            slices 360 lt {
+                gsave
+                    nout 0 goto
+                    0 0 goto
+                    slices sides div 360 mul rotate
+                    nout 0 goto
+                    stroke
+                grestore
+            } if
         } ifelse
         stroke
+
     } def
 
     grid /bg known {

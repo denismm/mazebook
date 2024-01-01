@@ -36,7 +36,7 @@ class RectBaseGrid(BaseGrid):
         return [(i, j) for i in (0, self.width) for j in (0, self.height)]
 
     @property
-    def size_dict(self) -> dict[str, int | list[int]]:
+    def size_dict(self) -> dict[str, int | float | bool | list[int]]:
         return {"width": self.width, "height": self.height}
 
 class RectGrid(RectBaseGrid):

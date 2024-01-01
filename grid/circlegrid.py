@@ -18,12 +18,14 @@ class CircleGrid(SingleSizeGrid):
     def __init__(self, radius: int, firstring: Optional[int] = None, center_cell: bool = True, degrees: float = 360.0, **kwargs: Any) -> None:
         super().__init__(radius, **kwargs)
         self.radius = radius
+        self.center_cell = center_cell
+        self.degrees = degrees
+
         # width of ring r
         self.widths: list[int] = []
         # for convenience: width of ring r / width of ring r-1
         self.ratios: list[int] = []
         # positions in CircleGrid are (r, theta)
-        self.center_cell = center_cell
         if center_cell:
             physical_radius_offset = 0.0
             self._add_column((0, 0))
@@ -62,8 +64,8 @@ class CircleGrid(SingleSizeGrid):
 
     # key and value for size in draw_maze.ps
     @property
-    def size_dict(self) -> dict[str, int | bool | list[int]]:
-        return {'radius': self.radius, 'widths':  self.widths, 'center_cell': self.center_cell}
+    def size_dict(self) -> dict[str, int | float | bool | list[int]]:
+        return {'radius': self.radius, 'widths':  self.widths, 'center_cell': self.center_cell, 'degrees': self.degrees}
 
     @property
     def edges(self) -> tuple[Edge, ...]:
@@ -178,8 +180,8 @@ class PolygonGrid(CircleGrid):
 
     # key and value for size in draw_maze.ps
     @property
-    def size_dict(self) -> dict[str, int | bool | list[int]]:
-        return {'radius': self.radius, 'sides': self.sides, 'widths':  self.widths, 'center_cell': self.center_cell}
+    def size_dict(self) -> dict[str, int | float | bool | list[int]]:
+        return {'radius': self.radius, 'sides': self.sides, 'widths':  self.widths, 'center_cell': self.center_cell, 'slices': self.slices}
 
     @property
     def external_points(self) -> Sequence[tuple[float, ...]]:
@@ -196,7 +198,7 @@ class PolygonGrid(CircleGrid):
 
     @property
     def edges(self) -> tuple[Edge, ...]:
-        result: list[Edge] = [super().edges]
+        result: list[Edge] = list(super().edges)
         inner_borders: list[tuple[Position, ...]] = []
         outer_r = len(self.widths) - 1
         side_len = self.widths[-1] // self.sides

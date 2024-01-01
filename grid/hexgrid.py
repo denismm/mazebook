@@ -36,7 +36,7 @@ class HexGrid(HexBaseGrid):
     neighbor_directions: tuple[tuple[Direction, ...], ...] = (hex_directions,)
 
     @property
-    def size_dict(self) -> dict[str, int | list[int]]:
+    def size_dict(self) -> dict[str, int | float | bool | list[int]]:
         return {"radius": self.radius}
 
     maze_type = "hexmaze"
@@ -67,7 +67,7 @@ class TriGrid(HexBaseGrid):
         )
 
     @property
-    def size_dict(self) -> dict[str, int | list[int]]:
+    def size_dict(self) -> dict[str, int | float | bool | list[int]]:
         return {"width": self.width}
 
     maze_type = "trimaze"

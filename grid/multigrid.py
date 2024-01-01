@@ -1,5 +1,6 @@
 # grids with cells in a square layout
 
+from dataclasses import dataclass
 from positions import Position, IntPosition, Direction, cardinal_directions, add_direction, manhattan, Coordinates
 from typing import Optional, Any, Callable, Sequence, NamedTuple
 import random
@@ -11,12 +12,20 @@ EdgeSpec = NamedTuple('EdgeSpec', [
     ('side', int),                # target side
     ('flip', bool),               # whether to flip edge connection
 ])
-GridSpec = NamedTuple('GridSpec', [
-    ('grid_class', type[BaseGrid]),             # type of subgrid
-    ('args', tuple[int|bool, ...]),             # args to subgrid init
-    ('edges', tuple[Optional[EdgeSpec], ...]),  # target edge of each edge
-    ('location', tuple[int, int]),              # translation of this grid
-])
+@dataclass
+class GridSpec:
+    grid_class: type[BaseGrid]                  # type of subgrid
+    args: tuple[int|bool, ...]                  # args to subgrid init
+    edges: tuple[Optional[EdgeSpec], ...]       # target edge of each edge
+    location: tuple[float, float]               # translation of this grid
+    rotation: float = 0.0                       # rotation of grid
+    scale: float = 1.0                          # scaling of grid
+
+@dataclass
+class GridPosition:
+    location: tuple[float, float]               # translation of this grid
+    rotation: float = 0.0                       # rotation of grid
+    scale: float = 1.0                          # scaling of grid
 
 class MultiGrid(BaseGrid):
     def __init__(self, 
@@ -26,7 +35,7 @@ class MultiGrid(BaseGrid):
         super().__init__(**kwargs)
         self._subgrids: dict[str, BaseGrid] = {}
         self._edge_map: dict[Position, Position] = {}
-        self.offsets: dict[str, tuple[float, ...]] = {}
+        self.grid_positions: dict[str, GridPosition] = {}
         for gridname, grid_spec in subgrids.items():
             self._subgrids[gridname] = grid_spec.grid_class(
                 *grid_spec.args,
@@ -35,7 +44,7 @@ class MultiGrid(BaseGrid):
                 edge_map=self._edge_map,
                 **kwargs
             )
-            self.offsets[gridname] = grid_spec.location
+            self.grid_positions[gridname] = GridPosition(grid_spec.location, grid_spec.rotation, grid_spec.scale)
         # now that all grids exist, go through it again to deal with edges
         for gridname, grid_spec in subgrids.items():
             source_grid = self._subgrids[gridname]
@@ -61,7 +70,7 @@ class MultiGrid(BaseGrid):
         bbox: list[float] = [0.0] * 4
         for gridname in self._subgrids.keys():
             grid_bbox = self._subgrids[gridname].bounding_box
-            grid_offset = self.offsets[gridname] * 2
+            grid_offset = self.grid_positions[gridname].location * 2
             adjusted_bbox = [ b + o for b, o in zip(grid_bbox, grid_offset)]
             for i in range(2):
                 bbox[i] = min(adjusted_bbox[i], bbox[i])
@@ -74,11 +83,16 @@ class MultiGrid(BaseGrid):
     ) -> str:
         output: list[str] = []
         for gridname in self._subgrids.keys():
-            grid_offset = self.offsets[gridname]
+            grid_pos = self.grid_positions[gridname]
+            grid_offset = grid_pos.location
             translation = ' '.join([str(f) for f in grid_offset])
             output.append(f'% grid {gridname}')
             output.append('gsave')
+            if grid_pos.rotation:
+                output.append(f"{grid_pos.rotation} rotate")
             output.append(f"{translation} translate")
+            if grid_pos.scale:
+                output.append(f"{grid_pos.scale} softscale")
             output.append(self._subgrids[gridname].ps_instructions(path=path, field=field))
             output.append('grestore')
         return "\n".join(output)

@@ -203,9 +203,10 @@
     /polar_goto { ppgoto } def
     /center_cell_path {
         /slices grid /slices get def
+        /center_sides slices widths 1 get mul sides div def
         /i 0 def
         sides {
-            i slices le {
+            i center_sides le {
                 0.5 0 goto
             } if
             /i i 1 add def
@@ -369,15 +370,16 @@
             /outwall_n walls length outstart sub def
             center_flag grid /slices known and {
                 /slices grid /slices get def
+                /center_sides slices widths 1 get mul sides div def
             } {
                 % big enough to never be relevant
-                /slices 360 def
+                /center_sides 360 def
             } ifelse
             outwall_n 0 eq {
                 nout ccw 1 ao_point polar_goto
             } {
                 /outwall_len cw ccw sub outwall_n div def
-                0 1 outwall_n slices min 1 sub { /i arg
+                0 1 outwall_n center_sides min 1 sub { /i arg
                     /door_ccw i       outwall_len mul ccw add def
                     /door_cw  i 1 add outwall_len mul ccw add def
                     nout door_ccw 1 ao_point polar_goto
@@ -389,7 +391,7 @@
                         nout door_cw -1 ao_point convert_from_polar goto
                     } ifelse
                 } for
-                slices outwall_n lt {
+                center_sides outwall_n lt {
                     0 0 goto
                 } if
             } ifelse
@@ -502,12 +504,13 @@
             /full_circle position 0 get 0 eq center_cell and def
             full_circle grid /slices known and {
                 /slices grid /slices get def
+                /center_sides slices widths 1 get mul sides div def
             } {
                 % big enough to never be relevant
-                /slices 360 def
+                /center_sides 360 def
             } ifelse
             /outwall_len cw ccw sub outwall_n div def
-            0 1 outwall_n slices min 1 sub { /door_i arg
+            0 1 outwall_n center_sides min 1 sub { /door_i arg
                 /door_ccw door_i       outwall_len mul ccw add def
                 /door_cw  door_i 1 add outwall_len mul ccw add def
                 walls outstart door_i add get {
@@ -533,7 +536,7 @@
                     } if
                 } ifelse
             } for
-            slices 360 lt {
+            center_sides outwall_n lt {
                 gsave
                     nout 0 goto
                     0 0 goto

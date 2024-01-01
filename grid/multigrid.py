@@ -42,8 +42,9 @@ class MultiGrid(BaseGrid):
         for gridname, grid_spec in subgrids.items():
             grid_kwargs = grid_spec.kwargs or {}
             grid_kwargs.update(kwargs)
-            grid_kwargs['linewidth'] = linewidth / grid_spec.scale
-            grid_kwargs['inset'] = inset / grid_spec.scale
+            if grid_spec.scale != 1.0:
+                grid_kwargs['linewidth'] = linewidth / grid_spec.scale
+                grid_kwargs['inset'] = inset / grid_spec.scale
             self._subgrids[gridname] = grid_spec.grid_class(
                 *grid_spec.args,
                 grid=self._grid,

@@ -51,6 +51,8 @@ class MultiGrid(BaseGrid):
         # now that all grids exist, go through it again to deal with edges
         for gridname, grid_spec in subgrids.items():
             source_grid = self._subgrids[gridname]
+            if len(grid_spec.edges) != len(source_grid.edges):
+                raise ValueError(f"edges mismatch between grid and spec for {gridname} ({len(source_grid.edges)} != {len(grid_spec.edges)})")
             for i, edge in enumerate(grid_spec.edges):
                 if edge is not None:
                     target_grid = self._subgrids[edge.target]

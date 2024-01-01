@@ -202,7 +202,7 @@ class PolygonGrid(CircleGrid):
         inner_borders: list[tuple[Position, ...]] = []
         outer_r = len(self.widths) - 1
         side_len = self.widths[-1] // self.sides
-        for i in range(self.sides):
+        for i in range(self.slices):
             inner_borders.append(
                 tuple(IntPosition((outer_r, (i * side_len) + j), self._gridname) for j in range(side_len))
             )

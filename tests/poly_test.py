@@ -50,3 +50,4 @@ def test_poly() -> None:
     partial_grid = PolygonGrid(3, 5, slices=4)
     assert partial_grid.widths == [1, 5, 15, 15]
     assert len(partial_grid) == 29
+    assert len(partial_grid.edges) == 4

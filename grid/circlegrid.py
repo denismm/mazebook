@@ -29,7 +29,7 @@ class CircleGrid(SingleSizeGrid):
     def size_dict(self) -> dict[str, int | bool | list[int]]:
         return {'radius': self.radius, 'widths':  self.widths, 'center_cell': self.center_cell}
 
-    def __init__(self, radius: int, firstring: Optional[int] = None, center_cell: bool = True, angle_max: float = 360.0, **kwargs: Any) -> None:
+    def __init__(self, radius: int, firstring: Optional[int] = None, center_cell: bool = True, degrees: float = 360.0, **kwargs: Any) -> None:
         super().__init__(radius, **kwargs)
         self.radius = radius
         # width of ring r
@@ -61,7 +61,7 @@ class CircleGrid(SingleSizeGrid):
             self.widths.append(width)
             self.ratios.append(ratio)
             for theta in range(width):
-                if (theta + 0.5) * 360 / width >= angle_max:
+                if (theta + 0.5) * 360 / width >= degrees:
                     break
                 self._add_column((r, theta))
 
@@ -169,7 +169,7 @@ class PolygonGrid(CircleGrid):
         self.slices: int = sides
         if slices is not None:
             self.slices = slices
-            kwargs['angle_max'] = 360 * slices / sides
+            kwargs['degrees'] = 360 * slices / sides
         super().__init__(radius, firstring=firstring, center_cell=center_cell, **kwargs)
 
     # key and value for size in draw_maze.ps

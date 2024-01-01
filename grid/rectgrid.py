@@ -32,7 +32,7 @@ class RectBaseGrid(BaseGrid):
         return self.adjust_adjacents(start, neighbors)
 
     @property
-    def external_points(self) -> list[tuple[float, ...]]:
+    def external_points(self) -> Sequence[tuple[float, ...]]:
         return [(i, j) for i in (0, self.width) for j in (0, self.height)]
 
     @property

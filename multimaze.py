@@ -30,6 +30,7 @@ parser.add_argument('--pathcolor', help="string of rgb float values for path, if
 parser.add_argument('--linewidth', type=float, help="thickness of line, where 1 is the cell width")
 parser.add_argument('--inset', type=float, help="depth of inset when weave is true, where 1 is the cell width")
 parser.add_argument('--firstring', type=int, help="cells in the first non-trivial ring of a circular maze")
+parser.add_argument('--slices', type=int, help="number of slices of a polygon maze to include")
 parser.add_argument('-y', '--hyper', type=int, action='append', help="number of planes in each hyper dimension, repeat for more dimensions")
 parser.add_argument('--pixels', type=float, help="how many pixels to map one maze height to, when printing to png")
 
@@ -88,6 +89,8 @@ elif m := re.match(r'(\d+)([\@o])(\d*)$', args.size):
     center_cell = (m.group(2) == '@')
     if len(m.group(3)):
         sides = int(m.group(3))
+        if args.slices:
+            option_kwargs['slices'] = args.slices
         grid = PolygonGrid(size, sides, firstring=args.firstring, center_cell=center_cell, **option_kwargs)
     else:
         grid = CircleGrid(size, firstring=args.firstring, center_cell=center_cell, **option_kwargs)

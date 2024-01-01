@@ -46,3 +46,7 @@ def test_poly() -> None:
     assert len(edges[0].inner) == 3
     assert edges[0].inner[0] in small_grid
     assert edges[0].outer[0] not in small_grid
+
+    partial_grid = PolygonGrid(3, 5, slices=4)
+    assert partial_grid.widths == [1, 5, 15, 15]
+    assert len(partial_grid) == 29

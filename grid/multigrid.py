@@ -20,6 +20,7 @@ class GridSpec:
     location: tuple[float, float]               # translation of this grid
     rotation: float = 0.0                       # rotation of grid
     scale: float = 1.0                          # scaling of grid
+    kwargs: Optional[dict[str, Any]] = None     # kwargs for subgrid init
 
 @dataclass
 class GridPosition:
@@ -37,12 +38,14 @@ class MultiGrid(BaseGrid):
         self._edge_map: dict[Position, Position] = {}
         self.grid_positions: dict[str, GridPosition] = {}
         for gridname, grid_spec in subgrids.items():
+            grid_kwargs = grid_spec.kwargs or {}
+            grid_kwargs.update(kwargs)
             self._subgrids[gridname] = grid_spec.grid_class(
                 *grid_spec.args,
                 grid=self._grid,
                 gridname=gridname,
                 edge_map=self._edge_map,
-                **kwargs
+                **grid_kwargs
             )
             self.grid_positions[gridname] = GridPosition(grid_spec.location, grid_spec.rotation, grid_spec.scale)
         # now that all grids exist, go through it again to deal with edges

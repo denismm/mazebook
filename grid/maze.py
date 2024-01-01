@@ -287,7 +287,7 @@ class BaseGrid():
     ### Printing support 
 
     @property
-    def external_points(self) -> list[tuple[float, ...]]:
+    def external_points(self) -> Sequence[tuple[float, ...]]:
         raise ValueError("not overridden")
 
     # corners of bounding box: lower left, top right

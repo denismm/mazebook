@@ -16,7 +16,7 @@ class CircleGrid(SingleSizeGrid):
     maze_type = "circlemaze"
 
     @property
-    def external_points(self) -> list[tuple[float, ...]]:
+    def external_points(self) -> Sequence[tuple[float, ...]]:
         # fake it as a box
         # "physical" radius
         p_radius: float = self.radius
@@ -29,7 +29,7 @@ class CircleGrid(SingleSizeGrid):
     def size_dict(self) -> dict[str, int | bool | list[int]]:
         return {'radius': self.radius, 'widths':  self.widths, 'center_cell': self.center_cell}
 
-    def __init__(self, radius: int, firstring: Optional[int] = None, center_cell: bool = True, **kwargs: Any) -> None:
+    def __init__(self, radius: int, firstring: Optional[int] = None, center_cell: bool = True, angle_max: float = 360.0, **kwargs: Any) -> None:
         super().__init__(radius, **kwargs)
         self.radius = radius
         # width of ring r
@@ -61,6 +61,8 @@ class CircleGrid(SingleSizeGrid):
             self.widths.append(width)
             self.ratios.append(ratio)
             for theta in range(width):
+                if (theta + 0.5) * 360 / width >= angle_max:
+                    break
                 self._add_column((r, theta))
 
     @cache
@@ -160,11 +162,15 @@ class CircleGrid(SingleSizeGrid):
 class PolygonGrid(CircleGrid):
     maze_type = "polygonmaze"
 
-    def __init__(self, radius: int, sides: int, firstring: Optional[int] = None, center_cell: bool = True, **kwargs: Any) -> None:
+    def __init__(self, radius: int, sides: int, firstring: Optional[int] = None, center_cell: bool = True, slices: Optional[int] = None, **kwargs: Any) -> None:
         if firstring is None:
             firstring = sides
-        super().__init__(radius, firstring=firstring, center_cell=center_cell, **kwargs)
         self.sides = sides
+        self.slices: int = sides
+        if slices is not None:
+            self.slices = slices
+            kwargs['angle_max'] = 360 * slices / sides
+        super().__init__(radius, firstring=firstring, center_cell=center_cell, **kwargs)
 
     # key and value for size in draw_maze.ps
     @property
@@ -172,16 +178,16 @@ class PolygonGrid(CircleGrid):
         return {'radius': self.radius, 'sides': self.sides, 'widths':  self.widths, 'center_cell': self.center_cell}
 
     @property
-    def external_points(self) -> list[tuple[float, ...]]:
+    def external_points(self) -> Sequence[tuple[float, ...]]:
         from math import cos, sin, tau
         # "physical" radius
         side_angle = tau / self.sides
         p_radius: float = self.radius
         if self.center_cell:
             p_radius += 0.5
-        return [
+        return [(0.0, 0.0)] + [
             (cos(side_angle * i) * p_radius, sin(side_angle * i) * p_radius)
-            for i in range(self.sides)
+            for i in range(self.slices + 1)
         ]
 
     @property

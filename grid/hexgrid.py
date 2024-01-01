@@ -3,7 +3,7 @@
 from positions import Position, IntPosition, Direction, add_direction
 from typing import Optional, Any, Sequence
 
-from .maze import BaseGrid, SingleSizeGrid, ps_list
+from .maze import BaseGrid, SingleSizeGrid, Edge
 
 hex_directions: tuple[Direction, ...] = ( 
     (1, 1), (0, 1), (-1, 0), (-1, -1), (0, -1), (1, 0)
@@ -78,3 +78,21 @@ class TriGrid(HexBaseGrid):
             -0.5 * sqrt(3), -0.5,
             (self.width - 0.5) * sqrt(3), self.width * 1.5 - 0.5
         )
+
+    @property
+    def edges(self) -> tuple[Edge, ...]:
+        result: list[Edge] = []
+        w = self.width
+        gridname = self._gridname
+        inner_borders: list[tuple[Position, ...]] = [
+            tuple(IntPosition((2*w - i, i), gridname) for i in range(w - 1, 2 * w - 1)),
+            tuple(IntPosition((i, 2*i), gridname) for i in reversed(range(w))),
+            tuple(IntPosition((2*i, i), gridname) for i in range(w)),
+        ]
+        directions = self.neighbor_directions[0]
+        outer_borders: list[tuple[Position, ...]] = []
+        for border, d in zip(inner_borders, directions):
+            outer_borders.append( tuple(add_direction(b, d) for b in border))
+        return tuple(Edge(inner, outer) for inner, outer in zip(inner_borders, outer_borders))
+
+

@@ -123,6 +123,10 @@ class BaseGrid():
         self.pixels = pixels or 20.0
         self.room_size = room_size or 1
 
+    # quick way to get a position for coordinates in this grid
+    def _pos(self, coordinates: Coordinates) -> Position:
+        return IntPosition(coordinates, self._gridname)
+
     def connect(self, first: Position, second: Position) -> None:
         # what if there's a distance between the two cells?
         if IntPosition(second.coordinates, second.gridname) in self.pos_adjacents(first):

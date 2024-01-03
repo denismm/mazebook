@@ -1,6 +1,6 @@
 # grids with or without a central node surrounded by rings of cells
 
-from positions import Position, IntPosition, Direction, add_direction
+from positions import Position, Direction, add_direction
 from typing import Optional, Any, Sequence
 from math import pi
 from functools import cache
@@ -55,12 +55,18 @@ class CircleGrid(SingleSizeGrid):
 
     @property
     def external_points(self) -> Sequence[tuple[float, ...]]:
-        # fake it as a box
+        from math import cos, sin, tau
         # "physical" radius
         p_radius: float = self.radius
         if self.center_cell:
             p_radius += 0.5
-        return [(-p_radius, -p_radius), (p_radius, p_radius)]
+        results: list[tuple[float, ...]] = [(0.0, 0.0)]
+        # TODO: also add a point at self.degrees if needed?
+        for angle in range(0, int(self.degrees), 10):
+            results.append(
+                (cos(angle) * p_radius, sin(angle) * p_radius)
+            )
+        return results
 
     # key and value for size in draw_maze.ps
     @property
@@ -76,20 +82,22 @@ class CircleGrid(SingleSizeGrid):
         # cw and ccw around ring
         r, theta, *remainder = start.coordinates
         neighbors: list[Position] = []
-        gridname = self._gridname
-        # right, down, left
+        # right, (down), left
         if self.widths[r] > 1:
-            neighbors.append(IntPosition((r, (theta + 1) % self.widths[r], *remainder), gridname))
+            for dt in (1, -1):
+                new_theta = theta + dt
+                if self.degrees == 360.0:
+                    new_theta %= self.widths[r]
+                neighbors.append(self._pos((r, new_theta, *remainder)))
+
         if r > 0:
-            neighbors.append(IntPosition((r - 1, theta // self.ratios[r], *remainder), gridname))
-        if self.widths[r] > 1:
-            neighbors.append(IntPosition((r, (theta - 1) % self.widths[r], *remainder), gridname))
+            neighbors.insert(1, self._pos((r - 1, theta // self.ratios[r], *remainder)))
         if r + 1 < len(self.widths):
             next_ratio = self.ratios[r + 1]
         else:
             next_ratio = 1
         neighbors += [
-            IntPosition((r + 1, theta * next_ratio + x, *remainder), gridname) for x in range(next_ratio)]
+            self._pos((r + 1, theta * next_ratio + x, *remainder)) for x in range(next_ratio)]
         return self.adjust_adjacents(start, neighbors)
 
     def find_link_pos(self, first: Position, second: Position) -> Position:
@@ -97,7 +105,7 @@ class CircleGrid(SingleSizeGrid):
         if first.coordinates[0] == 1 and second.coordinates[0] == 1 and self.center_cell:
             if self.widths[1] == 4:
                 # we're probably going across the middle
-                return IntPosition((0, 0))
+                return self._pos((0, 0))
         return super().find_link_pos(first, second)
 
     def region_divisions(self, region: set[Position]) -> list[Division]:
@@ -164,6 +172,32 @@ class CircleGrid(SingleSizeGrid):
                     result.append(Division(name, (left, right)))
         return result
 
+class SemiCircleGrid(CircleGrid):
+    mazetype = "semicirclemaze"
+
+    def __init__(self, diameter: int, firstring: Optional[int] = None, **kwargs: Any) -> None:
+        center_cell = (diameter % 2 == 1)
+        parent_radius = (diameter - center_cell) // 2
+        if firstring is None:
+            firstring = 6
+        super().__init__(parent_radius, center_cell=center_cell, firstring=firstring, degrees=180.0, **kwargs)
+
+    @property
+    def edges(self) -> tuple[Edge, ...]:
+        # assemble complex border
+        inner_border: list[Position] = []
+        outer_border: list[Position] = []
+        for r in reversed(range(self.radius)):
+            inner_border.append( self._pos((r, self.widths[r] // 2)))
+            outer_border.append( self._pos((r, self.widths[r] // 2 + 1)))
+        if self.center_cell:
+            inner_border.append( self._pos((0, 0)))
+            outer_border.append( self._pos((-1, 0)))
+        for r in range(self.radius):
+            inner_border.append( self._pos((r, 0)))
+            outer_border.append( self._pos((r, -1)))
+        return ( Edge(tuple(inner_border), tuple(outer_border)), )
+
 
 class PolygonGrid(CircleGrid):
     maze_type = "polygonmaze"
@@ -204,7 +238,7 @@ class PolygonGrid(CircleGrid):
         side_len = self.widths[-1] // self.sides
         for i in range(self.slices):
             inner_borders.append(
-                tuple(IntPosition((outer_r, (i * side_len) + j), self._gridname) for j in range(side_len))
+                tuple(self._pos((outer_r, (i * side_len) + j)) for j in range(side_len))
             )
         outer_borders: list[tuple[Position, ...]] = []
         out = (1, 0)

@@ -41,10 +41,10 @@ subgrids = {
     ),
 }
 
-heart = MultiGrid(subgrids, weave=True, linewidth=0.01)
+heart = MultiGrid(subgrids, weave=True, linewidth=0.01, pixels=30)
 
 heart.generate_maze("backtrack")
 
 field = heart.dijkstra(IntPosition((0, 0), "C"))
 
-heart.print("ps", field=field, maze_name="heart")
+heart.print("png", field=field, maze_name="heart")

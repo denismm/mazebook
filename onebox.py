@@ -18,7 +18,7 @@ def draw_square(name: str, edges: tuple[EdgeSpec, ...]) -> None:
 
     multigrid = MultiGrid(subgrids, weave=True)
 
-    multigrid.generate_maze("kruskal")
+    multigrid.generate_maze("backtrack")
 
     field = multigrid.dijkstra(IntPosition((0, 0), "A"))
 
@@ -37,6 +37,20 @@ draw_square('klein', (
         EdgeSpec("A", 3, False),
         EdgeSpec("A", 0, True),
         EdgeSpec("A", 1, False),
+    ))
+
+draw_square('projective_plane', (
+        EdgeSpec("A", 2, False),
+        EdgeSpec("A", 3, False),
+        EdgeSpec("A", 0, False),
+        EdgeSpec("A", 1, False),
+    ))
+
+draw_square('cylinder', (
+        None,
+        EdgeSpec("A", 3, True),
+        None,
+        EdgeSpec("A", 1, True),
     ))
 
 draw_square('moebius', (

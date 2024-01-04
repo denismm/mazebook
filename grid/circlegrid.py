@@ -83,6 +83,7 @@ class CircleGrid(SingleSizeGrid):
         r, theta, *remainder = start.coordinates
         neighbors: list[Position] = []
         # right, (down), left
+        is_center = (r == 0 and self.center_cell)
         if self.widths[r] > 1:
             for dt in (1, -1):
                 new_theta = theta + dt
@@ -96,8 +97,15 @@ class CircleGrid(SingleSizeGrid):
             next_ratio = self.ratios[r + 1]
         else:
             next_ratio = 1
+        if is_center:
+            next_range = next_ratio * int(self.degrees) // 360
+        else:
+            next_range = next_ratio
         neighbors += [
-            self._pos((r + 1, theta * next_ratio + x, *remainder)) for x in range(next_ratio)]
+            self._pos((r + 1, theta * next_ratio + x, *remainder)) for x in range(next_range)]
+
+        if is_center and self.degrees < 360.0:
+            neighbors.append(self._pos((-1, 0)))
         return self.adjust_adjacents(start, neighbors)
 
     def find_link_pos(self, first: Position, second: Position) -> Position:
@@ -187,13 +195,19 @@ class SemiCircleGrid(CircleGrid):
         # assemble complex border
         inner_border: list[Position] = []
         outer_border: list[Position] = []
-        for r in reversed(range(self.radius)):
+        if self.center_cell:
+            first_r = 1
+            last_r = self.radius + 1
+        else:
+            first_r = 0
+            last_r = self.radius
+        for r in reversed(range(first_r, last_r)):
             inner_border.append( self._pos((r, self.widths[r] // 2)))
             outer_border.append( self._pos((r, self.widths[r] // 2 + 1)))
         if self.center_cell:
             inner_border.append( self._pos((0, 0)))
             outer_border.append( self._pos((-1, 0)))
-        for r in range(self.radius):
+        for r in range(first_r, last_r):
             inner_border.append( self._pos((r, 0)))
             outer_border.append( self._pos((r, -1)))
         return ( Edge(tuple(inner_border), tuple(outer_border)), )

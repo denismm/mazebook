@@ -6,7 +6,7 @@ from grid.multigrid import MultiGrid, GridSpec, EdgeSpec
 from positions import IntPosition
 
 random.seed(97)
-maze_size = 8
+maze_size = 9
 subgrids = {
     "C": GridSpec(
         RectGrid,
@@ -18,6 +18,7 @@ subgrids = {
             None,
         ),
         (-maze_size / 2, -maze_size/2),
+        rotation=45,
     ),
     "L": GridSpec(
         SemiCircleGrid,
@@ -26,7 +27,7 @@ subgrids = {
             EdgeSpec("C", 0, True),
         ),
         ( 0, maze_size / 2),
-        rotation=270,
+        rotation=270+45,
 
     ),
     "R": GridSpec(
@@ -36,11 +37,11 @@ subgrids = {
             EdgeSpec("C", 1, True),
         ),
         ( 0, maze_size / 2),
-        rotation=0,
+        rotation=45,
     ),
 }
 
-heart = MultiGrid(subgrids, weave=False, linewidth=0.01)
+heart = MultiGrid(subgrids, weave=True, linewidth=0.01)
 
 heart.generate_maze("backtrack")
 

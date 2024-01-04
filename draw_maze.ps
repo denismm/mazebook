@@ -187,7 +187,14 @@
     /convert_from_polar { polar } def
     /convert_to_polar { ralop } def
     /polar_goto { pgoto } def
-    /center_cell_path { 0 0 0.5 circle closepath } def
+    /center_cell_path {
+        0 0 0.5
+        0 grid /degrees get arc
+        grid /degrees get 360 lt {
+            0 0 goto
+        } if
+        closepath
+    } def
 
     grid drawpolarmaze
 } def
@@ -368,9 +375,16 @@
                  } ifelse
             } if
             /outwall_n walls length outstart sub def
-            center_flag grid /slices known and {
-                /slices grid /slices get def
-                /center_sides slices widths 1 get mul sides div def
+            center_flag grid /degrees known and {
+                /degrees grid /degrees get def
+                grid /slices known {
+                    /slices grid /slices get def
+                    /center_sides slices widths 1 get mul sides div def
+                } {
+                    /sides widths 1 get def
+                    /proportion 360 degrees div def
+                    /center_sides sides proportion div cvi def
+                } ifelse
             } {
                 % big enough to never be relevant
                 /center_sides 360 def
@@ -378,7 +392,11 @@
             outwall_n 0 eq {
                 nout ccw 1 ao_point polar_goto
             } {
-                /outwall_len cw ccw sub outwall_n div def
+                /outwall_len center_flag {
+                    360 widths 1 get div
+                } {
+                    cw ccw sub outwall_n div
+                } ifelse def
                 0 1 outwall_n center_sides min 1 sub { /i arg
                     /door_ccw i       outwall_len mul ccw add def
                     /door_cw  i 1 add outwall_len mul ccw add def
@@ -392,9 +410,30 @@
                     } ifelse
                 } for
                 center_sides outwall_n lt {
-                    0 0 goto
+                    degrees 360 lt {
+                        walls dup length 1 sub get {
+                            inset 0 gt {
+                                /inner_ao inset nout div asin def
+                                /inner_start_angle degrees inner_ao sub def
+                                nout inner_start_angle polar_goto
+                                degrees 180 gt {
+                                    degrees
+                                    0 0 inset degrees 90 sub 90 arcn
+                                } {
+                                } ifelse
+                                nout inner_ao convert_from_polar goto
+                            } {
+                                0 0 goto
+                            } ifelse
+                        } {
+                            nout degrees pgoto
+                            0 0 goto
+                            nout 0 convert_from_polar goto
+                        } ifelse
+                    } if
                 } if
             } ifelse
+            closepath
         } ifelse
     } def
 
@@ -502,14 +541,25 @@
             nout ccw 1 ao_point polar_goto
         } {
             /full_circle position 0 get 0 eq center_cell and def
-            full_circle grid /slices known and {
-                /slices grid /slices get def
-                /center_sides slices widths 1 get mul sides div def
+            full_circle grid /degrees known and {
+                /degrees grid /degrees get def
+                grid /slices known {
+                    /slices grid /slices get def
+                    /center_sides slices widths 1 get mul sides div def
+                } {
+                    /sides widths 1 get def
+                    /proportion 360 degrees div def
+                    /center_sides sides proportion div cvi def
+                } ifelse
             } {
                 % big enough to never be relevant
                 /center_sides 360 def
             } ifelse
-            /outwall_len cw ccw sub outwall_n div def
+            /outwall_len full_circle {
+                360 widths 1 get div
+            } {
+                cw ccw sub outwall_n div 
+            } ifelse def
             0 1 outwall_n center_sides min 1 sub { /door_i arg
                 /door_ccw door_i       outwall_len mul ccw add def
                 /door_cw  door_i 1 add outwall_len mul ccw add def
@@ -536,14 +586,28 @@
                     } if
                 } ifelse
             } for
-            center_sides outwall_n lt {
-                gsave
-                    nout 0 goto
-                    0 0 goto
-                    slices sides div 360 mul rotate
-                    nout 0 goto
-                    stroke
-                grestore
+            full_circle {
+                degrees 360 lt {
+                    walls dup length 1 sub get {
+                        inset 0 gt {
+                            nout degrees -1 ao_point polar_goto
+                            degrees 180 gt {
+                                degrees
+                                0 0 inset degrees 90 sub 90 arcn
+                            } {
+                            } ifelse
+                            nout 0 1 ao_point convert_from_polar goto
+                        } {
+                            gsave
+                                nout 0 goto
+                                0 0 goto
+                                degrees rotate
+                                nout 0 goto
+                                stroke
+                            grestore
+                        } ifelse
+                    } if
+                } if
             } if
         } ifelse
         stroke

@@ -237,10 +237,14 @@
     % centercell: true if 0,0 is a single cell in the middle
     % cells: list of lists containing coord (ring, cell) then list of boolean walls for ccw, in, cw, outs
 
-    /setup {} def
     /widths grid /widths get def
     /radius widths length def
     /center_cell grid /center_cell get def
+    grid /degrees known {
+        /degrees grid /degrees get def
+    } {
+        /degrees grid /slices get 360 mul sides div def
+    } ifelse
 
     (L) set_polar_corner_mode
 
@@ -416,10 +420,12 @@
                                 /inner_ao inset nout div asin def
                                 /inner_start_angle degrees inner_ao sub def
                                 nout inner_start_angle polar_goto
-                                degrees 180 gt {
+                                degrees 180 ge {
                                     degrees
                                     0 0 inset degrees 90 sub 90 arcn
                                 } {
+                                    inset degrees half sin div
+                                    degrees half convert_from_polar goto
                                 } ifelse
                                 nout inner_ao convert_from_polar goto
                             } {
@@ -447,6 +453,7 @@
             center_cell { 0 } { 2 } ifelse
         } { 3 } ifelse def
         /inner_flag position 0 get 0 eq center_cell not and def
+        /center_flag position 0 get 0 eq center_cell and def
         inner_flag {
             /innerangle where {
                 pop
@@ -537,12 +544,11 @@
              } ifelse
         } if
         /outwall_n walls length outstart sub def
-        outwall_n 0 eq {
+        outwall_n 0 eq center_flag not and {
             nout ccw 1 ao_point polar_goto
         } {
-            /full_circle position 0 get 0 eq center_cell and def
-            full_circle grid /degrees known and {
-                /degrees grid /degrees get def
+            /full_circle center_flag degrees 360 eq and def
+            center_flag grid /degrees known and {
                 grid /slices known {
                     /slices grid /slices get def
                     /center_sides slices widths 1 get mul sides div def
@@ -555,12 +561,13 @@
                 % big enough to never be relevant
                 /center_sides 360 def
             } ifelse
-            /outwall_len full_circle {
+            /outwall_len center_flag {
                 360 widths 1 get div
             } {
                 cw ccw sub outwall_n div 
             } ifelse def
-            0 1 outwall_n center_sides min 1 sub { /door_i arg
+            /doors_to_do outwall_n center_sides min def
+            0 1 doors_to_do 1 sub { /door_i arg
                 /door_ccw door_i       outwall_len mul ccw add def
                 /door_cw  door_i 1 add outwall_len mul ccw add def
                 walls outstart door_i add get {
@@ -568,7 +575,7 @@
                         door_i 0 ne full_circle or { nout door_ccw polar_goto } if
                         nout door_ccw 1 ao_point polar_goto
                         nout door_cw -1 ao_point polar_goto
-                        door_i outwall_n 1 sub ne full_circle or {
+                        door_i doors_to_do 1 sub ne full_circle or {
                             nout door_cw polar_goto
                         } if
                         stroke
@@ -581,20 +588,24 @@
                         stroke
                         out door_cw -1 ao_point polar_goto
                         nout door_cw -1 ao_point convert_from_polar goto
-                        door_i outwall_n 1 sub ne full_circle or { nout door_cw polar_goto } if
+                        door_i doors_to_do 1 sub ne full_circle or { nout door_cw polar_goto } if
                         stroke
                     } if
                 } ifelse
             } for
-            full_circle {
+            center_flag {
                 degrees 360 lt {
                     walls dup length 1 sub get {
                         inset 0 gt {
+                            % this is only needed for strange angles
+                            % nout door_ccw -1 ao_point polar_goto
                             nout degrees -1 ao_point polar_goto
-                            degrees 180 gt {
+                            degrees 180 ge {
                                 degrees
                                 0 0 inset degrees 90 sub 90 arcn
                             } {
+                                inset degrees half sin div
+                                degrees half convert_from_polar goto
                             } ifelse
                             nout 0 1 ao_point convert_from_polar goto
                         } {
@@ -606,7 +617,14 @@
                                 stroke
                             grestore
                         } ifelse
-                    } if
+                    } {
+                        % currently has to be semicircle
+                        nout door_ccw -1 ao_point polar_goto
+                        nout degrees polar_goto
+                        stroke
+                        nout 0 polar_goto
+                        nout 0 1 ao_point polar_goto
+                    } ifelse
                 } if
             } if
         } ifelse

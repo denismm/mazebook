@@ -66,7 +66,7 @@ class CircleGrid(SingleSizeGrid):
             results.append(
                 (cos(angle) * p_radius, sin(angle) * p_radius)
             )
-        return results
+        return [self.transform_point(point) for point in results]
 
     # key and value for size in draw_maze.ps
     @property
@@ -239,10 +239,11 @@ class PolygonGrid(CircleGrid):
         p_radius: float = self.radius
         if self.center_cell:
             p_radius += 0.5
-        return [(0.0, 0.0)] + [
+        results =  [(0.0, 0.0)] + [
             (cos(side_angle * i) * p_radius, sin(side_angle * i) * p_radius)
             for i in range(self.slices + 1)
         ]
+        return [self.transform_point(point) for point in results]
 
     @property
     def edges(self) -> tuple[Edge, ...]:

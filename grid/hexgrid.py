@@ -46,7 +46,8 @@ class HexGrid(HexBaseGrid):
         # "physical" radius
         # fake it for now
         p_radius: float = self.radius + 0.5
-        return [ (-p_radius, -p_radius), (p_radius, p_radius)]
+        results = [ (-p_radius, -p_radius), (p_radius, p_radius)]
+        return [self.transform_point(point) for point in results]
 
 class TriGrid(HexBaseGrid):
     def __init__(self, width: int, **kwargs: Any) -> None:
@@ -75,7 +76,8 @@ class TriGrid(HexBaseGrid):
     @property
     def external_points(self) -> Sequence[tuple[float, ...]]:
         from math import sqrt
-        return [ (0.0, 0.0), (self.width, 0.0), (self.width /2, self.width * sqrt(3) / 2)]
+        results = [ (0.0, 0.0), (self.width, 0.0), (self.width /2, self.width * sqrt(3) / 2)]
+        return [self.transform_point(point) for point in results]
 
     @property
     def edges(self) -> tuple[Edge, ...]:

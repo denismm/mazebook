@@ -7,17 +7,19 @@ import random
 
 from .maze import BaseGrid, ps_list
 
-EdgeSpec = NamedTuple('EdgeSpec', [
-    ('target', str),               # target grid
-    ('side', int),                # target side
-    ('flip', bool),               # whether to flip edge connection
-])
+@dataclass
+class EdgeSpec:
+    target: str         # target grid
+    side: int           # target side
+    flip: bool          # whether to flip edge connection
+    align: bool=False   # true to align grid along this edge
+
 @dataclass
 class GridSpec:
     grid_class: type[BaseGrid]                  # type of subgrid
     args: tuple[int|bool, ...]                  # args to subgrid init
     edges: tuple[Optional[EdgeSpec], ...]       # target edge of each edge
-    location: tuple[float, float]               # translation of this grid
+    location: tuple[float, float] = (0.0, 0.0)  # translation of this grid
     rotation: float = 0.0                       # rotation of grid
     scale: float = 1.0                          # scaling of grid
     kwargs: Optional[dict[str, Any]] = None     # kwargs for subgrid init
@@ -36,7 +38,7 @@ class MultiGrid(BaseGrid):
         super().__init__(**kwargs)
         self._subgrids: dict[str, BaseGrid] = {}
         self._edge_map: dict[Position, Position] = {}
-        self.grid_positions: dict[str, GridPosition] = {}
+        grid_positions: dict[str, GridPosition] = {}
         linewidth = kwargs.get('linewidth', 0.1)
         inset = kwargs.get('inset', 0.1)
         for gridname, grid_spec in subgrids.items():
@@ -52,7 +54,7 @@ class MultiGrid(BaseGrid):
                 edge_map=self._edge_map,
                 **grid_kwargs
             )
-            self.grid_positions[gridname] = GridPosition(grid_spec.location, grid_spec.rotation, grid_spec.scale)
+            grid_positions[gridname] = GridPosition(grid_spec.location, grid_spec.rotation, grid_spec.scale)
         # now that all grids exist, go through it again to deal with edges
         for gridname, grid_spec in subgrids.items():
             source_grid = self._subgrids[gridname]
@@ -70,6 +72,41 @@ class MultiGrid(BaseGrid):
                     for s_pos, t_pos in zip(source_edge, target_edge):
                         self._edge_map[s_pos] = t_pos
 
+        # deal with alignments
+        aligned_grids: list[str] = []
+        unaligned_grids: list[str] = []
+        for gridname, grid_spec in subgrids.items():
+            for edge in grid_spec.edges:
+                if edge and edge.align:
+                    unaligned_grids.append(gridname)
+                    break
+            if gridname not in unaligned_grids:
+                aligned_grids.append(gridname)
+        while unaligned_grids:
+            progress = False
+            alignment_candidates = list(unaligned_grids)
+            for candidate in alignment_candidates:
+                grid_spec = subgrids[candidate]
+                alignment_edge: int = -1
+                for i, edge in enumerate(grid_spec.edges):
+                    if edge and edge.align:
+                        alignment_edge = i
+                        break
+                if alignment_edge == -1:
+                    raise ValueError(f"no alignment edge for {candidate}")
+                alignment_edge_spec = grid_spec.edges[alignment_edge]
+                target: str = alignment_edge_spec.target        # type: ignore [union-attr]
+                if target not in aligned_grids:
+                    continue
+                # align candidate with target
+                unaligned_grids.remove(candidate)
+                aligned_grids.append(candidate)
+                progress = False
+            if not progress:
+                raise ValueError("unalignable multigrid")
+        for grid_name, grid_position in grid_positions.items():
+            self._subgrids[grid_name].grid_position = grid_position
+
     def pos_adjacents(self, start: Position) -> Sequence[Position]:
         gridname = start.gridname
         subgrid = self._subgrids[gridname]      # type: ignore [index]
@@ -77,21 +114,9 @@ class MultiGrid(BaseGrid):
 
     @property
     def external_points(self) -> list[tuple[float, ...]]:
-        from math import cos, sin, radians
         points: list[tuple[float, ...]] = []
         for gridname in self._subgrids.keys():
-            grid_pos = self.grid_positions[gridname]
             for point in self._subgrids[gridname].external_points:
-                if grid_pos.scale:
-                    point = tuple( x * grid_pos.scale for x in point)
-                if grid_pos.location:
-                    point = tuple( x + y for x, y in zip(point, grid_pos.location))
-                if grid_pos.rotation:
-                    cos_t = cos(radians(grid_pos.rotation))
-                    sin_t = sin(radians(grid_pos.rotation))
-                    x: float = point[0] * cos_t - point[1] * sin_t
-                    y: float = point[0] * sin_t + point[1] * cos_t
-                    point = (x, y)
                 points.append(point)
         return points
 
@@ -101,16 +126,6 @@ class MultiGrid(BaseGrid):
     ) -> str:
         output: list[str] = []
         for gridname in self._subgrids.keys():
-            grid_pos = self.grid_positions[gridname]
-            grid_offset = grid_pos.location
-            translation = ' '.join([str(f) for f in grid_offset])
-            output.append(f'% grid {gridname}')
-            output.append('gsave')
-            if grid_pos.rotation:
-                output.append(f"{grid_pos.rotation} rotate")
-            output.append(f"{translation} translate")
-            if grid_pos.scale and grid_pos.scale != 1.0:
-                output.append(f"{grid_pos.scale} softscale")
+            output.append(f"% grid {gridname}")
             output.append(self._subgrids[gridname].ps_instructions(path=path, field=field))
-            output.append('grestore')
         return "\n".join(output)

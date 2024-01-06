@@ -6,6 +6,7 @@ from typing import Any, Optional, Callable, NamedTuple, Sequence
 from typing_extensions import Protocol
 from itertools import product
 from numbers import Real
+from dataclasses import dataclass
 import json
 
 class Cell():
@@ -49,6 +50,13 @@ Edge = NamedTuple('Edge', [
     ('inner', tuple[Position, ...]),
     ('outer', tuple[Position, ...]),
 ])
+
+@dataclass
+class GridPosition:
+    location: tuple[float, float] = (0.0, 0.0)  # translation of this grid
+    rotation: float = 0.0                       # rotation of grid
+    scale: float = 1.0                          # scaling of grid
+NullPosition = GridPosition()
 
 class BaseGrid():
     _grid: dict[Position, Cell]
@@ -113,6 +121,7 @@ class BaseGrid():
         inset: Optional[float] = None,
         pixels: Optional[float] = None,
         room_size: Optional[int] = None,
+        grid_position: GridPosition = NullPosition,
     ) -> None:
         self.weave = weave
         self.hyper = hyper or []
@@ -122,6 +131,7 @@ class BaseGrid():
         self.inset = inset
         self.pixels = pixels or 20.0
         self.room_size = room_size or 1
+        self.grid_position = grid_position
 
     # quick way to get a position for coordinates in this grid
     def _pos(self, coordinates: Coordinates) -> Position:
@@ -293,6 +303,21 @@ class BaseGrid():
 
     ### Printing support 
 
+    def transform_point(self, point: tuple[float, ...]) -> tuple[float, ...]:
+        from math import cos, sin, radians
+        grid_pos = self.grid_position
+        if grid_pos.scale:
+            point = tuple( x * grid_pos.scale for x in point)
+        if grid_pos.location:
+            point = tuple( x + y for x, y in zip(point, grid_pos.location))
+        if grid_pos.rotation:
+            cos_t = cos(radians(grid_pos.rotation))
+            sin_t = sin(radians(grid_pos.rotation))
+            x: float = point[0] * cos_t - point[1] * sin_t
+            y: float = point[0] * sin_t + point[1] * cos_t
+            point = (x, y)
+        return point
+
     @property
     def external_points(self) -> Sequence[tuple[float, ...]]:
         raise ValueError("not overridden")
@@ -360,6 +385,16 @@ class BaseGrid():
             field: list[set[Position]] = [],
     ) -> str:
         output: list[str] = []
+        grid_position = self.grid_position
+        grid_offset = grid_position.location
+        translation = ' '.join([str(f) for f in grid_offset])
+        output.append('gsave')
+        if grid_position.rotation:
+            output.append(f"{grid_position.rotation} rotate")
+        output.append(f"{translation} translate")
+        if grid_position.scale and grid_position.scale != 1.0:
+            output.append(f"{grid_position.scale} softscale")
+
         output.append("<<")
         # size
         for size_key, size_value in self.size_dict.items():
@@ -418,6 +453,7 @@ class BaseGrid():
                 ]) for frontier in field
             ]))
         output.append(f">> draw{self.maze_type}")
+        output.append('grestore')
         return "\n".join(output)
 
     def walls_for_cell(self, cell: Cell) -> list[bool]:

@@ -33,7 +33,8 @@ class RectBaseGrid(BaseGrid):
 
     @property
     def external_points(self) -> Sequence[tuple[float, ...]]:
-        return [(i, j) for i in (0, self.width) for j in (0, self.height)]
+        results = [(i, j) for i in (0, self.width) for j in (0, self.height)]
+        return [self.transform_point(point) for point in results]
 
     @property
     def size_dict(self) -> dict[str, int | float | bool | list[int]]:

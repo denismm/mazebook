@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import random
 from grid.circlegrid import PolygonGrid
-from grid.hexgrid import TriGrid
 from grid.multigrid import MultiGrid, GridSpec, EdgeSpec
 from positions import IntPosition
 from math import cos, sin, tau
@@ -55,36 +54,36 @@ subgrids = {
         (EdgeSpec("C", 0, True),),
         triangle_position,
         0 * single_rotation - pullback,
-        scale = point_scale,
-        kwargs = point_kwargs,
+        scale=point_scale,
+        kwargs=point_kwargs,
     ),
     "1": GridSpec( PolygonGrid, point_args,
         (EdgeSpec("C", 1, True),),
         triangle_position,
         1 * single_rotation - pullback,
-        scale = point_scale,
-        kwargs = point_kwargs,
+        scale=point_scale,
+        kwargs=point_kwargs,
     ),
     "2": GridSpec( PolygonGrid, point_args,
         (EdgeSpec("C", 2, True),),
         triangle_position,
         2 * single_rotation - pullback,
-        scale = point_scale,
-        kwargs = point_kwargs,
+        scale=point_scale,
+        kwargs=point_kwargs,
     ),
     "3": GridSpec( PolygonGrid, point_args,
         (EdgeSpec("C", 3, True),),
         triangle_position,
         3 * single_rotation - pullback,
-        scale = point_scale,
-        kwargs = point_kwargs,
+        scale=point_scale,
+        kwargs=point_kwargs,
     ),
     "4": GridSpec( PolygonGrid, point_args,
         (EdgeSpec("C", 4, True),),
         triangle_position,
         4 * single_rotation - pullback,
-        scale = point_scale,
-        kwargs = point_kwargs,
+        scale=point_scale,
+        kwargs=point_kwargs,
     ),
 }
 

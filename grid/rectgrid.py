@@ -34,6 +34,8 @@ class RectBaseGrid(BaseGrid):
     @property
     def external_points(self) -> Sequence[tuple[float, ...]]:
         results = [(i, j) for i in (0, self.width) for j in (0, self.height)]
+        # rearrange to match edges
+        results = [results[i] for i in (2, 3, 1, 0)]
         return [self.transform_point(point) for point in results]
 
     @property

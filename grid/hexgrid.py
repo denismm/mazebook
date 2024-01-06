@@ -76,7 +76,11 @@ class TriGrid(HexBaseGrid):
     @property
     def external_points(self) -> Sequence[tuple[float, ...]]:
         from math import sqrt
-        results = [ (0.0, 0.0), (self.width, 0.0), (self.width /2, self.width * sqrt(3) / 2)]
+        results = [
+            (self.width, 0.0),
+            (self.width /2, self.width * sqrt(3) / 2),
+            (0.0, 0.0),
+        ]
         return [self.transform_point(point) for point in results]
 
     @property

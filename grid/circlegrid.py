@@ -191,6 +191,22 @@ class SemiCircleGrid(CircleGrid):
         super().__init__(parent_radius, center_cell=center_cell, firstring=firstring, degrees=180.0, **kwargs)
 
     @property
+    def external_points(self) -> Sequence[tuple[float, ...]]:
+        from math import cos, sin, tau
+        # "physical" radius
+        p_radius: float = self.radius
+        if self.center_cell:
+            p_radius += 0.5
+        # first two points must match edge
+        results: list[tuple[float, ...]] = [(-p_radius, 0.0), (p_radius, 0.0)]
+
+        for angle in range(10, 180, 10):
+            results.append(
+                (cos(angle) * p_radius, sin(angle) * p_radius)
+            )
+        return [self.transform_point(point) for point in results]
+
+    @property
     def edges(self) -> tuple[Edge, ...]:
         # assemble complex border
         inner_border: list[Position] = []
@@ -239,10 +255,10 @@ class PolygonGrid(CircleGrid):
         p_radius: float = self.radius
         if self.center_cell:
             p_radius += 0.5
-        results =  [(0.0, 0.0)] + [
+        results = [
             (cos(side_angle * i) * p_radius, sin(side_angle * i) * p_radius)
             for i in range(self.slices + 1)
-        ]
+        ] + [(0.0, 0.0)]
         return [self.transform_point(point) for point in results]
 
     @property

@@ -835,7 +835,7 @@ def png_print(maze: BaseGrid,
         f.write(maze.ps_instructions(path=path, field=field))
         f.write("\n } def\n")
         f.write("%%EndProlog\n")
-    command = ['pstopng'] + maze.png_alignment + [str(maze.pixels), filename, maze_name]
+    command = ['dmmlib/bin/pstopng'] + maze.png_alignment + [str(maze.pixels), filename, maze_name]
     subprocess.run(command, check=True)
     os.unlink(filename)
 

@@ -200,7 +200,7 @@ class BaseGrid():
 
     def pos_adjacents(self, start: Position) -> Sequence[Position]:
         # must return adjacent cells in order, including those not in grid
-        raise ValueError("not implemented")
+        raise NotImplementedError('pos_adjacents')
 
     def adjust_adjacents(self, start: Position, adjacents: Sequence[Position]) -> Sequence[Position]:
         # this appends hyper directions to subclass results
@@ -215,7 +215,7 @@ class BaseGrid():
 
     @property
     def edges(self) -> tuple[Edge, ...]:
-        raise ValueError("not implemented")
+        raise NotImplementedError("edges")
 
     def dijkstra(self, start: Position) -> list[set[Position]]:
         seen: set[Position] = {start}
@@ -264,7 +264,7 @@ class BaseGrid():
         return ret
 
     def region_divisions(self, region: set[Position]) -> list[Division]:
-        raise ValueError("not implemented")
+        raise NotImplementedError("region_divisions")
 
     def braid(self, proportion: float) -> None:
         # rule out forced dead-ends, such as the corner of a triangle
@@ -299,7 +299,7 @@ class BaseGrid():
     # key and value for size in draw_maze.ps
     @property
     def size_dict(self) -> dict[str, int | float | bool | list[int]]:
-        raise ValueError("not overridden")
+        raise NotImplementedError("size_dict")
 
     ### Printing support 
 
@@ -320,7 +320,7 @@ class BaseGrid():
 
     @property
     def external_points(self) -> Sequence[tuple[float, ...]]:
-        raise ValueError("not overridden")
+        raise NotImplementedError("external_points")
 
     # corners of bounding box: lower left, top right
     @property

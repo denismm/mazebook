@@ -17,27 +17,21 @@ subgrids = {
             None,
             None,
         ),
-        (-maze_size / 2, -maze_size/2),
         rotation=45,
     ),
     "L": GridSpec(
         SemiCircleGrid,
         (maze_size,),
         (
-            EdgeSpec("C", 0, True),
+            EdgeSpec("C", 0, True, align=True),
         ),
-        ( 0, maze_size / 2),
-        rotation=270+45,
-
     ),
     "R": GridSpec(
         SemiCircleGrid,
         (maze_size,),
         (
-            EdgeSpec("C", 1, True),
+            EdgeSpec("C", 1, True, align=True),
         ),
-        ( 0, maze_size / 2),
-        rotation=45,
     ),
 }
 

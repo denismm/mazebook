@@ -129,6 +129,8 @@ class MultiGrid(BaseGrid):
                 y: float = t_r[0] * sin_r + t_r[1] * cos_r
                 translate = (x, y)
                 grid_position.location = translate
+                grid.linewidth = linewidth / grid_position.scale
+                grid.inset = inset / grid_position.scale
                 unaligned_grids.remove(candidate)
                 aligned_grids.append(candidate)
                 progress = True

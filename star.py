@@ -4,17 +4,11 @@ from grid.circlegrid import PolygonGrid
 from grid.hexgrid import TriGrid
 from grid.multigrid import MultiGrid, GridSpec, EdgeSpec
 from positions import IntPosition
-from math import cos, sin, tau
 
 random.seed(97)
 maze_size = 8
 drop_grid = PolygonGrid(maze_size, 5)
 triangle_width = drop_grid.widths[-1] // 5
-single_rotation = 72.0
-pentagon_radius = maze_size + 0.5
-triangle_position = (pentagon_radius * -sin(tau/10), pentagon_radius * cos(tau/10))
-pullback = 0
-triangle_scale = 2 * sin(tau/10) * pentagon_radius / triangle_width 
 subgrids = {
     "C": GridSpec(
         PolygonGrid,
@@ -31,42 +25,27 @@ subgrids = {
     "0": GridSpec(
         TriGrid,
         (triangle_width,),
-        (None, None, EdgeSpec("C", 0, True),),
-        triangle_position,
-        0 * single_rotation - pullback,
-        scale = triangle_scale,
+        (None, None, EdgeSpec("C", 0, True, align=True),),
     ),
     "1": GridSpec(
         TriGrid,
         (triangle_width,),
-        (None, None, EdgeSpec("C", 1, True),),
-        triangle_position,
-        1 * single_rotation - pullback,
-        scale = triangle_scale,
+        (None, None, EdgeSpec("C", 1, True, align=True),),
     ),
     "2": GridSpec(
         TriGrid,
         (triangle_width,),
-        (None, None, EdgeSpec("C", 2, True),),
-        triangle_position,
-        2 * single_rotation - pullback,
-        scale = triangle_scale,
+        (None, None, EdgeSpec("C", 2, True, align=True),),
     ),
     "3": GridSpec(
         TriGrid,
         (triangle_width,),
-        (None, None, EdgeSpec("C", 3, True),),
-        triangle_position,
-        3 * single_rotation - pullback,
-        scale = triangle_scale,
+        (None, None, EdgeSpec("C", 3, True, align=True),),
     ),
     "4": GridSpec(
         TriGrid,
         (triangle_width,),
-        (None, None, EdgeSpec("C", 4, True),),
-        triangle_position,
-        4 * single_rotation - pullback,
-        scale = triangle_scale,
+        (None, None, EdgeSpec("C", 4, True, align=True),),
     ),
 }
 

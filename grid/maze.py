@@ -217,6 +217,18 @@ class BaseGrid():
     def edges(self) -> tuple[Edge, ...]:
         raise NotImplementedError("edges")
 
+    @property
+    def external_points(self) -> Sequence[tuple[float, ...]]:
+        raise NotImplementedError("external_points")
+
+    def points_for_edge(self, edge_num: int) -> Sequence[tuple[float, ...]]:
+        points: Sequence[tuple[float, ...]] = []
+        external_points = self.external_points
+        for i in range(2):
+            j = (edge_num + i) % len(external_points)
+            points.append(external_points[j])
+        return points
+
     def dijkstra(self, start: Position) -> list[set[Position]]:
         seen: set[Position] = {start}
         far_points: list[set[Position]] = [{start}]
@@ -317,10 +329,6 @@ class BaseGrid():
             y: float = point[0] * sin_t + point[1] * cos_t
             point = (x, y)
         return point
-
-    @property
-    def external_points(self) -> Sequence[tuple[float, ...]]:
-        raise NotImplementedError("external_points")
 
     # corners of bounding box: lower left, top right
     @property

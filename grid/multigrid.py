@@ -99,7 +99,7 @@ class MultiGrid(BaseGrid):
                 # align candidate with target
                 target_grid = self._subgrids[target_name]
                 target_side = alignment_edge_spec.side
-                target_points: list[tuple[float, ...]] = list(target_grid.external_points[target_side:target_side + 2])
+                target_points = target_grid.points_for_edge(target_side)
                 if alignment_edge_spec.flip:
                     target_points = list(reversed(target_points))
                 else:
@@ -110,7 +110,7 @@ class MultiGrid(BaseGrid):
                 grid.grid_position = GridPosition()
                 grid_position = grid.grid_position
                 # calculate rotation and scale
-                local_points: list[tuple[float, ...]] = list(grid.external_points[alignment_edge:alignment_edge + 2])
+                local_points = grid.points_for_edge(alignment_edge)
                 local_direction: tuple[float, ...] = tuple(t - s for s, t in zip (local_points[0], local_points[1]))
                 target_angle = atan2(target_direction[1], target_direction[0])
                 local_angle = atan2(local_direction[1], local_direction[0])
@@ -119,7 +119,7 @@ class MultiGrid(BaseGrid):
                 local_length = sqrt(local_direction[0]**2 + local_direction[1]**2)
                 grid_position.scale = target_length / local_length
                 # refetch local points, transformed
-                local_points = list(grid.external_points[alignment_edge:alignment_edge + 2])
+                local_points = grid.points_for_edge(alignment_edge)
                 #translated_rotate
                 t_r: tuple[float, ...] = tuple(t - s for s, t in zip (local_points[0], target_points[0]))
                 # since rotate is done last, I need to un-rotate the translate

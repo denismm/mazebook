@@ -16,29 +16,26 @@ subgrids = {
             EdgeSpec("L", 0, True),
             EdgeSpec("D", 1, True),
         ),
-        (0, 0),
     ),
     "B": GridSpec(
         RectGrid,
         (maze_size, maze_size),
         (
             EdgeSpec("R", 0, True),
-            EdgeSpec("D", 3, True),
+            EdgeSpec("D", 3, True, align=True),
             EdgeSpec("L", 2, True),
             EdgeSpec("U", 1, True),
         ),
-        (0, -2 * maze_size),
     ),
     "L": GridSpec(
         RectGrid,
         (maze_size, maze_size),
         (
-            EdgeSpec("F", 2, True),
+            EdgeSpec("F", 2, True, align=True),
             EdgeSpec("U", 2, True),
             EdgeSpec("B", 2, True),
             EdgeSpec("D", 2, True),
         ),
-        (-maze_size, 0),
     ),
     "R": GridSpec(
         RectGrid,
@@ -46,10 +43,9 @@ subgrids = {
         (
             EdgeSpec("B", 0, True),
             EdgeSpec("U", 0, True),
-            EdgeSpec("F", 0, True),
+            EdgeSpec("F", 0, True, align=True),
             EdgeSpec("D", 0, True),
         ),
-        (maze_size, 0),
     ),
     "U": GridSpec(
         RectGrid,
@@ -58,20 +54,18 @@ subgrids = {
             EdgeSpec("R", 1, True),
             EdgeSpec("B", 3, True),
             EdgeSpec("L", 1, True),
-            EdgeSpec("F", 1, True),
+            EdgeSpec("F", 1, True, align=True),
         ),
-        (0, maze_size),
     ),
     "D": GridSpec(
         RectGrid,
         (maze_size, maze_size),
         (
             EdgeSpec("R", 3, True),
-            EdgeSpec("F", 3, True),
+            EdgeSpec("F", 3, True, align=True),
             EdgeSpec("L", 3, True),
             EdgeSpec("B", 1, True),
         ),
-        (0, -maze_size),
     ),
 }
 

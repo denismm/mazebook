@@ -25,6 +25,7 @@ for i in range(maze_size, maze_size * 3):
         if point_size is None:
             raise ValueError("no matching size")
         break
+assert point_size is not None
 point_args = (point_size, 10)
 
 single_rotation = 72.0
@@ -51,38 +52,23 @@ subgrids = {
         kwargs=polygon_kwargs
     ),
     "0": GridSpec( PolygonGrid, point_args,
-        (EdgeSpec("C", 0, True),),
-        triangle_position,
-        0 * single_rotation - pullback,
-        scale=point_scale,
+        (EdgeSpec("C", 0, True, align=True),),
         kwargs=point_kwargs,
     ),
     "1": GridSpec( PolygonGrid, point_args,
-        (EdgeSpec("C", 1, True),),
-        triangle_position,
-        1 * single_rotation - pullback,
-        scale=point_scale,
+        (EdgeSpec("C", 1, True, align=True),),
         kwargs=point_kwargs,
     ),
     "2": GridSpec( PolygonGrid, point_args,
-        (EdgeSpec("C", 2, True),),
-        triangle_position,
-        2 * single_rotation - pullback,
-        scale=point_scale,
+        (EdgeSpec("C", 2, True, align=True),),
         kwargs=point_kwargs,
     ),
     "3": GridSpec( PolygonGrid, point_args,
-        (EdgeSpec("C", 3, True),),
-        triangle_position,
-        3 * single_rotation - pullback,
-        scale=point_scale,
+        (EdgeSpec("C", 3, True, align=True),),
         kwargs=point_kwargs,
     ),
     "4": GridSpec( PolygonGrid, point_args,
-        (EdgeSpec("C", 4, True),),
-        triangle_position,
-        4 * single_rotation - pullback,
-        scale=point_scale,
+        (EdgeSpec("C", 4, True, align=True),),
         kwargs=point_kwargs,
     ),
 }

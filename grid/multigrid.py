@@ -4,8 +4,9 @@ from dataclasses import dataclass
 from positions import Position, IntPosition, Direction, cardinal_directions, add_direction, manhattan, Coordinates
 from typing import Optional, Any, Callable, Sequence, NamedTuple
 import random
+from math import atan2, sqrt, degrees, cos, sin, radians
 
-from .maze import BaseGrid, ps_list
+from .maze import BaseGrid, ps_list, GridPosition
 
 @dataclass
 class EdgeSpec:
@@ -24,12 +25,6 @@ class GridSpec:
     scale: float = 1.0                          # scaling of grid
     kwargs: Optional[dict[str, Any]] = None     # kwargs for subgrid init
 
-@dataclass
-class GridPosition:
-    location: tuple[float, float]               # translation of this grid
-    rotation: float = 0.0                       # rotation of grid
-    scale: float = 1.0                          # scaling of grid
-
 class MultiGrid(BaseGrid):
     def __init__(self, 
         subgrids: dict[str, GridSpec],
@@ -47,6 +42,8 @@ class MultiGrid(BaseGrid):
             if grid_spec.scale != 1.0:
                 grid_kwargs['linewidth'] = linewidth / grid_spec.scale
                 grid_kwargs['inset'] = inset / grid_spec.scale
+            grid_position = GridPosition(grid_spec.location, grid_spec.rotation, grid_spec.scale)
+            grid_kwargs['grid_position'] = grid_position
             self._subgrids[gridname] = grid_spec.grid_class(
                 *grid_spec.args,
                 grid=self._grid,
@@ -54,7 +51,6 @@ class MultiGrid(BaseGrid):
                 edge_map=self._edge_map,
                 **grid_kwargs
             )
-            grid_positions[gridname] = GridPosition(grid_spec.location, grid_spec.rotation, grid_spec.scale)
         # now that all grids exist, go through it again to deal with edges
         for gridname, grid_spec in subgrids.items():
             source_grid = self._subgrids[gridname]
@@ -87,6 +83,7 @@ class MultiGrid(BaseGrid):
             alignment_candidates = list(unaligned_grids)
             for candidate in alignment_candidates:
                 grid_spec = subgrids[candidate]
+                grid = self._subgrids[candidate]
                 alignment_edge: int = -1
                 for i, edge in enumerate(grid_spec.edges):
                     if edge and edge.align:
@@ -95,17 +92,48 @@ class MultiGrid(BaseGrid):
                 if alignment_edge == -1:
                     raise ValueError(f"no alignment edge for {candidate}")
                 alignment_edge_spec = grid_spec.edges[alignment_edge]
-                target: str = alignment_edge_spec.target        # type: ignore [union-attr]
-                if target not in aligned_grids:
+                assert alignment_edge_spec is not None
+                target_name: str = alignment_edge_spec.target
+                if target_name not in aligned_grids:
                     continue
                 # align candidate with target
+                target_grid = self._subgrids[target_name]
+                target_side = alignment_edge_spec.side
+                target_points: list[tuple[float, ...]] = list(target_grid.external_points[target_side:target_side + 2])
+                if alignment_edge_spec.flip:
+                    target_points = list(reversed(target_points))
+                else:
+                    raise NotImplementedError("aligning unflipped not supported")
+                target_direction: tuple[float, ...] = tuple(t - s for s, t in zip (target_points[0], target_points[1]))
+
+                # start from scratch
+                grid.grid_position = GridPosition()
+                grid_position = grid.grid_position
+                # calculate rotation and scale
+                local_points: list[tuple[float, ...]] = list(grid.external_points[alignment_edge:alignment_edge + 2])
+                local_direction: tuple[float, ...] = tuple(t - s for s, t in zip (local_points[0], local_points[1]))
+                target_angle = atan2(target_direction[1], target_direction[0])
+                local_angle = atan2(local_direction[1], local_direction[0])
+                grid_position.rotation = degrees(target_angle - local_angle)
+                target_length = sqrt(target_direction[0]**2 + target_direction[1]**2)
+                local_length = sqrt(local_direction[0]**2 + local_direction[1]**2)
+                grid_position.scale = target_length / local_length
+                # refetch local points, transformed
+                local_points = list(grid.external_points[alignment_edge:alignment_edge + 2])
+                #translated_rotate
+                t_r: tuple[float, ...] = tuple(t - s for s, t in zip (local_points[0], target_points[0]))
+                # since rotate is done last, I need to un-rotate the translate
+                cos_r = cos(radians(-grid_position.rotation))
+                sin_r = sin(radians(-grid_position.rotation))
+                x: float = t_r[0] * cos_r - t_r[1] * sin_r
+                y: float = t_r[0] * sin_r + t_r[1] * cos_r
+                translate = (x, y)
+                grid_position.location = translate
                 unaligned_grids.remove(candidate)
                 aligned_grids.append(candidate)
-                progress = False
+                progress = True
             if not progress:
                 raise ValueError("unalignable multigrid")
-        for grid_name, grid_position in grid_positions.items():
-            self._subgrids[grid_name].grid_position = grid_position
 
     def pos_adjacents(self, start: Position) -> Sequence[Position]:
         gridname = start.gridname

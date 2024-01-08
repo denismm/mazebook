@@ -61,4 +61,4 @@ star.generate_maze("backtrack")
 
 field = star.dijkstra(IntPosition((0, 0), "C"))
 
-star.print("png", field=field, maze_name="fat_star")
+star.print("ps", field=field, maze_name="fat_star")

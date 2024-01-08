@@ -28,16 +28,6 @@ for i in range(maze_size, maze_size * 3):
 assert point_size is not None
 point_args = (point_size, 10)
 
-single_rotation = 72.0
-pentagon_radius = maze_size + 0.5 * center_cell
-point_radius = point_size + 0.5 * center_cell
-point_scale = pentagon_radius * sin(tau/10) / (point_radius * sin(tau/20))
-multiplier = pentagon_radius * cos(tau/10) + point_scale * point_radius * cos(tau/20)
-triangle_position = (
-    -cos(tau/20) * multiplier,
-    -sin(tau/20) * multiplier
-)
-pullback = 144 - 36
 subgrids = {
     "C": GridSpec( PolygonGrid, polygon_args,
         (

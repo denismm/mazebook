@@ -548,7 +548,7 @@
             nout ccw 1 ao_point polar_goto
         } {
             /full_circle center_flag degrees 360 eq and def
-            center_flag grid /degrees known and {
+            center_flag grid /degrees known grid /slices known or and {
                 grid /slices known {
                     /slices grid /slices get def
                     /center_sides slices widths 1 get mul sides div def

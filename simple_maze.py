@@ -4,6 +4,7 @@ from grid.maze import BaseGrid, SingleSizeGrid
 from grid.rectgrid import RectBaseGrid, RectGrid, ZetaGrid, UpsilonGrid
 from grid.circlegrid import CircleGrid, PolygonGrid
 from grid.hexgrid import HexGrid, TriGrid
+from grid.complex_maze import complex_grid
 import argparse
 import random
 import re
@@ -97,6 +98,9 @@ elif m := re.match(r'(\d+)([\@o])(\d*)$', args.size):
         if args.degrees:
             option_kwargs['degrees'] = args.degrees
         grid = CircleGrid(size, firstring=args.firstring, center_cell=center_cell, **option_kwargs)
+elif ':' in args.size:
+    complex_type, size = args.size.split(':')
+    grid = complex_grid(complex_type, int(size), **option_kwargs)
 elif os.access(args.size, os.R_OK):
     mask_filename = args.size
     if mask_filename[-4:] == '.png':

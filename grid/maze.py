@@ -222,7 +222,7 @@ class BaseGrid():
         raise NotImplementedError("external_points")
 
     def points_for_edge(self, edge_num: int) -> Sequence[tuple[float, ...]]:
-        points: Sequence[tuple[float, ...]] = []
+        points: list[tuple[float, ...]] = []
         external_points = self.external_points
         for i in range(2):
             j = (edge_num + i) % len(external_points)

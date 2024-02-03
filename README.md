@@ -7,8 +7,8 @@ in Python and PostScript instead of Ruby, I made a number of different
 choices as to how to represent spaces.  The polygonal grids and complex
 maze code are original to me but feel free to reimplement them.
 
-The maze generation code is pure Python but most output is via PostScript
-- to use this code you will need to have ghostscript, perl, and the netpbm
+The maze generation code is pure Python but most output is via PostScript.
+To use this code you will need to have python3, gs, perl, and the netpbm
 utilities installed and in your path.  This library includes much of the
 code in my own dmmlib library, so it is not necessary to download that
 separately.

@@ -2567,7 +2567,7 @@ polar_dict /mside_thresh 50 put
                 } {
                     cw ccw sub outwall_n div
                 } ifelse def
-                0 1 outwall_n center_sides min 1 sub { /i arg
+                0 1 outwall_n center_sides minimum 1 sub { /i arg
                     /door_ccw i       outwall_len mul ccw add def
                     /door_cw  i 1 add outwall_len mul ccw add def
                     nout door_ccw 1 ao_point polar_goto
@@ -2732,7 +2732,7 @@ polar_dict /mside_thresh 50 put
             } {
                 cw ccw sub outwall_n div 
             } ifelse def
-            /doors_to_do outwall_n center_sides min def
+            /doors_to_do outwall_n center_sides minimum def
             0 1 doors_to_do 1 sub { /door_i arg
                 /door_ccw door_i       outwall_len mul ccw add def
                 /door_cw  door_i 1 add outwall_len mul ccw add def
@@ -3054,5 +3054,3 @@ polar_dict /mside_thresh 50 put
         } if
     grestore
 } def
-
-%%EndProlog

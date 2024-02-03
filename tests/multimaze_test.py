@@ -4,7 +4,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 import random
 from maze.rectgrid import RectGrid
 from maze.multigrid import MultiGrid, GridSpec, EdgeSpec
-from positions import IntPosition
+from maze.positions import IntPosition
 
 def test_two_square() -> None:
     random.seed(97)

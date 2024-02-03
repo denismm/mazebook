@@ -3,7 +3,7 @@ import random
 from maze.rectgrid import RectGrid
 from maze.hexgrid import TriGrid
 from maze.multigrid import MultiGrid, GridSpec, EdgeSpec
-from positions import IntPosition
+from maze.positions import IntPosition
 
 random.seed(97)
 maze_size = 8

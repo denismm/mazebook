@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from maze.hexgrid import TriGrid
-from positions import IntPosition as IntPos
+from maze.positions import IntPosition as IntPos
 from maze.grid import Edge
 import random
 

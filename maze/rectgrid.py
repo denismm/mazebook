@@ -1,6 +1,6 @@
 # grids with cells in a square layout
 
-from positions import Position, IntPosition, Direction, cardinal_directions, add_direction, manhattan, Coordinates
+from .positions import Position, IntPosition, Direction, cardinal_directions, add_direction, manhattan, Coordinates
 from typing import Optional, Any, Callable, Sequence
 import random
 

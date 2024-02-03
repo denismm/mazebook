@@ -1,6 +1,6 @@
 # grids with or without a central node surrounded by rings of cells
 
-from positions import Position, Direction, add_direction
+from .positions import Position, Direction, add_direction
 from typing import Optional, Any, Sequence
 from math import pi
 from functools import cache

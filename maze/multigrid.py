@@ -1,7 +1,7 @@
 # grids with cells in a square layout
 
 from dataclasses import dataclass
-from positions import Position, IntPosition, Direction, cardinal_directions, add_direction, manhattan, Coordinates
+from .positions import Position, IntPosition, Direction, cardinal_directions, add_direction, manhattan, Coordinates
 from typing import Optional, Any, Callable, Sequence, NamedTuple
 import random
 from math import atan2, sqrt, degrees, cos, sin, radians

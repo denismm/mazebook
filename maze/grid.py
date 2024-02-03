@@ -1,4 +1,4 @@
-from positions import Position, LinkPosition, IntPosition, Direction, cardinal_directions, add_direction, Coordinates
+from .positions import Position, LinkPosition, IntPosition, Direction, cardinal_directions, add_direction, Coordinates
 import random
 import os
 from collections import defaultdict

@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from maze.circlegrid import PolygonGrid
-from positions import IntPosition
+from maze.positions import IntPosition
 import random
 
 def test_poly() -> None:

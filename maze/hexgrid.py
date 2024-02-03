@@ -1,6 +1,6 @@
 # grids that use hexagonal geometry
 
-from positions import Position, IntPosition, Direction, add_direction
+from .positions import Position, IntPosition, Direction, add_direction
 from typing import Optional, Any, Sequence
 
 from .grid import BaseGrid, SingleSizeGrid, Edge

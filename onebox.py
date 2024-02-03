@@ -2,7 +2,7 @@
 import random
 from maze.rectgrid import RectGrid
 from maze.multigrid import MultiGrid, GridSpec, EdgeSpec
-from positions import IntPosition
+from maze.positions import IntPosition
 
 def draw_square(name: str, edges: tuple[EdgeSpec, ...]) -> None:
     random.seed(97)

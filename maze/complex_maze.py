@@ -12,6 +12,7 @@ class ComplexMaze(Protocol):
 
 complex_mazes: dict[str, ComplexMaze] = {}
 
+# dict-adding decorator
 def complex(cmf: ComplexMaze) -> ComplexMaze:
     complex_mazes[cmf.__name__] = cmf   # type: ignore [attr-defined] # fixed in next mypy version
     return cmf

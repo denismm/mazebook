@@ -73,32 +73,31 @@ Only the following complex mazes can be used directly from make_maze, specified 
 
 ## maze algorithms
 
-* `-a`, `--algorithm`: maze algorithm to use.  Not all algorithms are available for all grids.
+- `-a', `--algorithm`: maze algorithm to use.  Not all algorithms are available for all grids.
+  - aldous_broder
+  - wilson
+  - hunt_kill
+  - backtrack
+  - kruskal
+  - simple_prim
+  - true_prim
+  - random_tree
+  - last_tree
+  - half_tree
+  - first_tree
+  - median_tree
+  - eller (RectGrid, CircleGrid, PolygonGrid only)
+  - fractal (RectGrid, CircleGrid, PolygonGrid only)
+  - binary (RectGrid only)
+  - sidewinder (RectGrid only)
 
-** aldous_broder
-** wilson
-** hunt_kill
-** backtrack
-** kruskal
-** simple_prim
-** true_prim
-** random_tree
-** last_tree
-** half_tree
-** first_tree
-** median_tree
-** eller (RectGrid, CircleGrid, PolygonGrid only)
-** fractal (RectGrid, CircleGrid, PolygonGrid only)
-** binary (RectGrid only)
-** sidewinder (RectGrid only)
-
-* -s --seed
-* -f --field
-* -p --path
-* -w --weave
-* -b --braid
-* --room_size
-* -y --hyper
+- -s --seed
+- -f --field
+- -p --path
+- -w --weave
+- -b --braid
+- --room_size
+- -y --hyper
 
 ## printing methods
 

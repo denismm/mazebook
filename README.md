@@ -73,7 +73,8 @@ Only the following complex mazes can be used directly from make_maze, specified 
 
 ## maze algorithms
 
-* `-a', `--algorithm`: maze algorithm to use.  Not all algorithms are available for all grids.
+* `-a`, `--algorithm`: maze algorithm to use.  Not all algorithms are available for all grids.
+
 ** aldous_broder
 ** wilson
 ** hunt_kill

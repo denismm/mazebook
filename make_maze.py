@@ -35,6 +35,7 @@ parser.add_argument('--slices', type=int, help="number of slices of a polygon ma
 parser.add_argument('--degrees', type=float, help="angles to include in a circle maze")
 parser.add_argument('-y', '--hyper', type=int, action='append', help="number of planes in each hyper dimension, repeat for more dimensions")
 parser.add_argument('--pixels', type=float, help="how many pixels to map one maze height to, when printing to png")
+parser.add_argument('--noflat', action='store_true', help="whether to call out to draw_maze rather than inlining it")
 
 args = parser.parse_args()
 
@@ -65,6 +66,8 @@ if args.weave:
     option_kwargs['weave'] = True
 if args.bg:
     option_kwargs['bg'] = True
+if args.noflat:
+    option_kwargs['noflat'] = True
 if args.pathcolor:
     option_kwargs['pathcolor'] = [float(c) for c in args.pathcolor.split()]
 if args.inset:

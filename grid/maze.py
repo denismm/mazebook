@@ -1,5 +1,6 @@
 from positions import Position, LinkPosition, IntPosition, Direction, cardinal_directions, add_direction, Coordinates
 import random
+import os
 from collections import defaultdict
 from collections.abc import Iterable
 from typing import Any, Optional, Callable, NamedTuple, Sequence
@@ -28,6 +29,9 @@ class Cell():
 # convenience for ps printing
 def ps_list(iterable: Iterable[Any]) -> str:
     return '[' + ' '.join([str(x) for x in iterable]) + ']'
+
+def toppath():
+    return os.path.dirname(__file__) + '/..'
 
 class PrinterFunction(Protocol): 
     def __call__(self,
@@ -117,6 +121,7 @@ class BaseGrid():
         weave: Optional[bool] = False,
         pathcolor: Optional[list[float]] = None,
         bg: Optional[bool] = None,
+        noflat: Optional[bool] = None,
         linewidth: Optional[float] = None,
         inset: Optional[float] = None,
         pixels: Optional[float] = None,
@@ -127,6 +132,7 @@ class BaseGrid():
         self.hyper = hyper or []
         self.pathcolor = pathcolor
         self.bg = bg
+        self.noflat = noflat
         self.linewidth = linewidth
         self.inset = inset
         self.pixels = pixels or 20.0
@@ -360,6 +366,17 @@ class BaseGrid():
             for c in range(2):
                 bbox[2+c] += hypersteps[i][c] * (self.hyper[i] - 1)
         return tuple(bbox)
+
+    # start of ps code
+    @property
+    def ps_prologue(self) -> str:
+        draw_maze = toppath() + '/includes/draw_maze.ps'
+        if self.noflat:
+            return f"%!\n({draw_maze}) run\n"
+        else:
+            with open(draw_maze, 'r') as f:
+                include = f.read()
+                return include
 
     # ps command to align ps output
     @property
@@ -874,12 +891,13 @@ def png_print(maze: BaseGrid,
     filename = '.temp.ps'
     maze_name = str(kwargs.get('maze_name', 'temp'))
     with open(filename, 'w') as f:
-        f.write("%!\n(draw_maze.ps) run\n")
+        f.write(maze.ps_prologue)
         f.write("/%s {" % (maze_name, ))
         f.write(maze.ps_instructions(path=path, field=field))
         f.write("\n } def\n")
         f.write("%%EndProlog\n")
-    command = ['dmmlib/bin/pstopng'] + maze.png_alignment + [str(maze.pixels), filename, maze_name]
+    pstopng = toppath() + '/bin/pstopng'
+    command = [pstopng] + maze.png_alignment + [str(maze.pixels), filename, maze_name]
     subprocess.run(command, check=True)
     os.unlink(filename)
 
@@ -889,7 +907,7 @@ def ps_print(maze: BaseGrid,
         field: list[set[Position]] = [],
         **kwargs: str
 ) -> None:
-    print("%!\n(draw_maze.ps) run")
+    print(maze.ps_prologue)
     print("%%EndProlog\n")
     print(maze.ps_alignment)
     print(maze.ps_instructions(path=path, field=field))

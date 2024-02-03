@@ -10,7 +10,11 @@ ghostscript, perl, and the netpbm utilities installed and in your path.  This li
 my own dmmlib library, so it is not necessary to download that separately.
 
 ## Usage
-./make_maze.py is a command-line executable that will generate mazes in a variety of ways.  You can also use the libraries directly.
+`make_maze.py` is a command-line executable that will generate mazes in a variety of ways.  You can also use the libraries directly.
+
+`./make_maze.py heart:10 -wf -o png -n heart -s 10`
+
+![colorful heart-shaped maze](/images/heart.png)
 
 ### grid types
 ### maze algorithms

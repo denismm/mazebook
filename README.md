@@ -48,7 +48,7 @@ as the number of cells in a ring occasionally doubles to keep the cells
 as square as possible.  If there's a center cell, it will have every cell
 in the first ring as a neighbor.
 
-* CircleGrid: a circular grid where the central cell is circular and all other cells are slices of a ring.  Specified as "R@" or "Ro", where @ means a central cell and o means no central cell and R is the radius, not including the central cell if present, as in "5o".
+* CircleGrid: a circular grid where the central cell is circular and all other cells are annular sectors.  Specified as "R@" or "Ro", where @ means a central cell and o means no central cell and R is the radius, not including the central cell if present, as in "5o".
 * PolygonGrid: a grid the shape of a regular polygon where the central cell is the shape of the full grid and all other cells are trapezoids.  Specified as "R@S" or "RoS", where @ means a central cell and o means no central cell, R is the radius, and S is the number of sides of the grid, as in "8@7".
 * SemiCircleGrid: a special case of circular grid that only include 180 degrees of the circle, providing a flat side.  Not available directly through make_maze but useful in complex grids.
 

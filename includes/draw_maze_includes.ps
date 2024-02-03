@@ -1,0 +1,892 @@
+%!
+(dmmlib/base.ps) run
+(dmmlib/lines.ps) run
+(dmmlib/polar.ps) run
+
+/atranslate { aload pop translate } def
+
+/islink { dup length 1 sub get /link eq } def
+
+/drawrectmaze { /grid arg
+    % 0 0 grid /width get grid /height get box stroke
+    /setup {} def
+    /flatcenter { /position arg
+        [ position 0 2 getinterval { 0.5 add } forall ]
+    } def
+    /getcellpath { /walls arg /position arg
+        position getcenter atranslate
+        /walls_i 0 def
+        4 {
+            0.5 inset sub dup neg goto
+            walls walls_i get not {
+                0.5 dup inset sub neg goto
+                0.5 dup inset sub goto
+            } if
+            /walls_i walls_i 1 add def
+        } circrepeat
+        closepath
+    } def
+    /mgoto { goto } def
+    /drawwalls { /walls arg /position arg
+        position getcenter atranslate
+        0 1 3 { /i arg
+            gsave
+                i 0 sub 90 mul rotate
+                walls i get {
+                    % don't draw walls for link cells
+                    position islink not {
+                        0.5 inset sub dup neg goto
+                        0.5 inset sub dup goto
+                        stroke
+                    } if
+                } {
+                    inset 0 gt {
+                        0.5 inset sub dup neg goto
+                        0.5 dup inset sub neg goto
+                        stroke
+                        0.5 inset sub dup goto
+                        0.5 dup inset sub goto
+                        stroke
+                    } if
+                } ifelse
+            grestore
+        } for
+    } def
+
+    mazeengine
+
+} def
+
+/drawupsilonmaze { /grid arg
+    /full_octagon_offset 0.5 22.5 tan mul def
+    /setup {
+        /octagon_offset 0.5 inset sub 22.5 tan mul def
+        /diamond_offset_short inset 22.5 tan mul 2 sqrt div def
+        /diamond_offset_long 0.5 full_octagon_offset sub diamond_offset_short sub def
+        /diamond_corner diamond_offset_long diamond_offset_short sub def
+    } def
+    /flatcenter { /position arg
+        [ position 0 2 getinterval { 2 div 0.5 add } forall ]
+    } def
+    /getcellpath { /walls arg /position arg
+        position getcenter atranslate
+        /wall_i 0 def
+        position 0 get 2 mod 0 eq {
+            8 {
+                0.5 inset sub octagon_offset neg goto
+                walls wall_i get not {
+                    0.5 octagon_offset neg goto
+                    0.5 octagon_offset goto
+                } if
+                0.5 inset sub octagon_offset goto
+                /wall_i wall_i 1 add def
+            } circrepeat closepath
+        } {
+            4 {
+                diamond_corner 0 goto
+                walls wall_i get not {
+                    diamond_offset_long diamond_offset_short goto
+                    diamond_offset_long diamond_offset_short exch goto
+                } if
+                0 diamond_corner goto
+                /wall_i wall_i 1 add def
+            } circrepeat closepath
+        } ifelse
+    } def
+    /mgoto { goto } def
+    /drawwalls { /walls arg /position arg
+        position getcenter atranslate
+        position 0 get 2 mod 0 eq {
+            0 1 7 { /i arg
+                gsave
+                    i 45 mul rotate
+                    walls i get {
+                        position islink not {
+                            0.5 inset sub octagon_offset neg goto
+                            0.5 inset sub octagon_offset goto
+                            stroke
+                        } if
+                    } {
+                        0.5 inset sub octagon_offset neg goto
+                        0.5 octagon_offset neg goto
+                        stroke
+                        0.5 octagon_offset goto
+                        0.5 inset sub octagon_offset goto
+                        stroke
+                    } ifelse
+                grestore
+            } for
+        } {
+            0 1 3 { /i arg
+                gsave
+                    i 90 mul rotate
+                    walls i get {
+                        position islink not {
+                            diamond_corner 0 goto
+                            0 diamond_corner goto
+                            stroke
+                        } if
+                    } {
+                        diamond_corner 0 goto
+                        diamond_offset_long diamond_offset_short goto
+                        stroke
+                        diamond_offset_short diamond_offset_long goto
+                        0 diamond_corner goto
+                        stroke
+                    } ifelse
+                grestore
+            } for
+        } ifelse
+    } def
+
+    mazeengine
+
+} def
+
+/drawzetamaze { /grid arg
+    % 0 0 grid /width get grid /height get box stroke
+    /setup {} def
+    /flatcenter { /position arg
+        [ position 0 2 getinterval { 0.5 add } forall ]
+    } def
+    /getcellpath { /walls arg /position arg
+        position getcenter atranslate
+        -0.5 -0.5 0.5 0.5 box
+    } def
+    /mgoto { goto } def
+    /drawwalls { /walls arg /position arg
+        position getcenter atranslate
+        0 2 6 { /i arg
+            walls i get {
+                gsave
+                    i 0 sub 45 mul rotate
+                    0.5 -0.5 goto
+                    0.5 0.5 goto
+                    stroke
+                grestore
+            } if
+        } for
+        % zeta paths
+        1 2 7 { /i arg
+            walls i get not {
+                gsave
+                    i 45 mul rotate
+                    0.5 thicken
+                    0.5 0 dot
+                grestore
+            } if
+        } for
+    } def
+
+    mazeengine
+
+} def
+
+/drawcirclemaze { /grid arg
+    /setup {} def
+    /convert_from_polar { polar } def
+    /convert_to_polar { ralop } def
+    /polar_goto { pgoto } def
+    /center_cell_path {
+        0 0 0.5
+        0 grid /degrees get arc
+        grid /degrees get 360 lt {
+            0 0 goto
+        } if
+        closepath
+    } def
+
+    grid drawpolarmaze
+} def
+
+/drawpolygonmaze { /grid arg
+    % polygonmaze also has sides as a field
+    /setup {} def
+    /sides grid /sides get def
+    sides set_polypolar_sides
+
+    /convert_from_polar { polypolar } def
+    /convert_to_polar { polyralop } def
+    /polar_goto { ppgoto } def
+    /center_cell_path {
+        /slices grid /slices get def
+        /center_sides slices widths 1 get mul sides div def
+        /i 0 def
+        sides {
+            i center_sides le {
+                0.5 0 goto
+            } if
+            /i i 1 add def
+        }
+        slices sides lt {
+            0 0 goto
+        } if
+        circrepeat
+        closepath
+    } def
+
+    grid /bg known {
+        0 0 radius 2 mul circle fill
+    } if
+    grid drawpolarmaze
+} def
+
+/drawpolarmaze { /grid arg
+    % grid fields:
+    % widths: array of ints, counting cells in each ring (from the middle out)
+    % centercell: true if 0,0 is a single cell in the middle
+    % cells: list of lists containing coord (ring, cell) then list of boolean walls for ccw, in, cw, outs
+
+    /widths grid /widths get def
+    /radius widths length def
+    /center_cell grid /center_cell get def
+    grid /degrees known {
+        /degrees grid /degrees get def
+    } {
+        /degrees grid /slices get 360 mul sides div def
+    } ifelse
+
+    (L) set_polar_corner_mode
+
+    /flatcenter {
+        2 dict begin
+            /coord arg
+            % given a (ring, cell) coordinate, return (r, theta) of center
+            coord 0 2 getinterval aload pop /cell arg /ring arg
+            /r ring center_cell not { 0.5 add } if def
+            /theta center_cell ring 0 eq and { 0 } {
+                widths ring get 360 exch div cell 0.5 add mul
+            } ifelse def
+            [ r theta convert_from_polar ]
+        end
+    } def
+
+    /getbox {
+        % given a ring/cell coordinate, return ccw, in, cw, out dimensions
+        % of the entire box, not including insets
+        % not valid for center cell
+        2 dict begin
+            0 2 getinterval /coord arg
+            coord aload pop /cell arg /ring arg
+            /out ring center_cell {0.5 add} {1 add} ifelse def
+            /in out 1 sub def
+            /turn widths ring get 360 exch div def
+            /ccw cell turn mul def
+            /cw cell 1 add turn mul def
+            [ccw in cw out]
+        end
+    } def
+    /ao 10 dict def
+    % special handling for 0
+    ao 0 0 put
+    /get_ao { /query_rad arg
+        ao query_rad known not {
+            ao query_rad
+                inset query_rad div asin
+            put
+        } if
+        ao query_rad get
+    } def
+    /ao_point { /direction arg /angle arg /rad arg
+        rad angle rad get_ao direction mul add
+    } def
+
+    /getcellpath { /walls arg /position arg
+        position getcenter atranslate
+        -1 dup scale position flatcenter atranslate -1 dup scale
+        % sometimes we need a special lowest point
+        center_cell not inset 0 ne and {
+            /innerangle where {
+                pop
+            } {
+                /innerangle 360 widths 0 get div half def
+                /innerpoint inset innerangle sin div def
+            } ifelse
+        } if
+
+        inset 0 eq {
+            center_cell not position 0 get 0 ne or {
+                /cbox position getbox def
+                cbox 1 get cbox 0 get polar_goto
+                cbox 3 get cbox 0 get polar_goto
+                cbox 3 get cbox 2 get polar_goto
+                cbox 1 get cbox 2 get polar_goto
+                cbox 1 get cbox 0 get polar_goto
+                closepath
+            } {
+                center_cell_path
+            } ifelse
+        } {
+            % deal with insets
+            /outstart position 0 get 0 eq {
+                center_cell { 0 } { 2 } ifelse
+            } { 3 } ifelse def
+            % flag for innerpoint handling
+            /inner_flag position 0 get 0 eq center_cell not and def
+            % also flag for center cell
+            /center_flag position 0 get 0 eq center_cell and def
+
+            % figure out angle offsets as we go
+            outstart 0 ne {
+                position getbox aload pop /out arg /cw arg /in arg /ccw arg
+                /nin in inset add def
+            } {
+                /ccw 0 def
+                /cw 360 def
+                /out 0.5 def
+            } ifelse
+            /nout out inset sub def
+            outstart 0 ne {
+                % side wall
+                nout cw -1 ao_point polar_goto
+                walls 0 get {
+                    inner_flag not {
+                        nin cw -1 ao_point convert_from_polar goto
+                    } if
+                } {
+                    nout cw polar_goto
+                    inner_flag {
+                        innerpoint cw convert_from_polar goto
+                        innerpoint ccw innerangle add polar_goto
+                    } {
+                        nin cw convert_from_polar goto
+                        nin cw -1 ao_point polar_goto
+                    } ifelse
+                } ifelse
+                % lower wall if appropriate
+                position 0 get 0 ne {
+                    walls 1 get {
+                        nin ccw 1 ao_point polar_goto
+                    } {
+                        in cw -1 ao_point convert_from_polar goto
+                        in ccw 1 ao_point polar_goto
+                        nin ccw 1 ao_point convert_from_polar goto
+                    } ifelse
+                } {
+                    innerpoint ccw innerangle add convert_from_polar goto
+                } ifelse
+                % other side
+                walls outstart 1 sub get {
+                    nout ccw 1 ao_point convert_from_polar goto
+                } {
+                    inner_flag {
+                        innerpoint ccw polar_goto
+                    } {
+                        nin ccw polar_goto
+                    } ifelse
+                    nout ccw convert_from_polar goto
+                    nout ccw 1 ao_point polar_goto
+                 } ifelse
+            } if
+            /outwall_n walls length outstart sub def
+            center_flag grid /degrees known and {
+                /degrees grid /degrees get def
+                grid /slices known {
+                    /slices grid /slices get def
+                    /center_sides slices widths 1 get mul sides div def
+                } {
+                    /sides widths 1 get def
+                    /proportion 360 degrees div def
+                    /center_sides sides proportion div cvi def
+                } ifelse
+            } {
+                % big enough to never be relevant
+                /center_sides 360 def
+            } ifelse
+            outwall_n 0 eq {
+                nout ccw 1 ao_point polar_goto
+            } {
+                /outwall_len center_flag {
+                    360 widths 1 get div
+                } {
+                    cw ccw sub outwall_n div
+                } ifelse def
+                0 1 outwall_n center_sides min 1 sub { /i arg
+                    /door_ccw i       outwall_len mul ccw add def
+                    /door_cw  i 1 add outwall_len mul ccw add def
+                    nout door_ccw 1 ao_point polar_goto
+                    walls outstart i add get {
+                        nout door_cw -1 ao_point polar_goto
+                    } {
+                        out door_ccw 1 ao_point convert_from_polar goto
+                        out door_cw -1 ao_point polar_goto
+                        nout door_cw -1 ao_point convert_from_polar goto
+                    } ifelse
+                } for
+                center_sides outwall_n lt {
+                    degrees 360 lt {
+                        walls dup length 1 sub get {
+                            inset 0 gt {
+                                /inner_ao inset nout div asin def
+                                /inner_start_angle degrees inner_ao sub def
+                                nout inner_start_angle polar_goto
+                                degrees 180 ge {
+                                    degrees
+                                    0 0 inset degrees 90 sub 90 arcn
+                                } {
+                                    inset degrees half sin div
+                                    degrees half convert_from_polar goto
+                                } ifelse
+                                nout inner_ao convert_from_polar goto
+                            } {
+                                0 0 goto
+                            } ifelse
+                        } {
+                            nout degrees pgoto
+                            0 0 goto
+                            nout 0 convert_from_polar goto
+                        } ifelse
+                    } if
+                } if
+            } ifelse
+            closepath
+        } ifelse
+    } def
+
+    /mgoto { convert_to_polar polar_goto } def
+
+    /drawwalls { /walls arg /position arg
+        position getcenter atranslate
+        -1 dup scale position flatcenter atranslate -1 dup scale
+        /all_walls position islink not def
+        /outstart position 0 get 0 eq {
+            center_cell { 0 } { 2 } ifelse
+        } { 3 } ifelse def
+        /inner_flag position 0 get 0 eq center_cell not and def
+        /center_flag position 0 get 0 eq center_cell and def
+        inner_flag {
+            /innerangle where {
+                pop
+            } {
+                /innerangle 360 widths 0 get div half def
+                /innerpoint inset innerangle sin div def
+            } ifelse
+        } if
+        outstart 0 ne {
+            position getbox aload pop /out arg /cw arg /in arg /ccw arg
+            /nin in inset add def
+        } {
+            /ccw 0 def
+            /cw 360 def
+            /out 0.5 def
+        } ifelse
+        /nout out inset sub def
+        outstart 0 ne {
+            % side walls
+            walls 0 get {
+                all_walls {
+                    nout cw -1 ao_point polar_goto
+                    nout cw -1 ao_point polar_goto
+                    inner_flag {
+                        innerpoint ccw innerangle add convert_from_polar goto
+                    } {
+                        nin cw -1 ao_point convert_from_polar goto
+                    } ifelse
+                    stroke
+                } if
+            } {
+                inset 0 gt {
+                    nout cw -1 ao_point polar_goto
+                    nout cw polar_goto
+                    stroke
+                    inner_flag {
+                        innerpoint cw convert_from_polar goto
+                        innerpoint ccw innerangle add polar_goto
+                    } {
+                        nin cw convert_from_polar goto
+                        nin cw -1 ao_point polar_goto
+                    } ifelse
+                    stroke
+                } if
+            } ifelse
+            position 0 get 0 ne {
+                walls 1 get {
+                    all_walls {
+                        nin cw -1 ao_point polar_goto
+                        nin ccw 1 ao_point polar_goto
+                        stroke
+                    } if
+                } {
+                    inset 0 gt {
+                        nin cw -1 ao_point polar_goto
+                        in cw -1 ao_point convert_from_polar goto
+                        stroke
+                        in ccw 1 ao_point polar_goto
+                        nin ccw 1 ao_point convert_from_polar goto
+                        stroke
+                    } if
+                } ifelse
+            } if
+            walls outstart 1 sub get {
+                all_walls {
+                    inner_flag {
+                        innerpoint ccw innerangle add polar_goto
+                    } {
+                        nin ccw 1 ao_point convert_from_polar goto
+                    } ifelse
+                    nout ccw 1 ao_point convert_from_polar goto
+                    stroke
+                } if
+            } {
+                inset 0 gt {
+                    inner_flag {
+                        innerpoint ccw innerangle add polar_goto
+                        innerpoint ccw polar_goto
+                    } {
+                        nin ccw 1 ao_point convert_from_polar goto
+                        nin ccw polar_goto
+                    } ifelse
+                    stroke
+                    nout ccw convert_from_polar goto
+                    nout ccw 1 ao_point polar_goto
+                    stroke
+                } if
+             } ifelse
+        } if
+        /outwall_n walls length outstart sub def
+        outwall_n 0 eq center_flag not and {
+            nout ccw 1 ao_point polar_goto
+        } {
+            /full_circle center_flag degrees 360 eq and def
+            center_flag grid /degrees known grid /slices known or and {
+                grid /slices known {
+                    /slices grid /slices get def
+                    /center_sides slices widths 1 get mul sides div def
+                } {
+                    /sides widths 1 get def
+                    /proportion 360 degrees div def
+                    /center_sides sides proportion div cvi def
+                } ifelse
+            } {
+                % big enough to never be relevant
+                /center_sides 360 def
+            } ifelse
+            /outwall_len center_flag {
+                360 widths 1 get div
+            } {
+                cw ccw sub outwall_n div 
+            } ifelse def
+            /doors_to_do outwall_n center_sides min def
+            0 1 doors_to_do 1 sub { /door_i arg
+                /door_ccw door_i       outwall_len mul ccw add def
+                /door_cw  door_i 1 add outwall_len mul ccw add def
+                walls outstart door_i add get {
+                    all_walls {
+                        door_i 0 ne full_circle or { nout door_ccw polar_goto } if
+                        nout door_ccw 1 ao_point polar_goto
+                        nout door_cw -1 ao_point polar_goto
+                        door_i doors_to_do 1 sub ne full_circle or {
+                            nout door_cw polar_goto
+                        } if
+                        stroke
+                    } if
+                } {
+                    inset 0 gt {
+                        door_i 0 ne full_circle or { nout door_ccw polar_goto } if
+                        nout door_ccw 1 ao_point polar_goto
+                        out door_ccw 1 ao_point convert_from_polar goto
+                        stroke
+                        out door_cw -1 ao_point polar_goto
+                        nout door_cw -1 ao_point convert_from_polar goto
+                        door_i doors_to_do 1 sub ne full_circle or { nout door_cw polar_goto } if
+                        stroke
+                    } if
+                } ifelse
+            } for
+            center_flag {
+                degrees 360 lt {
+                    walls dup length 1 sub get {
+                        inset 0 gt {
+                            % this is only needed for strange angles
+                            % nout door_ccw -1 ao_point polar_goto
+                            nout degrees -1 ao_point polar_goto
+                            degrees 180 ge {
+                                degrees
+                                0 0 inset degrees 90 sub 90 arcn
+                            } {
+                                inset degrees half sin div
+                                degrees half convert_from_polar goto
+                            } ifelse
+                            nout 0 1 ao_point convert_from_polar goto
+                        } {
+                            gsave
+                                nout 0 goto
+                                0 0 goto
+                                degrees rotate
+                                nout 0 goto
+                                stroke
+                            grestore
+                        } ifelse
+                    } {
+                        % currently has to be semicircle
+                        nout 180 -1 ao_point polar_goto
+                        nout degrees polar_goto
+                        stroke
+                        nout 0 polar_goto
+                        nout 0 1 ao_point polar_goto
+                    } ifelse
+                } if
+            } if
+        } ifelse
+        stroke
+
+    } def
+
+    grid /bg known {
+        0 0 radius 2 mul circle fill
+    } if
+    mazeengine
+
+} def
+
+/s3h 3 sqrt 2 div def
+
+/h2c { /hexcoord arg
+    % convert hex coordinate to x,y
+    hexcoord 0 2 getinterval aload pop /n arg /ese arg
+    [
+        ese s3h mul
+        ese neg half n add
+    ]
+} def
+
+
+/drawhexmaze { /grid arg
+    /setup {} def
+    % grid fields:
+    % radius: count of cells in a radius, not including center
+        % full distance across is 2 * radius + 1
+    % cells: list of lists containing coord (ese, n) then list of boolean walls
+        % for ene, n, wnw, wsw, s, ese
+    % field: as before
+    % path: as before
+
+    /radius grid /radius get def
+
+    /flatcenter { h2c } def
+
+    /getcellpath { /walls arg /position arg
+        % one cell, centered on position
+        position getcenter atranslate
+        6 {
+            3 sqrt recip 0 goto
+        } circrepeat
+        closepath
+    } def
+
+    /mgoto { goto } def
+
+    /drawwalls { /walls arg /position arg
+        position getcenter atranslate
+        0 1 5 { /i arg
+            walls i get {
+                gsave
+                    i 0.5 add 60 mul rotate
+                    0.5 3 sqrt 2 mul recip neg goto
+                    0.5 3 sqrt 2 mul recip goto
+                    stroke
+                grestore
+            } if
+        } for
+    } def
+
+    mazeengine
+
+} def
+
+/drawtrimaze { /grid arg
+    /setup {
+        s3h recip half softscale
+        s3h 0.5 translate
+        /inset_mul 1 inset 2 mul sub def
+    } def
+    % grid fields:
+    % width: count of cells across one side
+    % cells: list of lists containing coord (ese, n) then list of boolean walls
+        % for ene, wnw, s
+        % for n, wsw, ese
+    % field: as before
+    % path: as before
+
+    /width grid /width get def
+
+    /flatcenter { /hexcoord arg
+        % convert hex coordinate to x,y
+        hexcoord 0 2 getinterval aload pop /n arg /ese arg
+        [
+            ese s3h mul
+            ese neg half n add
+        ]
+    } def
+
+    /getcellpath { /walls arg /tripos arg
+        % one cell, centered on tripos, oriented appropriately
+        tripos getcenter atranslate
+        tripos 0 2 getinterval aload pop add 3 mod 2 eq {
+            90 rotate } {30 rotate
+        } ifelse
+        0 1 2 { /i arg
+            0.5 inset_mul mul s3h neg inset_mul mul goto
+            walls i get not {
+                0.5 s3h neg inset_mul mul goto
+                0.5 s3h inset_mul mul goto
+            } if
+            0.5 inset_mul mul s3h inset_mul mul goto
+            120 rotate
+        } for
+        closepath
+    } def
+
+    /mgoto { goto } def
+
+    /drawwalls { /walls arg /position arg
+        position getcenter atranslate
+        position 0 2 getinterval aload pop add 3 mymod cvi /tritype arg
+        tritype 1 eq {
+            0 setsinebowcolor doot
+        } {
+            tritype 0 eq { 30 rotate } { 90 rotate } ifelse
+            0 1 2 { /i arg
+                gsave
+                    i 120 mul rotate
+                    0.5 inset_mul mul s3h neg inset_mul mul goto
+                    walls i get not {
+                        0.5 s3h neg inset_mul mul goto
+                        stroke
+                        0.5 s3h inset_mul mul goto
+                    } if
+                    0.5 inset_mul mul s3h inset_mul mul goto
+                    stroke
+                grestore
+            } for
+        } ifelse
+    } def
+
+    mazeengine
+
+} def
+
+/mazeengine {
+    1 setlinecap 1 setlinejoin
+    grid /hyperstep known {
+        /hyperstep grid /hyperstep get def
+    } {
+        /hyperstep [] def
+    } ifelse
+    /hyper_n hyperstep length def
+
+    /getcenter {
+        /baseposition arg
+        baseposition flatcenter /result arg
+        0 1 hyper_n 1 sub { /h arg
+            baseposition dup length hyper_n sub h add get /z arg
+            0 1 1 { /c arg
+                hyperstep h get c get z mul
+                result c get add
+                result exch
+                c exch put
+            } for
+        } for
+        result
+    } def
+
+    /hyperwalls { /true_walls arg /position arg
+        /hyper_doors true_walls dup length hyper_n 2 mul sub hyper_n 2 mul getinterval def
+        gsave
+            position getcenter atranslate
+            0 1 hyper_n 2 mul 1 sub {
+                /hi arg
+                hyper_doors hi get not {
+                    /hyperdir hyperstep hi 2 idiv get def
+                    % use unit vector for door distance
+                    /doordir hyperdir aload pop exch atan def
+                    % turn around if necessary
+                    hi 2 mod 0 eq {
+                        /doordir doordir 180 add def
+                    } if
+                    gsave
+                        doordir rotate
+                        % improve this
+                        0.375 0 translate
+                        9 recip softscale
+                        -1 1 goto 0 0 goto -1 -1 goto stroke
+                    grestore
+                } if
+            } for
+        grestore
+    } def
+    gsave
+        grid /linewidth known {
+            grid /linewidth get
+        } {
+            0.1
+        } ifelse
+        setlinewidth
+        1 setlinecap
+        1 setlinejoin
+
+        grid /weave known {
+            grid /inset known {
+                grid /inset get
+            } {
+                0.1
+            } ifelse
+        } {
+            0
+        } ifelse /inset arg
+        grid /field known {
+            /fieldstep grid /field get length 1 sub recip def
+        } if
+
+        setup
+
+        grid /cells get {
+            gsave
+                /cell arg
+                cell 0 get /position arg
+                cell 1 get /true_walls arg
+                cell 2 get /field arg
+                gsave
+                    grid /field known {
+                        field fieldstep mul 360 mul setsinebowcolor
+                    } {
+                        grid /pathcolor known {
+                            grid /pathcolor get aload pop
+                        } {
+                            1 dup dup
+                        } ifelse
+                        setrgbcolor
+                    } ifelse
+                    position islink {
+                        1.5 darken
+                    } if
+                    position true_walls getcellpath fill
+                grestore
+                gsave
+                    position
+                    true_walls dup length hyper_n 2 mul sub 0 exch getinterval
+                    drawwalls
+                grestore
+                gsave
+                    position true_walls hyperwalls
+                grestore
+            grestore
+        } forall
+
+        grid /path known {
+            grid /path get {
+                getcenter aload pop mgoto
+            } forall
+            grid /field known {
+                1 setgray
+            } {
+                1 0 0 setrgbcolor
+            } ifelse
+            stroke
+            grid /path get 0 get getcenter aload pop dot
+            grid /path get dup length 1 sub get getcenter aload pop dot
+        } if
+    grestore
+} def
+
+%%EndProlog

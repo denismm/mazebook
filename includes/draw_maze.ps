@@ -1,7 +1,2173 @@
 %!
-(dmmlib/base.ps) run
-(dmmlib/lines.ps) run
-(dmmlib/polar.ps) run
+/arg { exch def } def
+
+% define if not known
+/defaultdef {
+    % name definition
+    exch
+    % definition name
+    dup where {
+        % definition name dict
+        pop pop pop
+    } {
+        % definition name
+        exch def
+    } ifelse
+} def
+
+/safe_func_dict_dict 20 dict defaultdef
+
+% /foo [/x /y /z] { x dup mul y dup mul z dup mul add add } 1 /new dict_safe_func
+/dict_safe_func {
+    /function_dictionary arg
+    /returns arg
+    /function_body exch cvlit def
+    /arguments arg
+    /function_name arg
+
+    /func_local_dict <<
+        /arguments arguments 
+        /local_function_body function_body 
+        /function_dictionary function_dictionary 
+        /function_name function_name 
+        /returns returns 
+    >> def
+    safe_func_dict_dict function_name func_local_dict put
+
+    /standard_function_body {
+        % get data out of fake closure dictionary
+        safe_func_dict_dict exch get /func_local_dict arg
+        func_local_dict begin
+
+        % set a sentinel, roll above args
+        /sentinel (sentinel          ) def
+        sentinel 8 10 getinterval rand exch cvs pop
+        /sentinel sentinel cvn def
+        sentinel arguments length 1 add 1 roll
+        % enter dictionary
+        function_dictionary /new eq {
+            /function_dictionary 10 dict def
+        } if
+        function_dictionary false ne {
+            function_dictionary begin
+        } if
+        % define args
+        arguments length 1 sub -1 0 {
+            arguments exch get arg
+        } for
+        % run body
+        func_local_dict /local_function_body get cvx exec
+        % roll for returns
+        returns 1 add -1 roll
+        % check sentinel
+        dup sentinel eq {
+            pop
+        } {
+            pstack
+            [(sentinel not in place for) function_name] ==
+            die
+        } ifelse
+        function_dictionary false ne {
+            % check dictionary
+            currentdict function_dictionary ne {
+                countdictstack ==
+                (wrong dictionary!) ==
+                die
+            } if
+            % leave dictionary
+            end
+        } if
+        currentdict func_local_dict ne {
+            countdictstack ==
+            (where is closure dictionary?!) ==
+            die
+        } if
+        end %func_local_dict
+        currentdict /func_local_dict undef
+    } def
+    func_local_dict /new_function_body [
+        function_name /standard_function_body cvx
+    ] put
+    func_local_dict /new_function_body get 0 function_name put
+    func_local_dict /new_function_body get cvx function_name arg
+} def
+
+/safefunc { /new dict_safe_func } def
+/simplefunc { 0 /new dict_safe_func } def
+
+/circle { 0 360 arc closepath } def
+
+/dot { currentlinewidth 1.5 mul circle fill } def
+/doot { 0 0 dot } def
+
+/recip { 1 exch div } def
+/maximum { 2 copy gt { pop } { exch pop } ifelse } def
+/minimum { 2 copy lt { pop } { exch pop } ifelse } def
+/half { 2 div } def
+
+/PI 3.1415926 def
+
+% mod that accepts floats and makes negatives positive
+/mod_dict 2 dict def
+/mymod {
+    mod_dict begin
+        /modulus exch def
+        /original exch def
+        original 0 lt original modulus ge or {
+            original modulus div floor neg
+            modulus mul original add
+            /original exch def
+        } if
+        original
+    end
+} def
+
+/interpolate { 4 dict begin /range arg /point arg
+    point 0 ge {
+        point range length 1 sub lt {
+            /p point cvi def
+            /adjust point p sub def
+            % return range[p] + adjust * (range[p+1] - range[p])
+            range p get dup range p 1 add get exch sub adjust mul add
+        } {
+            range range length 1 sub get
+        } ifelse
+    }{
+        range 0 get
+    } ifelse
+    end
+} def
+
+/randint [/range] {rand range cvi mod} 1 safefunc
+
+/randrange [/min /max /resolution] {
+    max min sub resolution mul randint resolution div min add
+} 1 safefunc
+
+% curve analysis
+/lcurveto_dict 8 dict def
+/lcurveto {
+    lcurveto_dict begin
+        /y3 arg /x3 arg
+        /y2 arg /x2 arg
+        /y1 arg /x1 arg
+        x1 y1 lineto x2 y2 lineto x3 y3 lineto
+    end
+} def
+/pcurveto {
+    lcurveto_dict begin
+        /y3 arg /x3 arg
+        /y2 arg /x2 arg
+        /y1 arg /x1 arg
+        currentpoint /y0 arg /x0 arg
+        gsave
+            1 0 0 setrgbcolor
+            newpath
+            x0 y0 dot
+            x1 y1 dot
+            x2 y2 dot
+            x3 y3 dot
+        grestore
+        x1 y1 x2 y2 x3 y3 curveto
+    end
+} def
+
+% r is radius of near circle (centered on origin)
+% q is radius of far circle (centered on d,0)
+% d is distance between centers
+% returns angle of intersection from origin
+/circle_intersection { 5 dict begin /d arg /q arg /r arg
+    r dup mul d dup mul add q dup mul sub d 2 mul div
+    /x exch def
+    x r div dup dup mul 1 exch sub sqrt exch atan
+    /a exch def
+    a
+end } def
+
+/distance {
+    /by arg /bx arg /ay arg /ax arg
+    ax bx sub dup mul ay by sub dup mul add sqrt
+} def
+
+/angle4 {
+    /by arg /bx arg /ay arg /ax arg
+    by ay sub bx ax sub atan
+} def
+
+% ellipse library
+/ellipsedict 20 dict def
+ellipsedict /mtrx matrix put
+ellipsedict begin
+    /ell_base {
+        /arc_command arg
+        /endangle arg /startangle arg
+        /yrad arg /xrad arg
+        /y arg /x arg
+        /savematrix mtrx currentmatrix def
+        x y translate
+        xrad yrad scale
+        0 0 1 startangle endangle arc_command cvx exec
+        savematrix setmatrix
+    } def
+end
+/ell { ellipsedict begin /arc ell_base end } def
+/elln { ellipsedict begin /arcn ell_base end } def
+/spell { ellipsedict begin /sparc ell_base end } def
+/spelln { ellipsedict begin /sparcn ell_base end } def
+
+% svg-style arc
+% svgarc: draw elliptical arc with SVG-style arguments
+% xrad yrad xrot large sweep nx ny
+% start point at currentpoint, end point at nx,ny
+% radii of ellipse is xrad, yrad
+% angle of ellipse x-axis is xrot
+% arc counterclockwise if sweep is 1, else clockwise
+% large arc if large is 1
+
+% rsvgarc: nx/ny is relative
+% svgsparc: use spline arcs, two if large
+% rsvgsparc: both of above
+% dsvgarc: debug, show origin
+
+ellipsedict begin
+    /svgarc_base 
+    [/xrad /yrad /xrot /large /sweep /nx /ny /relative /spline /debug] {
+
+        % save current ref frame
+        /originalmatrix matrix currentmatrix def
+
+        % spare matrix for transformations
+        /tempmatrix matrix def
+
+        /ntrans {
+            % copy of tempmatrix is already on stack
+            pop
+            % nx and ny need to be where they'll be in the new situation
+            nx ny tempmatrix itransform /ny arg /nx arg
+            tempmatrix concat
+        } def
+
+        %move to origin
+        relative {
+            currentpoint translate
+        } {
+            currentpoint tempmatrix translate
+            ntrans
+        } ifelse
+
+        %rotate ellipse
+        xrot tempmatrix rotate
+        ntrans
+
+        % scale ellipse to circle
+        xrad yrad tempmatrix scale
+        /r 1 def
+        ntrans
+
+        % rotate nx/ny to 0/positive
+        nx neg ny atan tempmatrix rotate
+        ntrans
+
+        % at this point, origin is at currentpoint, nx is 0, ny > 0, r=1
+
+        % if ny > 2, change r to half of ny (based on W3 SVG spec F.6.2)
+        ny 2 gt {
+            /r ny 2 div def
+        } if
+
+        % compute and draw the arc
+        /l ny 2 div def
+        /s r dup mul l dup mul sub sqrt def 
+        /a l s atan def 
+        sweep 0 gt large 0 gt xor {
+            -1 1 scale
+        } if
+        large 0 gt {
+            spline {
+                s neg l r a neg 180 sparcn
+                s neg l r 180 a sparcn
+            } {
+                s neg l r a neg a arcn
+            } ifelse
+        } { 
+            spline {
+                s neg l r a neg a sparc
+            } {
+                s neg l r a neg a arc
+            } ifelse
+        } ifelse
+        debug { gsave currentpoint newpath goto s neg l goto stroke grestore } if
+
+        % return to original ref frame
+        originalmatrix setmatrix
+    } 0 ellipsedict dict_safe_func
+end
+
+/svgarc {ellipsedict begin false false false svgarc_base end} def
+/rsvgarc {ellipsedict begin true false false svgarc_base end} def
+/svgsparc {ellipsedict begin false true false svgarc_base end} def
+/rsvgsparc {ellipsedict begin true true false svgarc_base end} def
+/dsvgarc {ellipsedict begin false false true svgarc_base end} def
+
+
+/softscale {
+    dup dup scale
+    1 exch div thicken
+} def
+
+/thicken {
+    currentlinewidth mul setlinewidth
+} def
+
+/box {
+    % lbrt
+    4 copy 3 -1 roll exch 3 1 roll 6 2 roll
+    % lb rb rt lt
+    moveto lineto lineto lineto closepath
+} def
+
+/square {       % like circle but square
+    3 dict begin
+        /r arg
+        /y arg
+        /x arg
+        x r sub y r sub x r add y r add box
+    end
+} def
+
+/roundboxdict 5 dict def
+%box with rounded corners
+/roundbox {
+    %lbrt corner_radius
+    roundboxdict begin
+        /c arg
+        /t exch c sub def 
+        /r exch c sub def
+        /b exch c add def
+        /l exch c add def
+        r t c 0 90 arc
+        l t c 90 180 arc
+        l b c 180 270 arc
+        r b c 270 360 arc
+        closepath
+    end
+} def
+
+/curr_path {
+    false
+    gsave
+        {2 {pop} repeat pop true}
+        {2 {pop} repeat pop true}
+        {6 {pop} repeat pop true}
+        {0 {pop} repeat pop true}
+        pathforall
+    grestore
+} def
+
+/goto {
+    curr_path {lineto} {moveto} ifelse
+} def
+/rgoto { rlineto } def
+
+/centershowdict 4 dict def
+/centershow {
+    centershowdict begin
+        gsave
+            0 0 moveto
+            dup true charpath pathbbox
+            /top exch def
+            /right exch def
+            /bottom exch def
+            /left exch def
+        grestore
+        gsave
+            left right add 2 div neg
+            top bottom add 2 div neg
+            moveto show
+        grestore
+    end
+} def
+
+% use anonymous dictionary in case function contains circrepeat
+/schlafrepeat {
+    3 dict begin
+    /cr_function arg
+    /cr_x arg
+    /cr_n arg
+    cr_n abs {
+        cr_function
+        360 cr_n div cr_x mul rotate
+    } repeat
+    end
+} def
+/circrepeat { 1 exch schlafrepeat } def
+
+% takes a proc, runs it on both sides
+/hmirror {
+    2 dict begin
+        /lr_function arg
+        -1 2 1 {
+            gsave
+                1 scale
+                lr_function
+            grestore
+        } for
+    end
+} def
+
+/vmirror {
+    2 dict begin
+        /tb_function arg
+        -1 2 1 {
+            gsave
+                1 exch scale
+                tb_function
+            grestore
+        } for
+    end
+} def
+
+/grayfill { gsave setgray fill grestore } def
+/rgbfill { gsave setrgbcolor fill grestore } def
+/hsbfill { gsave sethsbcolor fill grestore } def
+/whitefill { 1 grayfill } def
+
+% "sinebow" based on http://basecase.org/env/on-rainbows by Charlie Loyd
+/sinebow {
+    2 div
+    dup cos dup mul exch
+    dup 120 add cos dup mul exch
+    120 sub cos dup mul
+} def
+
+/setsinebowcolor { sinebow setrgbcolor } def
+/sinebowfill { gsave setsinebowcolor fill grestore } def
+
+% "katebow" colors based on "The 12-bit rainbow palette" by Kate Rose Morley
+% https://iamkate.com/data/12-bit-rainbow/
+
+/katebow_dict 10 dict def
+katebow_dict begin
+    /katebow_colors [
+        [10 12 14 14  9  4  2  0  0  3 6 8 10]
+        [ 3  6  9 13 13 13 12 11  9  6 3 1  3]
+        [ 5  6  4  0  5  8 11 12 12 11 9 7  5]
+    ] def
+end
+
+/katebow { /angle arg
+    katebow_dict begin
+        /k_index angle 360 mymod 30 div def
+        0 1 2 {
+            katebow_colors exch get k_index exch interpolate 15 div
+        } for
+    end
+} def
+/setkatebowcolor { katebow setrgbcolor } def
+/katebowfill { katebow rgbfill } def
+
+% render an eps file, given filename and bounding box, 
+% with ll at 0,0 and height of 1
+/epsdict 10 dict def
+/include_eps {
+    epsdict begin
+        /t arg
+        /r arg
+        /b arg
+        /l arg
+        /file arg
+        % code from eps spec
+        /b4_Inc_state save def          % Save state for cleanup
+        /dict_count countdictstack def  % Count objects on dict stack
+        /op_count count 1 sub def       % Count objects on operand stack
+        userdict begin                  % Push userdict on dict stack
+        /showpage { } def               % Redefine showpage, { } = null proc
+        0 setgray 0 setlinecap          % Prepare graphics state
+        1 setlinewidth 0 setlinejoin
+        10 setmiterlimit [ ] 0 setdash newpath
+        /languagelevel where            % If level not equal to 1 then
+        {
+            pop languagelevel           % set strokeadjust and
+            1 ne                        % overprint to their defaults.
+            {
+                false setstrokeadjust false setoverprint
+            } if
+        } if
+
+        1 t b sub div dup scale
+        l neg b neg translate
+
+        l b r t box clip newpath
+
+        file run
+
+        count op_count sub {pop} repeat
+        countdictstack dict_count sub {end} repeat
+        b4_Inc_state restore
+    end
+} def
+
+/shavedict 10 dict def
+/shavepath {
+    shavedict begin
+    % important vars: oldx oldy startx starty
+        [
+            {
+                /y arg /x arg
+                /startx x def /starty y def
+                /oldx x def /oldy y def
+                x y 
+                /moveto cvx
+            }
+            {
+                /y arg /x arg
+                oldx x sub dup mul oldy y sub dup mul add sqrt
+                currentlinewidth 0.1 mul gt {
+                    % line is not too short to ignore
+                    /oldx x def /oldy y def
+                    x y
+                    /lineto cvx
+                } if
+            }
+            {
+                /y3 arg /x3 arg
+                /y2 arg /x2 arg
+                /y1 arg /x1 arg
+                oldx x1 sub dup mul oldy y1 sub dup mul add sqrt
+                x1 x2 sub dup mul y1 y2 sub dup mul add sqrt
+                x2 x3 sub dup mul y2 y3 sub dup mul add sqrt
+                add add
+                currentlinewidth 0.1 mul gt {
+                    % curve is not too short to ignore
+                    /oldx x3 def /oldy y3 def
+                    x1 y1 x2 y2 x3 y3
+                    /curveto cvx
+                } if
+            }
+            {
+                oldx startx sub dup mul oldy starty sub dup mul add sqrt
+                currentlinewidth 0.1 mul le {
+                    % closepath is too short - might cause trouble
+                    % change end of last segment to exactly start point
+                    % top of stack is either x y curveto or x y lineto
+                    3 1 roll
+                    pop pop startx starty 
+                    3 -1 roll
+                } if
+                /oldx startx def /oldy starty def
+                /closepath cvx
+            }
+            pathforall
+        ] 
+        newpath
+        cvx exec
+    end
+} def
+
+% colors
+% divide distance from white/black by x
+
+/lighten {
+    currentrgbcolor
+    3 {
+        4 -1 roll
+        dup
+        5 1 roll
+        exch 1 exch sub exch div 1 exch sub
+        3 1 roll
+    } repeat
+    setrgbcolor
+    pop
+} def
+/darken {
+    currentrgbcolor
+    3 {
+        4 -1 roll
+        dup
+        5 1 roll
+        div
+        3 1 roll
+    } repeat
+    setrgbcolor
+    pop
+} def
+
+
+% multiply distance from white/black by x
+/mul_lighten {
+    currentrgbcolor
+    3 {
+        4 -1 roll
+        dup
+        5 1 roll
+        exch 1 exch sub exch mul 1 exch sub
+        3 1 roll
+    } repeat
+    setrgbcolor
+    pop
+} def
+/mul_darken {
+    currentrgbcolor
+    3 {
+        4 -1 roll
+        dup
+        5 1 roll
+        mul
+        3 1 roll
+    } repeat
+    setrgbcolor
+    pop
+} def
+
+% grid of dots in box given 
+/dotgrid {
+    /gridspacing arg
+    /gridtop arg
+    /gridright arg
+    /gridbottom arg
+    /gridleft arg
+    gridleft gridspacing gridright {
+        /gridx arg
+        gridbottom gridspacing gridtop {
+            /gridy arg
+            gridx gridy dot
+        } for
+    } for
+} def
+
+/acos {
+    dup dup mul 1 exch sub sqrt exch atan
+} def
+/asin {
+    dup dup mul 1 exch sub sqrt atan
+} def
+/tan {
+    dup sin exch cos div
+} def
+
+% handle zeros
+/myatan {
+    dup 0 eq {
+        pop dup 0 eq {
+            pop 0
+        } {
+            0 atan
+        } ifelse
+    } {
+        atan
+    } ifelse
+} def
+
+% mod that accepts floats and makes negatives positive
+/mod_dict 2 dict def
+/mymod {
+    mod_dict begin
+        /modulus exch def
+        /original exch def
+        original 0 lt original modulus ge or {
+            original modulus div floor neg
+            modulus mul original add
+            /original exch def
+        } if
+        original
+    end
+} def
+
+% allow division by zero
+/zdiv {
+    dup 0 eq {
+        pop pop 0
+    } {
+        div
+    } ifelse
+} def
+
+/boltdict 20 dict def
+
+
+/pathlength {
+    boltdict begin
+        gsave
+            flattenpath
+            /startx /None def
+            /starty /None def
+            /oldx /None def
+            /oldy /None def
+            /linelen 0 def
+            /handle_line {
+                /newy arg /newx arg
+                newx oldx sub dup mul
+                newy oldy sub dup mul
+                add sqrt linelen add /linelen exch def
+                /oldx newx def
+                /oldy newy def
+            } def
+            {
+                /starty arg
+                /startx arg
+                /oldy starty def
+                /oldx startx def
+            }
+            {
+                handle_line
+            }
+            { pop pop pop pop pop pop }
+            { startx starty handle_line}
+            pathforall
+        grestore
+        linelen
+    end
+} def
+
+
+/curvepath {
+    % change all lines into 4-point curves
+    /addstraightcurve { /ny arg /nx arg
+        oldx 2 mul 3 div nx 3 div add  oldy 2 mul 3 div ny 3 div add
+        oldx 3 div nx 2 mul 3 div add  oldy 3 div ny 2 mul 3 div add
+        nx ny
+        /curveto cvx
+    } def
+    [
+        {
+            /y arg /x arg
+            /startx x def /starty y def
+            x y
+            /moveto cvx
+            /oldx x def /oldy y def
+        }
+        {
+            /y arg /x arg
+            x y addstraightcurve
+            /oldx x def /oldy y def
+        }
+        {
+            /y3 arg /x3 arg
+            /y2 arg /x2 arg
+            /y1 arg /x1 arg
+            x1 y1 x2 y2 x3 y3
+            /curveto cvx
+            /oldx x3 def /oldy y3 def
+        }
+        {
+            startx starty addstraightcurve
+            /closepath cvx
+            /oldx startx def /oldy starty def
+        }
+        pathforall
+    ]
+    newpath
+    cvx exec
+} def
+
+boltdict begin
+    /pathtopoints { /include_length arg
+        % analyze current path, creating pathpoints array
+        % pathpoints format: [x y lengthsofar ptype]
+        % drop last two fields if include_length is false
+        % ptype is /p for point or /c for control point
+
+        % count points in path & determine closedness
+        /pathcount 0 def
+        /closed false def
+        gsave
+            { 2 {pop} repeat /pathcount pathcount 1 add def } % moveto
+            { 2 {pop} repeat /pathcount pathcount 1 add def } % lineto
+            { 6 {pop} repeat /pathcount pathcount 3 add def } %curveto
+            { /pathcount pathcount 1 add def /closed true def } % closepath
+            pathforall
+        grestore
+        % pathcount is number of points in line
+
+        % move path points into array, tracking length and type
+        /pathpoints pathcount array def
+        /i 0 def
+        /x 0 def /y 0 def /linelen 0 def
+
+        % define internal helper functions
+        /addpoint { /ptype arg
+            pathpoints i [x y
+                include_length {
+                    linelen ptype
+                } if
+            ] put
+            /i i 1 add def
+        } def
+        /addline {
+            i 0 eq {quit} if
+            /ny exch def /nx exch def
+            % segment length
+            /seglen ny y sub dup mul nx x sub dup mul add sqrt def
+            seglen currentlinewidth 10 div gt {
+                % linelen += length, update x and y
+                seglen linelen add /linelen exch def
+                /x nx def /y ny def
+                /p addpoint
+            } {
+                /pathcount pathcount 1 sub def
+            } ifelse
+        } def
+        /addcurve {
+            i 0 eq {quit} if
+            % for length, treat as 3 line segments
+            % tag control points as "c" instead of "p"
+            6 2 roll
+            4 2 roll
+            /types [/c /c /p] def
+            /ci 0 def
+            /curvelen 0 def
+            3 {
+                /ny exch def /nx exch def
+                % segment length
+                ny y sub dup mul nx x sub dup mul add sqrt
+                % linelen += length, update x and y
+                dup curvelen add /curvelen exch def
+                linelen add /linelen exch def
+                /x nx def /y ny def
+                /ptype types ci get def
+                ptype addpoint
+                /ci ci 1 add def
+            } repeat
+            curvelen currentlinewidth 10 div le {
+                % if curve is too small, drop it from path
+                /pathcount pathcount 3 sub def
+                /i i 3 sub def
+                /linelen linelen curvelen sub def
+            } if
+        } def
+
+        % args to pathforall
+        % moveto
+        {
+            /y exch def /x exch def
+            i 0 ne {quit} if
+            /p addpoint
+        }
+        { addline } % lineto
+        { addcurve } % curve
+        % close
+        {
+            i 0 eq {quit} if
+            /closed true def
+            /ny pathpoints 0 get 1 get def
+            /nx pathpoints 0 get 0 get def
+            nx x eq ny y eq and not {
+                nx ny addline
+            } {
+                /pathcount pathcount 1 sub def
+            } ifelse
+        } pathforall
+    } def
+
+    /drawbevel {
+        /forward exch def
+        forward {
+            /a1 direction def
+            /a2 direction_2 def
+        } {
+            /a1 direction_2 def
+            /a2 direction def
+        } ifelse
+        currentlinejoin 1 eq {
+            a1 a2 sub
+            dup 0.1 le { 360 add } if
+            dup 180 lt {
+                a2 add /a1 exch def
+                x y lineout a1 a2 arcn
+            } {
+                pop
+                x a2 cos lineout mul add
+                y a2 sin lineout mul add
+                lineto
+            } ifelse
+        } {
+            x a2 cos lineout mul add
+            y a2 sin lineout mul add
+            lineto
+        } ifelse
+    } def
+
+    % specifically for use in radfunc functions
+    % provides the length of the current curve for control points.
+    /curve_distance {
+        ptype /p eq {
+            0
+        } {
+            % i is current position on pathcount
+            % find dist for previous p
+            /lp i 1 sub def
+            {
+                pathpoints lp get /last_p arg
+                last_p 3 get /p eq {
+                    /last_dist last_p 2 get def
+                    exit
+                } if
+                /lp lp 1 sub def
+            } loop
+            % find dist for next p
+            /np i 1 add def
+            {
+                pathpoints np get /next_p arg
+                next_p 3 get /p eq {
+                    /next_dist next_p 2 get def
+                    exit
+                } if
+                /np np 1 add def
+            } loop
+            % return difference
+            next_dist last_dist sub
+        } ifelse
+    } def
+
+
+    % expects to be run after pathtopoints.
+    % expects radfunc to be defined.
+    % add entries to pathpoints array.
+    /pathparser {
+        % determine actual points for drawing
+        % place direction and distance to actual point
+        %     into pathpoints entries, fields 4 and 5
+        % determine miter and bevel points and directions
+        0 1 pathcount 1 sub {
+            /i exch def
+            % l is last, n is next.  Strange math to make the edges work
+            /l i 0 eq { pathcount 2 sub } { i 1 sub } ifelse def
+            /n i pathcount 1 sub eq { 1 } { i 1 add } ifelse def
+
+            /cur_point pathpoints i get def
+            /x cur_point 0 get def
+            /y cur_point 1 get def
+            /dist cur_point 2 get def
+            /ptype cur_point 3 get def
+
+            /next_point pathpoints n get def
+            /nx next_point 0 get def
+            /ny next_point 1 get def
+            /ndir ny y sub nx x sub myatan def
+
+            /last_point pathpoints l get def
+            /lx last_point 0 get def
+            /ly last_point 1 get def
+            /ldir ly y sub lx x sub myatan def
+
+            /bevel false def
+            /direction_2 0 def
+            % effective line radius at this point
+            /linerad radfunc def
+            i 0 eq i pathcount 1 sub eq or closed not and {
+                % starting or ending point of stroke - no miter
+                /lineout linerad def
+                i 0 eq {
+                    /direction ndir 90 add def
+                    currentlinecap 2 eq {
+                        /x x ndir cos neg lineout mul add def
+                        /y y ndir sin neg lineout mul add def
+                    } if
+                } {
+                    /direction ldir 90 sub def
+                    currentlinecap 2 eq {
+                        /x x ldir cos neg lineout mul add def
+                        /y y ldir sin neg lineout mul add def
+                    } if
+                } ifelse
+            } {
+                /theta ndir ldir sub def
+                theta 0 lt {
+                    /theta theta 360 add def
+                } if
+                /phi 90 theta 2 div sub def
+                % actual distance to junction point
+                phi cos 0 eq {
+                    /lineout 0 def
+                } {
+                    /lineout linerad phi cos div def
+                } ifelse
+                % direction to junction point
+                /direction ndir 90 add phi add def
+                % check miter limit - not for control points
+                0 currentlinejoin ne
+                lineout linerad zdiv currentmiterlimit gt or
+                theta 0 eq or
+                ptype /p eq and {
+                    /bevel true def
+                    /lineout linerad def
+                    /direction ldir 90 sub 360 mymod def
+                    /direction_2 ndir 90 add 360 mymod def
+
+                    % special case for end point
+                    i pathcount 1 sub eq {
+                        /bevel false def
+                    } if
+                } if
+            } ifelse
+            pathpoints i bevel {
+                [x y dist ptype direction lineout true direction_2]
+            } {
+                [x y dist ptype direction lineout false direction]
+            } ifelse put
+        } for
+    } def
+
+    /pathengine {
+        pathcount 1 gt {
+            pathparser
+
+            % draw actual path
+            newpath
+
+            /loadpoint { /i arg
+                /cur_point pathpoints i get def
+                /x cur_point 0 get def
+                /y cur_point 1 get def
+                /ptype cur_point 3 get def
+                /direction cur_point 4 get def
+                /lineout cur_point 5 get def
+                /bevel cur_point 6 get def
+                /direction_2 cur_point 7 get def
+            } def
+
+            % side 1 of path from 0 to N
+            /ptype false def
+
+            /drawsegment { /forward arg
+                /last_ptype ptype def
+                i loadpoint
+                forward {
+                    x direction cos lineout mul add
+                    y direction sin lineout mul add
+                } {
+                    /direction direction 180 add def
+                    /direction_2 direction_2 180 add def
+                    x direction_2 cos lineout mul add
+                    y direction_2 sin lineout mul add
+                } ifelse
+                last_ptype false eq {
+                    moveto
+                } {
+                    ptype /p eq {
+                        last_ptype /c eq {
+                            curveto
+                        } {
+                            lineto
+                        } ifelse
+                    } if
+                } ifelse
+                bevel { forward drawbevel } if
+            } def
+
+            0 1 pathcount 1 sub { /i arg
+                true drawsegment
+            } for
+
+            % move to starting point of the line back,
+            %     adding circle at end if necessary
+            % even if beveled, direction_1 is appropriate
+            currentlinecap 1 eq closed not and {
+                x y lineout direction direction 180 add arcn
+            } {
+                /direction direction 180 add def
+                x direction cos lineout mul add
+                y direction sin lineout mul add
+                lineto
+            } ifelse
+
+            % side 2 of path from N-1 to 0
+            % last_ptype
+            pathcount 2 sub -1 0 { /i arg
+                false drawsegment
+            } for
+
+            % circle at end if necessary
+            currentlinecap 1 eq closed not and {
+                x y lineout direction direction 180 add arcn
+            } if
+            closepath
+        } if
+    } def
+end
+
+% line of varying widths, using only lineto
+% call with function that determines "line radius" (1/2 thickness)
+/var_line [/radfunc] {
+
+    % drop tiny mistake segments
+    shavepath
+
+    % turn all curves into lines
+    flattenpath
+
+    % analyze path, put into pathpoints array
+    true pathtopoints
+
+    pathengine
+
+} 0 boltdict dict_safe_func
+
+% line of varying widths
+% call with function that determines "line radius" (1/2 thickness)
+/var_path [/radfunc] {
+
+    % drop tiny mistake segments
+    shavepath
+
+    % analyze path, put into pathpoints array
+    true pathtopoints
+
+    pathengine
+
+} 0 boltdict dict_safe_func
+
+/calligraphic [/spline_offset] {
+
+    % drop tiny mistake segments
+    shavepath
+
+    % turn all lines and closepaths to curves
+    curvepath
+
+    % analyze path, moving points into pathpoints array
+    true pathtopoints
+
+    % engine func to implement calligraphic style
+    /radfunc {
+        currentlinewidth 2 div
+        ptype /c eq { spline_offset mul } if
+    } def
+
+    pathengine
+
+} 0 boltdict dict_safe_func
+
+/outline {
+    boltdict begin
+        /linefunc arg
+        gsave
+            linefunc
+            setlinewidth
+            stroke
+        grestore
+        newpath
+    end
+} def
+
+/bolt {
+    { dist linelen div 1 exch sub currentlinewidth mul 2 div } var_line
+} def
+/boltstroke { bolt fill } def
+/boltoutline { {bolt} outline } def
+
+/bipoint {
+    {i 0 eq i pathcount 1 sub eq or {0} {currentlinewidth 2 div} ifelse}
+    var_line
+} def
+
+/bipointstroke { bipoint fill } def
+/bipointoutline { {bipoint} outline } def
+
+/widthlist { /widths arg
+    /width_n widths length def
+    {widths i width_n mod get half} var_line
+} def
+/widthliststroke { widthlist fill } def
+/widthlistoutline { {widthlist} outline } def
+
+/taper {
+    { dist linelen div 1 exch sub currentlinewidth mul 2 div } var_path
+} def
+/taperstroke { taper fill } def
+/taperoutline { {taper} outline } def
+
+% call with a number argument: thickness of control points
+/callistroke { calligraphic fill } def
+
+% call with 2 number arguments: subline width and control point thickness
+/callioutline {
+    gsave
+        calligraphic
+        setlinewidth
+        stroke
+    grestore
+    newpath
+} def
+
+/spindly { 0 calligraphic } def
+/spindlystroke { 0 callistroke } def
+/spindlyoutline { 0 callioutline } def
+
+/brushy { 1 3 div calligraphic } def
+/brushystroke { 1 3 div callistroke } def
+/brushyoutline { 1 3 div callioutline } def
+
+/softscale {
+    dup dup scale
+    currentlinewidth exch div setlinewidth
+} def
+
+/thicken {
+    currentlinewidth mul setlinewidth
+} def
+
+/curr_path {
+    false
+    gsave
+        {2 {pop} repeat pop true}
+        {2 {pop} repeat pop true}
+        {6 {pop} repeat pop true}
+        {0 {pop} repeat pop true}
+        pathforall
+    grestore
+} def
+/arg { exch def } def
+/sparcdict 6 dict def
+/sparc {
+    sparcdict begin
+        /a2 arg
+        /a1 arg
+        /r arg
+        /y arg
+        /x arg
+        x y translate
+        r dup scale
+        a1 rotate
+        1 0
+        curr_path {
+            currentpoint pop 1 sub abs currentlinewidth 10 div lt
+            currentpoint exch pop 0 sub abs currentlinewidth 10 div lt and
+            {
+                pop pop
+            } {
+                lineto
+            } ifelse
+        } {
+            moveto
+        } ifelse
+        /adiff a2 a1 sub dup 360 div cvi 360 mul sub def
+        adiff 0 lt {
+            /adiff adiff 360 add def
+        } if
+        /theta adiff 2 div def
+        /offset 1 theta cos sub theta sin div 0.75 div def
+        1 offset
+        adiff cos adiff 90 sub cos offset mul add
+        adiff sin adiff 90 sub sin offset mul add
+        adiff cos adiff sin
+        curveto
+        a1 neg rotate
+        1 r div dup scale
+        x neg y neg translate
+    end
+} def
+/sparcn {
+    sparcdict begin
+    /a2 arg
+    /a1 arg
+    /r arg
+    /y arg
+    /x arg
+    -1 1 scale
+    x neg y r 180 a1 sub 180 a2 sub sparc
+    -1 1 scale
+    end
+} def
+
+/splitcircle {
+    /n arg
+    /radius arg
+    /y arg
+    /x arg
+    n {
+        x y radius 0 360 n div sparc
+    } circrepeat
+    closepath
+} def
+
+/spcircle {
+    3 copy 3 -1 roll add exch moveto
+    3 copy 0 180 sparc
+    180 0 sparc
+    closepath
+} def
+
+/ObjectLineDict 15 dict defaultdef
+ObjectLineDict begin
+    /_rotateobj true defaultdef
+    /_ObjectLineto {
+        /ny arg /nx arg
+        /seglen ny oy sub dup mul nx ox sub dup mul add sqrt def
+        ol seglen add separation ge {
+            /steps ol seglen add separation div cvi def
+            1 1 steps
+            {
+                /i arg
+                /ratio separation i mul ol sub seglen div def
+                ratio 0 ne {
+                    gsave
+                        newpath
+                        ox oy translate
+                        nx ox sub ratio mul         % position from o
+                        ny oy sub ratio mul
+                        _rotateobj {
+                            2 copy translate
+                            exch myatan rotate
+                        } {
+                            translate
+                        } ifelse
+                        object
+                    grestore
+                } if
+            } for
+            /ol ol steps separation mul sub def
+        } if
+        /ox nx def /oy ny def /ol ol seglen add def
+    } def
+end
+/ObjectLinePhase {
+    ObjectLineDict begin
+        /object arg
+        /phase arg
+        /separation arg
+        flattenpath
+        { /oy arg /ox arg /ol phase def /cx ox def /cy oy def} %moveto
+        {
+            _ObjectLineto
+        } % lineto
+        { die } % curveto
+        { cx cy _ObjectLineto } % closepath
+        pathforall
+    end
+} def
+/ObjectLine { 0 exch ObjectLinePhase newpath} def
+
+/cstroke { brushystroke } def
+/setplain { /cstroke { stroke } def } def
+/setbrushy { /cstroke { brushystroke } def } def
+/setspindly { /cstroke { spindlystroke } def } def
+
+/returnlines {
+    boltdict begin
+        gsave
+            flattenpath
+            false pathtopoints
+            pathpoints 0 pathcount getinterval
+        grestore
+    end
+} def
+
+/intersection {
+    /ntheta arg
+    /ny arg
+    /nx arg
+    /otheta arg
+    /oy arg
+    /ox arg
+    % find intersection based on y = mx + b
+    otheta cos 0 eq {
+        % swap to simplify processing
+        otheta ntheta /otheta arg /ntheta arg
+    } if
+    ntheta cos 0 eq {
+        otheta cos 0 eq {
+            % both 0, skip out
+            /ix ox def /iy oy def
+        }
+        /om otheta tan def
+        /ob oy om ox mul sub def
+        /ix nx def
+        /iy nx om mul ob add def
+    } {
+        /om otheta tan def
+        /nm ntheta tan def
+        om nm eq {
+            % if slopes are equal, either parallel or coincident
+            /ix ox def
+            /iy oy def
+        } {
+            /ob oy om ox mul sub def
+            /nb ny nm nx mul sub def
+
+            /ix nb ob sub om nm sub div def
+            /iy ix om mul ob add def
+        } ifelse
+    } ifelse
+    ix iy
+} def
+
+/lines_dict 20 dict def
+% see lines/splitspline.txt for derivation
+lines_dict begin
+    /subspline_1d {
+        /q arg /p arg
+        /D arg /C arg /B arg /A arg
+
+        /xfunc {
+            /t arg
+            1 A mul
+            3 B mul 3 A mul sub                     t mul add
+            3 C mul 6 B mul sub 3 A mul add         t mul t mul add
+            1 D mul 3 C mul sub 3 B mul add A sub   t mul t mul t mul add
+        } def
+
+        /xprime {
+            /t arg
+            3 B mul  3 A mul sub
+            6 C mul 12 B mul sub 6 A mul add                t mul add
+            3 D mul  9 C mul sub 9 B mul add 3 A mul sub    t mul t mul add
+        } def
+        /coeff q p sub 3 div def
+        /E p xfunc def
+        /H q xfunc def
+        /F p xprime coeff mul E add def
+        /G q xprime coeff mul H exch sub def
+        E F G H
+    } def
+
+    /subspline_points {
+        /q arg /p arg
+        /Dy arg /Dx arg
+        /Cy arg /Cx arg
+        /By arg /Bx arg
+        /Ay arg /Ax arg
+        Ax Bx Cx Dx p q subspline_1d /Hx arg /Gx arg /Fx arg /Ex arg
+        Ay By Cy Dy p q subspline_1d /Hy arg /Gy arg /Fy arg /Ey arg
+        Ex Ey Fx Fy Gx Gy Hx Hy
+    } def
+end
+
+/splitcurveto {
+    lines_dict begin
+        /divisions arg
+        /Dy arg /Dx arg
+        /Cy arg /Cx arg
+        /By arg /Bx arg
+        currentpoint
+        /Ay arg /Ax arg
+        0 1 divisions 1 sub {
+            /i arg
+            Ax Ay Bx By Cx Cy Dx Dy
+            i divisions div
+            i 1 add divisions div
+            subspline_points
+            8 -2 roll pop pop
+            curveto
+        } for
+    end
+} def
+
+lines_dict begin
+    /ca_lean /left def
+    /ca_mode /simple def
+end
+/constrangle_setleft { lines_dict begin /ca_lean /left def end } def
+/constrangle_setright { lines_dict begin /ca_lean /right def end } def
+/constrangle_setsimple { lines_dict begin /ca_mode /simple def end } def
+/constrangle_setclever { lines_dict begin /ca_mode /clever def end } def
+/constrangle_path {
+    lines_dict begin
+        /directions arg
+        /angle_increment 360 directions div def
+        /pathcount 0 def
+        /closed_path false def
+        gsave
+            { pop pop /pathcount pathcount 1 add def } % moveto
+            { pop pop /pathcount pathcount 1 add def } % lineto
+            { quit_constrangle_curveto } % curveto
+            { /pathcount pathcount 1 add def /closed_path true def} % closepath
+            pathforall
+        grestore
+        /pathpoints pathcount array def
+        /pathangles pathcount 1 sub array def
+        /i 0 def
+        /firstpoint false def
+        /addpoint {
+            /y arg /x arg
+            /point [ x y ] def
+            firstpoint false eq {
+                /firstpoint point def
+            } if
+            pathpoints i point put
+            i 0 gt {
+                pathpoints i 1 sub get aload pop /oy arg /ox arg
+                /theta y oy sub x ox sub atan def
+                pathangles i 1 sub theta put
+            } if
+            /i i 1 add def
+        } def
+        { addpoint } % moveto
+        { addpoint } % lineto
+        { quit_constrangle_curveto } % curveto
+        { firstpoint aload pop addpoint } % closepath
+        pathforall
+        newpath
+        firstpoint aload pop moveto
+        0 1 pathcount 2 sub {
+            /i arg
+            /oldpoint pathpoints i get def
+            /newpoint pathpoints i 1 add get def
+            oldpoint aload pop /oy arg /ox arg
+            newpoint aload pop /ny arg /nx arg
+            /line_angle pathangles i get def
+            % add intermediate point if necessary
+            line_angle angle_increment mymod 0 eq not {
+                /angle_coeff line_angle angle_increment div def
+                /right_angle angle_coeff floor angle_increment mul def
+                /left_angle angle_coeff ceiling angle_increment mul def
+                ca_mode /clever eq {
+                    /prev_i i 1 sub def
+                    /next_i i 1 add def
+                    closed_path {
+                        /prev_i prev_i pathcount 1 sub mymod def
+                        /next_i next_i pathcount 1 sub mymod def
+                    } {
+                        prev_i 0 lt { /prev_i i def } if
+                        next_i pathcount 2 sub gt { /next_i i def } if
+                    } ifelse
+                    /prev_angle pathangles prev_i get def
+                    /next_angle pathangles next_i get def
+                    /prev_bend line_angle prev_angle sub 360 mymod def
+                    /next_bend next_angle line_angle sub 360 mymod def
+                    /prev_dir
+                        prev_bend 0 eq { 0 } {
+                            prev_bend 180 gt
+                                { -1 }
+                                { prev_bend 180 lt { 1 } { 0 } ifelse }
+                            ifelse
+                        } ifelse
+                    def
+                    /next_dir
+                        next_bend 0 eq { 0 } {
+                            next_bend 180 gt
+                                { -1 }
+                                { next_bend 180 lt { 1 } { 0 } ifelse }
+                            ifelse
+                        } ifelse
+                    def
+                    prev_dir -1 eq {
+                        next_dir 1 eq {
+                            /lean_dir /lr def
+                        } {
+                            /lean_dir /right def
+                        } ifelse
+                    } if
+                    prev_dir 0 eq {
+                        next_dir 0 eq {
+                            /lean_dir ca_lean def
+                        } {
+                            next_dir -1 eq {
+                                /lean_dir /right def
+                            } {
+                                /lean_dir /left def
+                            } ifelse
+                        } ifelse
+                    } if
+                    prev_dir 1 eq {
+                        next_dir 1 eq {
+                            /lean_dir /rl def
+                        } {
+                            /lean_dir /left def
+                        } ifelse
+                    } if
+                    lean_dir /left eq {
+                        /oangle right_angle def /nangle left_angle def
+                    } if
+                    lean_dir /right eq {
+                        /oangle left_angle def /nangle right_angle def
+                    } if
+                    lean_dir /lr eq {
+                        /mx ox nx add 2 div def
+                        /my oy ny add 2 div def
+                        /oangle left_angle def
+                        /mid_angle right_angle def
+                        /nangle left_angle def
+                        ox oy oangle mx my mid_angle intersection /iy arg /ix arg
+                        ix iy lineto
+                        mx my lineto
+                        /ox mx def
+                        /oy my def
+                        /oangle mid_angle def
+                    }  if
+                    lean_dir /rl eq {
+                        /oangle left_angle def /nangle right_angle def
+                    } if
+                } {
+                    ca_lean /left eq {
+                        /oangle right_angle def /nangle left_angle def
+                    } {
+                        /oangle left_angle def /nangle right_angle def
+                    } ifelse
+                } ifelse
+                ox oy oangle nx ny nangle intersection /iy arg /ix arg
+                gsave newpath ix iy dot grestore
+                ix iy lineto
+            } if
+            newpoint aload pop lineto
+        } for
+    end
+} def
+
+
+% polar & spherical coordinates, and great circle paths
+
+% p prefix = polar coords and polar lines: r theta pmoveto
+% s prefix = spherical coords and great-circle paths : lat long slineto
+% both of above rendered in polar
+
+% pp prefix = polar coords projected onto concentric polygons
+
+% m prefix = as s but rendered in plate carree projection (for texturemaps).
+% Location of 180-crossing lines is unpredictable.
+
+% c prefix = cartesian coords on the unit sphere [x y z]
+
+
+/atan_dict 2 dict def
+/myatan {
+    atan_dict begin
+	/x arg
+	/y arg
+	y 0 eq x 0 eq and { 0 } { y x atan } ifelse
+    end
+} def
+
+/polar_dict 9 dict def
+/polar {
+    polar_dict begin
+        /theta arg
+        /radius arg
+        theta cos radius mul
+        theta sin radius mul
+    end
+} def
+/ralop {
+    polar_dict begin
+        /y arg
+        /x arg
+	x dup mul y dup mul add sqrt
+	y x myatan
+    end
+} def
+
+/pmoveto { polar moveto } def
+
+/ptranslate { polar translate } def
+
+/node {
+    gsave
+        currentpoint translate
+        newpath 0 0 currentlinewidth 1.5 mul 0 360 arc closepath fill
+    grestore
+} def
+
+/pnode { gsave pmoveto node grestore } def
+
+% number of segments to use when drawing curved line
+/segments 100 def
+
+% if true, approximate great circle with spline
+% if false, make segments along calculated path
+/polar_spline_mode false def
+
+% if false, do great circle lines
+% if (L), draw inner curve and straight line along radius
+% if (7), draw outer curve and straight line along radius
+/polar_corner_mode false def
+/set_polar_spline_mode { /polar_spline_mode arg } def
+/set_polar_corner_mode { /polar_corner_mode arg } def
+/plineto {
+    polar_dict begin
+        /newt arg
+        /newr arg
+
+	currentpoint ralop
+	/oldt arg
+	/oldr arg
+
+        newt oldt sub 360 div 0.5 add floor -360 mul newt add /newt exch def
+	oldr 0 eq newr 0 eq or newt oldt eq or {
+	    newr newt polar lineto
+	} {
+	    % if not straight line
+            polar_corner_mode false eq {
+                polar_spline_mode {
+                    % if spline mode
+                    /angle_span  newt oldt sub def
+                    /height_span newr oldr sub def
+                    /theta angle_span 2 div def
+                    /arc_offset 1 theta cos sub theta sin div 0.75 div def
+                    % arc_offset is positive if newt > oldt
+                    /line_offset height_span 3 div def
+                    % line_offset is positive if newr > oldr
+                    /firstr oldr def /secondr newr def
+
+                    %current point is oldt, oldr
+                    %first control point
+                    currentpoint exch % y0 x0
+                    oldt sin arc_offset mul firstr mul sub
+                    oldt cos line_offset firstr oldr div mul mul add
+                    exch % x1 y0
+                    oldt cos arc_offset mul firstr mul add
+                    oldt sin line_offset firstr oldr div mul mul add % x1 y1
+
+                    %second control point
+                    newr newt polar exch % y3 x3
+                    newt sin arc_offset mul secondr mul add
+                    newt cos line_offset secondr newr div mul mul sub
+                    exch % x2 y3
+                    newt cos arc_offset mul secondr mul sub
+                    newt sin line_offset secondr newr div mul mul sub % x2 y2
+
+                    % third control point
+                    newr newt polar
+
+                    curveto
+                } {
+                    % if not spline mode
+                    oldr newr eq {
+                       0 0 oldr oldt newt
+                       newt oldt gt { arc } { arcn } ifelse
+                    } {
+                        % if not simple arc
+                        1 segments div dup 1 {
+                            /fraction exch def
+                            oldr newr oldr sub fraction mul add
+                            oldt newt oldt sub fraction mul add
+                            polar lineto
+                        } for
+                    } ifelse % simple arc?
+                } ifelse % spline mode?
+            } {
+                % corner mode not false
+                /r_distance newr oldr sub def
+                /arc_func { newt oldt gt { arc } { arcn } ifelse } def
+                r_distance 0 eq {
+                   0 0 oldr oldt newt arc_func
+                } {
+                    polar_corner_mode (L) eq r_distance 0 lt xor
+                    /arcfirst arg
+                    arcfirst {
+                        0 0 oldr oldt newt arc_func
+                        newr newt polar lineto
+                    } {
+                        newr oldt polar lineto
+                        0 0 newr oldt newt arc_func
+                    } ifelse
+                } ifelse
+            } ifelse % not corner mode?
+	} ifelse % straight line
+    end
+} def
+
+/pgoto { curr_path {plineto} {pmoveto} ifelse } def
+
+/s2p {  % spherical to polar
+    exch 90 add exch
+} def
+
+/p2s {  % polar to spherical
+    exch 90 sub exch
+} def
+
+% polygon section
+% TODO: these should all use a local dict
+/polygon_sides 0 def    % don't even try it
+/set_polypolar_sides {
+    /polypolar_sides arg
+    /polypolar_big_angle 360 polypolar_sides div def
+} def
+
+/polypolar {
+    /theta arg
+    /r arg
+    /pre theta polypolar_big_angle div floor polypolar_big_angle mul def
+    /post pre polypolar_big_angle add def
+    /sub_angle theta polypolar_big_angle mymod polypolar_big_angle div def
+    /x_points [pre cos r mul post cos r mul] def
+    /y_points [pre sin r mul post sin r mul] def
+    sub_angle x_points interpolate
+    sub_angle y_points interpolate
+} def
+
+/polyralop { /y arg /x arg
+    % reverse polypolar mapping
+    y 0 eq x 0 eq and {
+        0 0
+    } {
+        /true_angle y x atan def
+        /true_distance x dup mul y dup mul add sqrt def
+        /face_number true_angle polypolar_big_angle div floor def
+        /normal_for_face
+            face_number 0.5 add
+            polypolar_big_angle mul def
+        /angle_diff true_angle normal_for_face sub def
+        /projection_r angle_diff cos true_distance mul def
+        /result_r projection_r polypolar_big_angle half cos div def
+        /sector_half_circ result_r polypolar_big_angle half sin mul def
+        /circ_distance angle_diff sin true_distance mul sector_half_circ add def
+        /result_theta
+            circ_distance sector_half_circ 2 mul div % proportion of circ
+            [face_number polypolar_big_angle mul dup polypolar_big_angle add]
+            interpolate def
+        result_r result_theta
+    } ifelse
+} def
+/ppmoveto { polypolar moveto } def
+/pplineto {
+    polar_dict begin
+        /outer_newt arg
+        /outer_newr arg
+
+	currentpoint polyralop
+	/outer_oldt arg
+	/outer_oldr arg
+
+        outer_newr 0 eq { /outer_newt outer_oldt def } if
+        outer_oldr 0 eq { /outer_oldt outer_newt def } if
+
+        outer_newt outer_oldt sub 360 div 0.5 add floor -360 mul outer_newt add /outer_newt exch def
+        polar_corner_mode false eq {
+            outer_newr outer_newt basepplineto
+        } {
+            polar_corner_mode (L) eq outer_newr outer_oldr sub 0 lt xor
+            /arcfirst arg
+            arcfirst {
+                outer_oldr outer_newt basepplineto
+                outer_newr outer_newt basepplineto
+            } {
+                outer_newr outer_oldt basepplineto
+                outer_newr outer_newt basepplineto
+            } ifelse
+        } ifelse
+    end
+} def
+/basepplineto {
+    polar_dict begin
+        /newt arg
+        /newr arg
+
+	currentpoint polyralop
+	/oldt arg
+	/oldr arg
+
+        newr 0 eq { /newt oldt def } if
+        oldr 0 eq { /oldt newt def } if
+
+        newt oldt sub 360 div 0.5 add floor -360 mul newt add /newt exch def
+
+        /oldface oldt polypolar_big_angle div floor def
+        /newface newt polypolar_big_angle div floor def
+        oldface newface ne {
+            % only if we're crossing faces
+            % loop depends on direction
+            /anglespan newt oldt sub def
+            oldface newface lt {
+                oldface 1 add 1 newface
+            } {
+                oldface -1 newface 1 add
+            } ifelse
+            % iterate through boundaries
+            {
+                /corner_t exch polypolar_big_angle mul def
+                /corner_proportion corner_t oldt sub anglespan div def
+                /corner_r corner_proportion [oldr newr] interpolate def
+                corner_r corner_t polypolar lineto
+            } for
+        } if
+        newr newt polypolar lineto
+    end
+} def
+/ppgoto { curr_path {pplineto} {ppmoveto} ifelse } def
+
+/vector_dict 20 dict def
+/s2c {  % spherical to cartesian
+    vector_dict begin
+	/long arg
+	/lat arg
+	/x lat cos long cos mul def
+	/y lat sin def
+	/z lat cos long sin mul def
+	[x y z]
+    end
+} def
+
+/c2s { % cartesian to spherical
+    vector_dict begin
+	aload pop
+	/z arg /y arg /x arg
+	/r2 x dup mul z dup mul add sqrt def  % radius in x-y plane
+	/lat y r2 myatan def
+	/long z x myatan def
+	lat 180 gt {
+	    /lat lat 360 sub def
+	} if
+	lat long
+    end
+} def
+
+/vcross {  % takes cartesian [x y z] args, A X B = C
+    vector_dict begin
+	/A arg
+	/B arg
+	/C [0 0 0] def
+	0 1 2 {
+	    /k exch def
+	    /i k 1 add 3 mod def
+	    /j i 1 add 3 mod def
+	    C k
+		A i get B j get mul
+		A j get B i get mul sub
+	    put
+	} for
+	C
+    end
+} def
+
+/vlength {
+    aload pop
+    3 {
+	dup mul 3 1 roll
+    } repeat
+    add add
+} def
+
+/vsmul { % multiply vector by scalar
+    vector_dict begin
+	/scalar arg
+	aload pop
+	3 {
+	    scalar mul 3 1 roll
+	} repeat
+	3 array astore
+    end
+} def
+/vsdiv { 1 exch div vsmul } def
+/vnorm {dup vlength vsdiv } def
+/vmtransform { % transform vector with matrix
+    vector_dict begin
+	/trans_M arg % 3x3 matrix
+	/trans_A arg % cartesian
+	/trans_out [0 0 0] def
+	0 1 2 {
+	    /i arg
+	    0 1 2 {
+		/j arg
+		trans_out j get
+		trans_A i get
+		trans_M i get j get
+		mul
+		add
+		trans_out exch j exch put
+	    } for
+	} for
+	trans_out
+    end
+} def
+/minvert {
+    vector_dict begin
+	/M_in arg % 3x3 matrix
+	/M_out 3 array def
+	0 1 2 {
+	    /i arg
+	    /row 3 array def
+	    0 1 2 {
+		/j arg
+		row j M_in j get i get put
+	    } for
+	    M_out i row put
+	} for
+	M_out
+    end
+} def
+/mmconcat {
+    vector_dict begin
+	/M2 arg
+	/M1 arg
+	/M_out 3 array def
+	0 1 2 {
+	    /i arg
+	    /row 3 array def
+	    0 1 2 {
+		/j arg
+		/cell 0 def
+		0 1 2 {
+		    /k arg
+		    cell
+			M1 i get k get
+			M2 k get j get mul
+			add /cell arg
+		} for
+		row j cell put
+	    } for
+	    M_out i row put
+	} for
+	M_out
+    end
+} def
+
+/snode { s2p pnode } def
+/smoveto { s2p pmoveto } def
+/stranslate { s2p ptranslate } def
+
+/slineto_dict 5 dict def
+/slineto {
+    slineto_dict begin
+	% on stack: lat long
+	/newlong arg
+	/newlat arg
+	/newc newlat newlong s2c def
+	% current point
+	currentpoint ralop p2s
+	/oldlong arg
+	/oldlat arg
+	/oldc oldlat oldlong s2c def
+
+	% get shorter distance around
+	newlong oldlong sub 360 div 0.5 add floor -360 mul newlong add
+	/newlong exch def
+
+	% check for zero
+	newlong oldlong ne newlat oldlat ne or {
+	    % find normal vector
+	    /normc newc oldc vcross vnorm def
+
+	    1 segments div dup 1 {
+		% find point on polar line
+		/fraction exch def
+		oldlat newlat oldlat sub fraction mul add
+		oldlong newlong oldlong sub fraction mul add
+		% convert to cartesian, then cross with norm and cross back
+		s2c normc vcross vnorm normc exch vcross vnorm
+		% convert to polar and draw
+		c2s s2p polar lineto
+	    } for
+	} if
+    end
+} def
+
+/sgoto { curr_path {slineto} {smoveto} ifelse } def
+
+polar_dict /mside_thresh 50 put
+
+/m2s {
+    polar_dict begin
+	/lat arg
+	/long arg
+	lat -90 lt lat 90 gt or {
+	    lat long
+	    (Latitude out of bounds) die
+	} if
+
+	% set mside here - it is reset by mmoveto
+	mside 0 eq {
+	    long mside_thresh     gt {
+		/mside  1 def
+		/pos_thresh 360 mside_thresh sub def
+		/neg_thresh 0 mside_thresh sub def
+	    } if
+	    long mside_thresh neg lt {
+		/mside -1 def
+		/pos_thresh 0 mside_thresh add def
+		/neg_thresh -360 mside_thresh add def
+	    } if
+	} if
+	lat long
+    end
+} def
+/s2m {
+    polar_dict begin
+	/long arg
+	/lat arg
+	% make high longitudes negative
+	long 180 gt {
+	    /long long 360 sub def
+	} if
+	% handle mside
+	mside  1 eq long mside_thresh neg lt and {
+	    /long long 360 add def
+	} if
+	mside -1 eq long mside_thresh     gt and {
+	    /long long 360 sub def
+	} if
+	long lat
+    end
+} def
+
+
+/mnode { node } def
+/mmoveto {
+    % reset set mside and then set if appropriate
+    polar_dict begin
+	/mside 0 def
+	/pos_thresh 720 def
+	/neg_thresh -720 def
+    end
+    2 copy m2s pop pop
+
+    moveto
+} def
+/mtranslate { translate } def
+
+/mlineto_dict 5 dict def
+/mlineto {
+    mlineto_dict begin
+	m2s
+	% on stack: lat long
+	/newlong arg
+	/newlat arg
+	/newc newlat newlong s2c def
+	% current point
+	currentpoint m2s
+	/oldlong arg
+	/oldlat arg
+	/oldc oldlat oldlong s2c def
+
+	% side threshholds
+	/pos_thresh polar_dict /pos_thresh get def
+	/neg_thresh polar_dict /neg_thresh get def
+	/close_thresh polar_dict /mside_thresh get 2 div def
+
+	% get shorter distance around
+	newlong oldlong sub 360 div 0.5 add floor -360 mul newlong add
+	/newlong exch def
+
+	% check for zero
+	newlong oldlong ne newlat oldlat ne or {
+	    % find normal vector
+	    /normc newc oldc vcross vnorm def
+
+	    % set previous point to old point
+	    oldlat oldlong s2m /oldy arg /oldx arg
+
+	    1 segments div dup 1 {
+		% find point on polar line
+		/fraction exch def
+		oldlat newlat oldlat sub fraction mul add
+		oldlong newlong oldlong sub fraction mul add
+
+		% convert to cartesian, then cross with norm and cross back
+		s2c normc vcross vnorm normc exch vcross vnorm
+
+		% convert to map coords
+		c2s s2m /newy arg /newx arg
+
+		% check for thresh-crossing
+		% newx neg_thresh sub close_thresh 2 div lt
+		% pos_thresh oldx sub close_thresh 2 div lt and
+		oldx newx sub abs 270 gt
+		{
+		    /poley oldy oldy abs div 90 mul def
+		    oldx poley lineto
+		    newx poley lineto
+		} if
+		/oldx newx def
+		/oldy newy def
+
+		% draw
+		newx newy lineto
+	    } for
+	} if
+    end
+} def
+
+/mgoto { curr_path {mlineto} {mmoveto} ifelse } def
 
 /atranslate { aload pop translate } def
 

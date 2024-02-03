@@ -6,7 +6,7 @@ from typing import Optional, Any, Callable, Sequence, NamedTuple
 import random
 from math import atan2, sqrt, degrees, cos, sin, radians
 
-from .maze import BaseGrid, ps_list, GridPosition
+from .grid import BaseGrid, ps_list, GridPosition
 
 @dataclass
 class EdgeSpec:

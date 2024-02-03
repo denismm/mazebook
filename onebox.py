@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import random
-from grid.rectgrid import RectGrid
-from grid.multigrid import MultiGrid, GridSpec, EdgeSpec
+from maze.rectgrid import RectGrid
+from maze.multigrid import MultiGrid, GridSpec, EdgeSpec
 from positions import IntPosition
 
 def draw_square(name: str, edges: tuple[EdgeSpec, ...]) -> None:

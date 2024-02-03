@@ -3,7 +3,7 @@
 from positions import Position, IntPosition, Direction, add_direction
 from typing import Optional, Any, Sequence
 
-from .maze import BaseGrid, SingleSizeGrid, Edge
+from .grid import BaseGrid, SingleSizeGrid, Edge
 
 hex_directions: tuple[Direction, ...] = ( 
     (1, 1), (0, 1), (-1, 0), (-1, -1), (0, -1), (1, 0)

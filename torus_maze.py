@@ -1,5 +1,5 @@
-from grid.rectgrid import RectGrid
-from grid.multigrid import MultiGrid
+from maze.rectgrid import RectGrid
+from maze.multigrid import MultiGrid
 
 torus_grids = {
     "A": RectGrid

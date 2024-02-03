@@ -4,7 +4,7 @@ from positions import Position, IntPosition, Direction, cardinal_directions, add
 from typing import Optional, Any, Callable, Sequence
 import random
 
-from .maze import BaseGrid, ps_list, Division, Edge
+from .grid import BaseGrid, ps_list, Division, Edge
 
 TEXT_CELL_WIDTH = 4
 TEXT_CELL_HEIGHT = 3

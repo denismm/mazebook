@@ -1,9 +1,9 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from grid.rectgrid import RectGrid
+from maze.rectgrid import RectGrid
 from positions import IntPosition as IntPos
-from grid.maze import Edge
+from maze.grid import Edge
 import random
 
 def test_rect() -> None:

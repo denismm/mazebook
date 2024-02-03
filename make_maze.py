@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-from grid.maze import BaseGrid, SingleSizeGrid
-from grid.rectgrid import RectBaseGrid, RectGrid, ZetaGrid, UpsilonGrid
-from grid.circlegrid import CircleGrid, PolygonGrid
-from grid.hexgrid import HexGrid, TriGrid
-from grid.complex_maze import complex_grid
+from maze.grid import BaseGrid, SingleSizeGrid
+from maze.rectgrid import RectBaseGrid, RectGrid, ZetaGrid, UpsilonGrid
+from maze.circlegrid import CircleGrid, PolygonGrid
+from maze.hexgrid import HexGrid, TriGrid
+from maze.complex_maze import complex_grid
 import argparse
 import random
 import re

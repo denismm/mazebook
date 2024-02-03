@@ -1,8 +1,8 @@
-from grid.maze import BaseGrid, SingleSizeGrid
-from grid.multigrid import MultiGrid, GridSpec, EdgeSpec
-from grid.rectgrid import RectBaseGrid, RectGrid, ZetaGrid, UpsilonGrid
-from grid.circlegrid import SemiCircleGrid, PolygonGrid
-from grid.hexgrid import HexGrid, TriGrid
+from .grid import BaseGrid, SingleSizeGrid
+from .multigrid import MultiGrid, GridSpec, EdgeSpec
+from .rectgrid import RectBaseGrid, RectGrid, ZetaGrid, UpsilonGrid
+from .circlegrid import SemiCircleGrid, PolygonGrid
+from .hexgrid import HexGrid, TriGrid
 from typing_extensions import Protocol
 
 class ComplexMaze(Protocol):

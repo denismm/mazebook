@@ -7,7 +7,7 @@ from functools import cache
 from sys import stderr
 import random
 
-from .maze import SingleSizeGrid, BaseGrid, Division, Edge
+from .grid import SingleSizeGrid, BaseGrid, Division, Edge
 
 def warn(*args: Any, **kwargs: Any) -> None:
     print(*args, file=stderr, **kwargs)

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import random
-from grid.rectgrid import RectGrid
-from grid.hexgrid import TriGrid
-from grid.multigrid import MultiGrid, GridSpec, EdgeSpec
+from maze.rectgrid import RectGrid
+from maze.hexgrid import TriGrid
+from maze.multigrid import MultiGrid, GridSpec, EdgeSpec
 from positions import IntPosition
 
 random.seed(97)

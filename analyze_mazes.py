@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import grid.maze
-import grid.rectgrid
+import maze.grid
+import maze.rectgrid
 import time
 
 SIZE = 50

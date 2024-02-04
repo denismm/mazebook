@@ -29,7 +29,7 @@ parser.add_argument('--slices', type=int, help="number of slices of a polygon ma
 parser.add_argument('--degrees', type=float, help="angles to include in a circle maze")
 parser.add_argument('-y', '--hyper', type=int, action='append', help="number of planes in each hyper dimension, repeat for more dimensions")
 
-parser.add_argument('-o', '--output', default="ascii", help="the output format", choices=RectGrid.outputs)
+parser.add_argument('-o', '--output', default="png", help="the output format", choices=RectGrid.outputs)
 parser.add_argument('-n', '--name', help="the name to use for the output if generating a png")
 parser.add_argument('--bg', action='store_true', help="whether to draw a black background")
 parser.add_argument('--pathcolor', help="string of rgb float values for path, if no field")

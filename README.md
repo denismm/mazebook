@@ -7,7 +7,7 @@ in Python and PostScript instead of Ruby, I made a number of different
 choices as to how to represent spaces.  The polygonal grids and complex
 maze code are original to me but feel free to reimplement them.
 
-The maze generation code is pure Python but most output is via PostScript.
+The maze generation code is pure Python and most output is via PostScript.
 To use this code you will need to have python3, gs, perl, and the netpbm
 utilities installed and in your path.  This library includes much of the
 code in my own dmmlib library, so it is not necessary to download that
@@ -73,7 +73,7 @@ Only the following complex mazes can be used directly from make_maze, specified 
 
 ## maze algorithms
 
-* `-a', `--algorithm`: maze algorithm to use.  Not all algorithms are available for all grids.
+* `-a', `--algorithm`: maze algorithm to use.  Not all algorithms are available for all grids.  The default is backtrack, which gives good-looking mazes without taking too long and works on all grids.  Details on these algorithms are not hard to find online, or they are documented in the book.
   - aldous_broder
   - wilson
   - hunt_kill
@@ -100,9 +100,10 @@ Only the following complex mazes can be used directly from make_maze, specified 
 
 ## printing methods
 
-* `-o` `--output`: the output method to use.
+* `-o` `--output`: the output method to use.  (Default: png)
   - ps: print a postscript file to STDOUT
   - png: create a png file at <name>.png
+  - json: print a json file to STDOUT
   - ascii: print an ascii rendition to STDOUT (RectGrid only)
 * `-n` `--name`: the name of the png file that the maze will be printed to (default: temp)
 * `--inset`: the size of the inset when --weave is true, in proportions of the cell size (default: 0.1)
@@ -114,4 +115,7 @@ Only the following complex mazes can be used directly from make_maze, specified 
 
 ## incompatible combinations
 
-TBA
+Some are mentioned above, I haven't tested every combination.  The 
+RectGrid-specific print method and maze algorithms are enforced by the code
+but other combinations may just fail with python exceptions or result in
+bad-looking output.

@@ -73,7 +73,7 @@ Only the following complex mazes can be used directly from make_maze, specified 
 
 ## maze algorithms
 
-- `-a', `--algorithm`: maze algorithm to use.  Not all algorithms are available for all grids.
+* `-a', `--algorithm`: maze algorithm to use.  Not all algorithms are available for all grids.
   - aldous_broder
   - wilson
   - hunt_kill
@@ -90,24 +90,28 @@ Only the following complex mazes can be used directly from make_maze, specified 
   - fractal (RectGrid, CircleGrid, PolygonGrid only)
   - binary (RectGrid only)
   - sidewinder (RectGrid only)
-
-- -s --seed
-- -f --field
-- -p --path
-- -w --weave
-- -b --braid
-- --room_size
-- -y --hyper
+* `-s` `--seed`: random seed for maze generation.  Not always reliable.
+* `-f` `--field`: finds one of the most distant points in the maze and colors each cell with the distance from that point with a rainbow gradient.
+* `-p` `--path`: finds the two points most distant from each other in the maze and draws a path between them.  Not compatible with complex mazes or with `hyper`.
+* `-w` `--weave`: makes some cells into bridges where one connection crosses another.  Will only apply to cells with four neighbors, such as in RectGrid, most of the cells in a CircularGrid or PolygonGrid, and the diamond cells in UpsilonGrid.
+* `-b` `--braid`: after maze generation, connect some dead-ends to make a multiply-connected maze.  Takes a number < 1.
+* `--room_size`: for fractal mazes, stop subdivision early in some cases.  Takes a number > 1.
+* `-y` `--hyper`: For each -y, add a dimension of that size in repeating copies of the maze.
 
 ## printing methods
 
-* -o --output
-* -n --name
-* --inset
-* --linewidth
-* --bg
-* --pathcolor
-* --pixels
-* --noflat
+* `-o` `--output`: the output method to use.
+  - ps: print a postscript file to STDOUT
+  - png: create a png file at <name>.png
+  - ascii: print an ascii rendition to STDOUT (RectGrid only)
+* `-n` `--name`: the name of the png file that the maze will be printed to (default: temp)
+* `--inset`: the size of the inset when --weave is true, in proportions of the cell size (default: 0.1)
+* `--linewidth`: the size of the lines used for the walls and path, in proportions of the cell size (default: 0.1)
+* `--bg`: whether to add a black background
+* `--pathcolor`: the color of the path if --path is true, as a space-delimited set of values from 0-1 (default: "1 1 1" if field is set, "1 0 0" if not)
+* `--pixels`: pixel size of one cell (approximately) for png output (default: 20)
+* `--noflat`: include drawmaze.ps instead of inlining it, for debugging
 
 ## incompatible combinations
+
+TBA

@@ -40,8 +40,12 @@ traditional cardinal directions.
 
 These are grids with triangular geometry in some way.  (https://www.redblobgames.com/grids/hexagons/) was a very useful resource in coding this section.
 
-* HexGrid: a hexagonal grid, with connections in 6 directions. The cells are oriented with a flat top, and the entire grid has the shape of a pointy-topped hexagon.  Specified as Rd, where R is the radius from the center hex (not inclusive), as in "5s" which will create a grid 11 hexes across at the widest points.
+* HexGrid: a hexagonal grid, with connections in 6 directions. The cells are oriented with a flat top, and the entire grid has the shape of a pointy-topped hexagon.  Specified as Rs, where R is the radius from the center hex (not inclusive), as in "5s" which will create a grid 11 hexes across at the widest points.
 * TriGrid: a triagonal grid, with connections in 3 directions.  The cells are upward-pointing and downward-pointing triangles, and the entire grid has the shape of an upward-pointing triangle.  Specified as Wd, where W is the length of one side of the grid, as in "7d".
+
+| 2s | 5d |
+|--|--|
+| ![2-radius hex maze](images/2s.png) | ![5-wide triangle maze](images/5d.png) |
 
 ### maze.circlegrid: circular and regular-polygonal grids
 
@@ -55,6 +59,10 @@ in the first ring as a neighbor.
 * CircleGrid: a circular grid where the central cell is circular and all other cells are annular sectors.  Specified as "R@" or "Ro", where @ means a central cell and o means no central cell and R is the radius, not including the central cell if present, as in "5o".
 * PolygonGrid: a grid the shape of a regular polygon where the central cell is the shape of the full grid and all other cells are trapezoids.  Specified as "R@S" or "RoS", where @ means a central cell and o means no central cell, R is the radius, and S is the number of sides of the grid, as in "8@7".
 * SemiCircleGrid: a special case of circular grid that only include 180 degrees of the circle, providing a flat side.  Not available directly through make_maze but useful in complex grids.
+
+| 2@ | 2@7 |
+|--|--|
+| ![2-radius circular maze](images/2@.png) | ![2-radius heptagonal maze](images/2@7.png) |
 
 Relevant arguments:
 * `firstring`: how many cells to put in the first ring (ignoring the central cell).  If not specified for circular grids, it will end up as 6 if there is a central cell and 3 if not.  If not specified for polygonal grids, it defaults to the number of sides.

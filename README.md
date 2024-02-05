@@ -19,7 +19,7 @@ variety of ways.  You can also use the libraries directly.
 
 `./make_maze.py heart:10 -wf -o png -n heart -s 10`
 
-![colorful heart-shaped maze](/images/heart.png)
+![colorful heart-shaped maze](images/heart.png)
 
 ## grid types
 
@@ -31,6 +31,10 @@ traditional cardinal directions.
 * RectGrid: normal square grid with orthogonal connections.  Specified as HxW or HxWg, as in "10x10".  If a mask is provided, the grid will be a RectGrid the size of the mask.
 * ZetaGrid: like RectGrid but adds diagonal connections. Specified as HxWz.
 * UpsilonGrid: like RectGrid but adds a diamond-shaped cell at each vertex, so half of the cells are octagons connecting in 8 directions and the other half are diamonds connecting in only the diagonal directions.  Specified as HxWu.
+
+| 5x5 | 5x5z | 5x5u |
+|--|--|--|
+| ![5x5 rectangular maze](images/5x5.png) | ![5x5 zeta maze](images/5x5z.png) | ![5x5 upsilon maze](images/5x5u.png)|
 
 ### maze.hexgrid: triangular and hexagonal grids
 

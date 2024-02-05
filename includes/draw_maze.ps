@@ -3017,11 +3017,10 @@ polar_dict /mside_thresh 50 put
                         field fieldstep mul 360 mul setsinebowcolor
                     } {
                         grid /pathcolor known {
-                            grid /pathcolor get aload pop
+                            grid /pathcolor get aload pop setrgbcolor
                         } {
-                            1 dup dup
+                            1 setgray
                         } ifelse
-                        setrgbcolor
                     } ifelse
                     position islink {
                         1.5 darken

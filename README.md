@@ -111,7 +111,7 @@ Only the following complex mazes can be used directly from make_maze, specified 
 * `-p` `--path`: finds the two points most distant from each other in the maze and draws a path between them.  Not compatible with complex mazes or with `hyper`.
 * `-w` `--weave`: makes some cells into bridges where one connection crosses another.  Will only apply to cells with four neighbors, such as in RectGrid, most of the cells in a CircularGrid or PolygonGrid, and the diamond cells in UpsilonGrid.
 * `-b` `--braid`: after maze generation, connect some dead-ends to make a multiply-connected maze.  Takes a number < 1.
-* `--room_size`: for fractal mazes, stop subdivision early in some cases.  Takes a number > 1.
+* `--room_size`: for fractal mazes, stop subdivision early in some cases.  Takes an integer > 1.
 * `-y` `--hyper`: For each -y, add a dimension of that size in repeating copies of the maze.
 
 ## printing methods

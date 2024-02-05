@@ -83,9 +83,13 @@ Only the following complex mazes can be used directly from make_maze, specified 
 * cube: an unfolded cube
 * heart: a heart, consisting of a square connected to two semicircles
 
+| slender_star:2 | fat_star:2 | heart:3 | cube:3 |
+|--|--|--|--|
+| ![slender star size 2](images/slender_star-2.png) | ![fat star size 2](images/fat_star-2.png) | ![heart size 3](images/heart-3.png) | ![cube size 3](images/cube-3.png) |
+
 ## maze algorithms
 
-* `-a', `--algorithm`: maze algorithm to use.  Not all algorithms are available for all grids.  The default is backtrack, which gives good-looking mazes without taking too long and works on all grids.  Details on these algorithms are not hard to find online, or they are documented in the book.
+* `-a`, `--algorithm`: maze algorithm to use.  Not all algorithms are available for all grids.  The default is backtrack, which gives good-looking mazes without taking too long and works on all grids.  Details on these algorithms are not hard to find online, or they are documented in the book.
   - aldous_broder
   - wilson
   - hunt_kill

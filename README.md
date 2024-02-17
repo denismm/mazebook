@@ -65,6 +65,7 @@ in the first ring as a neighbor.
 | ![2-radius circular maze](images/2@.png) | ![2-radius heptagonal maze](images/2@7.png) |
 
 Relevant arguments:
+
 * `firstring`: how many cells to put in the first ring (ignoring the central cell).  If not specified for circular grids, it will end up as 6 if there is a central cell and 3 if not.  If not specified for polygonal grids, it defaults to the number of sides.
 * `degrees`: how much of the circle or polygon to actually include, out of 360 degrees.  Strange behavior may result if the firstring value doesn't evenly divide the available angles.
 * `slices`: how much of the polygon to include, from 1 to the number of sides.
@@ -72,12 +73,14 @@ Relevant arguments:
 ### maze.complex_maze: complex grids assembled from subgrids
 
 These are grids made of simpler grids stitched together.  Only the following grids can be used in complex grids:
+
 * RectGrid
 * TriGrid
 * PolygonGrid
 * SemiCircleGrid
 
 Only the following complex mazes can be used directly from make_maze, specified as "N:S" where N is the name of the complex grid and S is the size of some internal edge, as in "slender_star:9":
+
 * slender_star: a five-pointed star with collinear edges
 * fat_star: a five-pointed star with shorter edges
 * cube: an unfolded cube

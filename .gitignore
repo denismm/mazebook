@@ -1,6 +1,7 @@
 __pycache__
 dmmlib
 .*.swp
+*.tgz
 pngs
 .DS_Store
 README.html

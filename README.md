@@ -118,7 +118,7 @@ Only the following complex mazes can be used directly from make_maze, specified 
 
 * `-o` `--output`: the output method to use.  (Default: png)
   - ps: print a postscript file to STDOUT
-  - png: create a png file at <name>.png
+  - png: create a png file at `<name>.png`
   - json: print a json file to STDOUT
   - ascii: print an ascii rendition to STDOUT (RectGrid only)
 * `-n` `--name`: the name of the png file that the maze will be printed to (default: temp)
